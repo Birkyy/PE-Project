@@ -1,6 +1,6 @@
 namespace PE_Group_Project.API.Models.DTO
 {
-    public class CreateUserRequestDTO
+    public class LoginRequestDTO
     {
         public required string Username { get; set; }
         public required string Email { get; set; }
