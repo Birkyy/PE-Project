@@ -104,15 +104,15 @@ const Dashboard = () => {
     <Layout>
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {/* Welcome Section */}
-        <div className="mb-8 animate-fade-in">
+        <div className="mb-8">
           <h1 className={`text-3xl font-bold mb-2 ${
             darkMode 
-              ? 'text-gradient-purple text-glow-purple'
-              : 'text-gray-900'
+              ? 'text-white'
+              : 'text-black'
           }`}>
             Welcome back, {user?.username || 'User'}!
           </h1>
-          <p className={`text-responsive-lg ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Here's what's happening with your projects today.</p>
+          <p className={`text-lg ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Here's what's happening with your projects today.</p>
         </div>
 
         {/* Quick Stats */}
@@ -120,7 +120,7 @@ const Dashboard = () => {
           <div className={`${darkMode ? 'card-cyberpunk' : 'bg-white border-purple-300 border rounded-lg hover:shadow-purple-300/30 hover:shadow-lg'} p-6 transition-all duration-300 animate-fade-in`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className={`text-sm text-responsive ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Tasks</p>
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Tasks</p>
                 <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>127</p>
               </div>
               <Target className="w-8 h-8 text-purple-400 animate-float" />
@@ -130,7 +130,7 @@ const Dashboard = () => {
           <div className={`${darkMode ? 'card-cyberpunk-cyan' : 'bg-white border-cyan-300 border rounded-lg hover:shadow-cyan-300/30 hover:shadow-lg'} p-6 transition-all duration-300 animate-fade-in`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className={`text-sm text-responsive ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Completed</p>
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Completed</p>
                 <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>89</p>
               </div>
               <CheckCircle2 className="w-8 h-8 text-cyan-400 animate-float" />
