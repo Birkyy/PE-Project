@@ -1,9 +1,11 @@
 import { useTheme } from '../../context/ThemeContext';
-import { Eye, Edit, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Eye, Edit, Trash2, Search } from 'lucide-react';
 import Layout from '../Layout';
 
 const MyProjects = () => {
   const { darkMode } = useTheme();
+  const navigate = useNavigate();
 
   const handleView = (projectName) => {
     console.log(`Viewing ${projectName}`);
@@ -32,9 +34,23 @@ const MyProjects = () => {
             }`}>
               My Projects
             </h2>
-            <p className={`text-lg mb-8 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              Manage and track all your projects in one place
-            </p>
+            {/* Search Bar */}
+            <div className="max-w-md mx-auto mb-8">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className={`h-5 w-5 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search projects..."
+                  className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 ${
+                    darkMode 
+                      ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400 focus:border-purple-400' 
+                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-purple-500'
+                  }`}
+                />
+              </div>
+            </div>
           </div>
           
           {/* Projects Grid */}
@@ -180,7 +196,10 @@ const MyProjects = () => {
 
           {/* Create New Project Button */}
           <div className="mt-8 text-center">
-            <button className="px-6 py-3 bg-gradient-to-r from-purple-600 to-cyan-600 text-white rounded-lg hover:from-purple-700 hover:to-cyan-700 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/25 focus:outline-none focus:ring-2 focus:ring-purple-400/50">
+            <button 
+              onClick={() => navigate('/add-project')}
+              className="px-6 py-3 bg-gradient-to-r from-purple-600 to-cyan-600 text-white rounded-lg hover:from-purple-700 hover:to-cyan-700 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/25 focus:outline-none focus:ring-2 focus:ring-purple-400/50"
+            >
               + Create New Project
             </button>
           </div>
