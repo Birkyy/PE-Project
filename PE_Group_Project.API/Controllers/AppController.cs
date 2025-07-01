@@ -22,9 +22,7 @@ namespace PE_Group_Project.API.Controllers
                 usersDTO.Add(
                     new UserDTO
                     {
-                        Id = user.Id,
                         Username = user.Username,
-                        Password = user.Password,
                         Email = user.Email,
                         Role = user.Role,
                     }
