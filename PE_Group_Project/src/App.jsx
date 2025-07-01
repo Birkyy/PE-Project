@@ -1,7 +1,10 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/Login';
 import Register from './components/Register';
-import Dashboard from './components/Dashboard';
+import Home from './components/Pages/Home';
+import Profile from './components/Pages/Profile';
+import MyProjects from './components/Pages/MyProjects';
+import UsersManagement from './components/Pages/UsersManagement';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -16,27 +19,27 @@ function App() {
           {/* Protected Routes */}
           <Route path="/dashboard" element={
             <ProtectedRoute>
-              <Dashboard />
+              <Home />
             </ProtectedRoute>
           } />
           <Route path="/member-home" element={
             <ProtectedRoute>
-              <Dashboard />
+              <Home />
             </ProtectedRoute>
           } />
           <Route path="/my-projects" element={
             <ProtectedRoute>
-              <Dashboard />
+              <MyProjects />
             </ProtectedRoute>
           } />
           <Route path="/users-management" element={
             <ProtectedRoute>
-              <Dashboard />
+              <UsersManagement />
             </ProtectedRoute>
           } />
           <Route path="/profile" element={
             <ProtectedRoute>
-              <Dashboard />
+              <Profile />
             </ProtectedRoute>
           } />
         </Routes>
