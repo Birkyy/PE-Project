@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTheme } from '../../context/ThemeContext';
 import Layout from '../Layout';
 import { 
   Calendar, 
@@ -29,8 +30,9 @@ import {
   AreaChart
 } from 'recharts';
 
-const Home = () => {
+const Dashboard = () => {
   const [user, setUser] = useState(null);
+  const { darkMode } = useTheme();
 
   useEffect(() => {
     // Load user data
@@ -88,16 +90,6 @@ const Home = () => {
     { id: 4, action: 'Assigned', item: 'Database Optimization Task', time: '2 days ago', type: 'assigned' }
   ];
 
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'critical': return 'text-red-400 bg-red-900/30 border-red-500/50';
-      case 'high': return 'text-orange-400 bg-orange-900/30 border-orange-500/50';
-      case 'medium': return 'text-yellow-400 bg-yellow-900/30 border-yellow-500/50';
-      case 'low': return 'text-blue-400 bg-blue-900/30 border-blue-500/50';
-      default: return 'text-gray-400 bg-gray-900/30 border-gray-500/50';
-    }
-  };
-
   const getActivityIcon = (type) => {
     switch (type) {
       case 'completed': return <CheckCircle2 className="w-4 h-4 text-green-400" />;
@@ -113,49 +105,53 @@ const Home = () => {
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {/* Welcome Section */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent mb-2">
+          <h1 className={`text-3xl font-bold mb-2 ${
+            darkMode 
+              ? 'bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent'
+              : 'text-gray-900'
+          }`}>
             Welcome back, {user?.username || 'User'}! 👋
           </h1>
-          <p className="text-gray-400">Here's what's happening with your projects today.</p>
+          <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Here's what's happening with your projects today.</p>
         </div>
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-gray-800 border border-purple-500/30 rounded-lg p-6 hover:shadow-lg hover:shadow-purple-500/20 transition-all duration-300">
+          <div className={`${darkMode ? 'bg-gray-800 border-purple-500/30' : 'bg-white border-purple-300'} border rounded-lg p-6 hover:shadow-lg ${darkMode ? 'hover:shadow-purple-500/20' : 'hover:shadow-purple-300/30'} transition-all duration-300`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-400 text-sm">Total Tasks</p>
-                <p className="text-2xl font-bold text-white">127</p>
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Tasks</p>
+                <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>127</p>
               </div>
               <Target className="w-8 h-8 text-purple-400" />
             </div>
           </div>
 
-          <div className="bg-gray-800 border border-cyan-500/30 rounded-lg p-6 hover:shadow-lg hover:shadow-cyan-500/20 transition-all duration-300">
+          <div className={`${darkMode ? 'bg-gray-800 border-cyan-500/30' : 'bg-white border-cyan-300'} border rounded-lg p-6 hover:shadow-lg ${darkMode ? 'hover:shadow-cyan-500/20' : 'hover:shadow-cyan-300/30'} transition-all duration-300`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-400 text-sm">Completed</p>
-                <p className="text-2xl font-bold text-white">89</p>
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Completed</p>
+                <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>89</p>
               </div>
               <CheckCircle2 className="w-8 h-8 text-cyan-400" />
             </div>
           </div>
 
-          <div className="bg-gray-800 border border-yellow-500/30 rounded-lg p-6 hover:shadow-lg hover:shadow-yellow-500/20 transition-all duration-300">
+          <div className={`${darkMode ? 'bg-gray-800 border-yellow-500/30' : 'bg-white border-yellow-300'} border rounded-lg p-6 hover:shadow-lg ${darkMode ? 'hover:shadow-yellow-500/20' : 'hover:shadow-yellow-300/30'} transition-all duration-300`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-400 text-sm">In Progress</p>
-                <p className="text-2xl font-bold text-white">32</p>
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>In Progress</p>
+                <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>32</p>
               </div>
               <Clock className="w-8 h-8 text-yellow-400" />
             </div>
           </div>
 
-          <div className="bg-gray-800 border border-red-500/30 rounded-lg p-6 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-300">
+          <div className={`${darkMode ? 'bg-gray-800 border-red-500/30' : 'bg-white border-red-300'} border rounded-lg p-6 hover:shadow-lg ${darkMode ? 'hover:shadow-red-500/20' : 'hover:shadow-red-300/30'} transition-all duration-300`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-400 text-sm">Overdue</p>
-                <p className="text-2xl font-bold text-white">6</p>
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Overdue</p>
+                <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>6</p>
               </div>
               <AlertTriangle className="w-8 h-8 text-red-400" />
             </div>
@@ -167,26 +163,23 @@ const Home = () => {
           {/* Personal Dashboard */}
           <div className="lg:col-span-2 space-y-6">
             {/* Upcoming Tasks */}
-            <div className="bg-gray-800 border border-purple-500/30 rounded-lg p-6">
+            <div className={`${darkMode ? 'bg-gray-800 border-purple-500/30' : 'bg-white border-purple-300'} border rounded-lg p-6`}>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-white flex items-center">
+                <h3 className={`text-lg font-semibold flex items-center ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                   <Calendar className="w-5 h-5 mr-2 text-purple-400" />
                   Upcoming Tasks
                 </h3>
-                <span className="text-sm text-gray-400">{upcomingTasks.length} tasks</span>
+                <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{upcomingTasks.length} tasks</span>
               </div>
               <div className="space-y-3">
                 {upcomingTasks.map((task) => (
-                  <div key={task.id} className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg border border-gray-600/50">
+                  <div key={task.id} className={`flex items-center justify-between p-3 rounded-lg border ${darkMode ? 'bg-gray-700/50 border-gray-600/50' : 'bg-gray-50 border-gray-200'}`}>
                     <div className="flex-1">
-                      <h4 className="text-white font-medium">{task.title}</h4>
-                      <p className="text-gray-400 text-sm">{task.project}</p>
+                      <h4 className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{task.title}</h4>
+                      <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{task.project}</p>
                     </div>
                     <div className="flex items-center space-x-3">
-                      <span className={`px-2 py-1 text-xs rounded border ${getPriorityColor(task.priority)}`}>
-                        {task.priority}
-                      </span>
-                      <span className="text-gray-400 text-sm">{task.due}</span>
+                      <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{task.due}</span>
                     </div>
                   </div>
                 ))}
@@ -195,9 +188,9 @@ const Home = () => {
 
             {/* Overdue Tasks */}
             {overdueTasks.length > 0 && (
-              <div className="bg-gray-800 border border-red-500/30 rounded-lg p-6">
+              <div className={`${darkMode ? 'bg-gray-800 border-red-500/30' : 'bg-white border-red-300'} border rounded-lg p-6`}>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-white flex items-center">
+                  <h3 className={`text-lg font-semibold flex items-center ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                     <AlertTriangle className="w-5 h-5 mr-2 text-red-400" />
                     Overdue Tasks
                   </h3>
@@ -205,15 +198,12 @@ const Home = () => {
                 </div>
                 <div className="space-y-3">
                   {overdueTasks.map((task) => (
-                    <div key={task.id} className="flex items-center justify-between p-3 bg-red-900/20 rounded-lg border border-red-500/30">
+                    <div key={task.id} className={`flex items-center justify-between p-3 rounded-lg border ${darkMode ? 'bg-red-900/20 border-red-500/30' : 'bg-red-50 border-red-200'}`}>
                       <div className="flex-1">
-                        <h4 className="text-white font-medium">{task.title}</h4>
-                        <p className="text-gray-400 text-sm">{task.project}</p>
+                        <h4 className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{task.title}</h4>
+                        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{task.project}</p>
                       </div>
                       <div className="flex items-center space-x-3">
-                        <span className={`px-2 py-1 text-xs rounded border ${getPriorityColor(task.priority)}`}>
-                          {task.priority}
-                        </span>
                         <span className="text-red-400 text-sm">Due: {task.due}</span>
                       </div>
                     </div>
@@ -224,8 +214,8 @@ const Home = () => {
           </div>
 
           {/* Recent Activity */}
-          <div className="bg-gray-800 border border-cyan-500/30 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-white flex items-center mb-4">
+          <div className={`${darkMode ? 'bg-gray-800 border-cyan-500/30' : 'bg-white border-cyan-300'} border rounded-lg p-6`}>
+            <h3 className={`text-lg font-semibold flex items-center mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
               <Activity className="w-5 h-5 mr-2 text-cyan-400" />
               Recent Activity
             </h3>
@@ -236,10 +226,10 @@ const Home = () => {
                     {getActivityIcon(activity.type)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-white text-sm">
+                    <p className={`text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                       <span className="font-medium">{activity.action}</span> {activity.item}
                     </p>
-                    <p className="text-gray-400 text-xs">{activity.time}</p>
+                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{activity.time}</p>
                   </div>
                 </div>
               ))}
@@ -250,22 +240,22 @@ const Home = () => {
         {/* Visual Analytics */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Weekly Progress Chart */}
-          <div className="bg-gray-800 border border-purple-500/30 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-white flex items-center mb-4">
+          <div className={`${darkMode ? 'bg-gray-800 border-purple-500/30' : 'bg-white border-purple-300'} border rounded-lg p-6`}>
+            <h3 className={`text-lg font-semibold flex items-center mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
               <BarChart3 className="w-5 h-5 mr-2 text-purple-400" />
               Weekly Task Progress
             </h3>
             <ResponsiveContainer width="100%" height={300}>
               <AreaChart data={weeklyProgressData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="day" stroke="#9CA3AF" />
-                <YAxis stroke="#9CA3AF" />
+                <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#374151" : "#E5E7EB"} />
+                <XAxis dataKey="day" stroke={darkMode ? "#9CA3AF" : "#6B7280"} />
+                <YAxis stroke={darkMode ? "#9CA3AF" : "#6B7280"} />
                 <Tooltip 
                   contentStyle={{ 
-                    backgroundColor: '#1F2937', 
-                    border: '1px solid #6B7280', 
+                    backgroundColor: darkMode ? '#1F2937' : '#FFFFFF', 
+                    border: darkMode ? '1px solid #6B7280' : '1px solid #D1D5DB', 
                     borderRadius: '8px',
-                    color: '#F3F4F6'
+                    color: darkMode ? '#F3F4F6' : '#111827'
                   }} 
                 />
                 <Area 
@@ -286,8 +276,8 @@ const Home = () => {
           </div>
 
           {/* Project Distribution */}
-          <div className="bg-gray-800 border border-cyan-500/30 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-white flex items-center mb-4">
+          <div className={`${darkMode ? 'bg-gray-800 border-cyan-500/30' : 'bg-white border-cyan-300'} border rounded-lg p-6`}>
+            <h3 className={`text-lg font-semibold flex items-center mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
               <PieChart className="w-5 h-5 mr-2 text-cyan-400" />
               Project Distribution
             </h3>
@@ -308,10 +298,10 @@ const Home = () => {
                 </Pie>
                 <Tooltip 
                   contentStyle={{ 
-                    backgroundColor: '#1F2937', 
-                    border: '1px solid #6B7280', 
+                    backgroundColor: darkMode ? '#1F2937' : '#FFFFFF', 
+                    border: darkMode ? '1px solid #6B7280' : '1px solid #D1D5DB', 
                     borderRadius: '8px',
-                    color: '#F3F4F6'
+                    color: darkMode ? '#F3F4F6' : '#111827'
                   }} 
                 />
               </RechartsPieChart>
@@ -324,9 +314,9 @@ const Home = () => {
                       className="w-3 h-3 rounded-full mr-2" 
                       style={{ backgroundColor: item.color }}
                     ></div>
-                    <span className="text-gray-300">{item.name}</span>
+                    <span className={`${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{item.name}</span>
                   </div>
-                  <span className="text-gray-400">{item.value}%</span>
+                  <span className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{item.value}%</span>
                 </div>
               ))}
             </div>
@@ -334,22 +324,22 @@ const Home = () => {
         </div>
 
         {/* Task Completion Trends */}
-        <div className="bg-gray-800 border border-pink-500/30 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-white flex items-center mb-4">
+        <div className={`${darkMode ? 'bg-gray-800 border-pink-500/30' : 'bg-white border-pink-300'} border rounded-lg p-6`}>
+          <h3 className={`text-lg font-semibold flex items-center mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
             <TrendingUp className="w-5 h-5 mr-2 text-pink-400" />
             Task Completion Trends
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={taskProgressData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis dataKey="name" stroke="#9CA3AF" />
-              <YAxis stroke="#9CA3AF" />
+              <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#374151" : "#E5E7EB"} />
+              <XAxis dataKey="name" stroke={darkMode ? "#9CA3AF" : "#6B7280"} />
+              <YAxis stroke={darkMode ? "#9CA3AF" : "#6B7280"} />
               <Tooltip 
                 contentStyle={{ 
-                  backgroundColor: '#1F2937', 
-                  border: '1px solid #6B7280', 
+                  backgroundColor: darkMode ? '#1F2937' : '#FFFFFF', 
+                  border: darkMode ? '1px solid #6B7280' : '1px solid #D1D5DB', 
                   borderRadius: '8px',
-                  color: '#F3F4F6'
+                  color: darkMode ? '#F3F4F6' : '#111827'
                 }} 
               />
               <Bar dataKey="completed" stackId="a" fill="#06B6D4" name="Completed" />
@@ -362,4 +352,4 @@ const Home = () => {
   );
 };
 
-export default Home; 
+export default Dashboard; 

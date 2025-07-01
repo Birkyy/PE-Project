@@ -1,5 +1,5 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu } from 'lucide-react';
+import { Menu, Bell } from 'lucide-react';
 
 const Header = ({ onToggleSidebar, darkMode }) => {
   const navigate = useNavigate();
@@ -17,7 +17,7 @@ const Header = ({ onToggleSidebar, darkMode }) => {
   };
 
   const navItems = [
-    { path: '/member-home', label: 'Home' },
+    { path: '/home', label: 'Dashboard' },
     { path: '/my-projects', label: 'My Projects' },
     { path: '/users-management', label: 'Users Management' },
     { path: '/profile', label: 'Profile' }
@@ -28,7 +28,7 @@ const Header = ({ onToggleSidebar, darkMode }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <Link to="/member-home">
+            <Link to="/home">
               <h1 className={`text-2xl font-bold transition-all duration-300 ${
                 darkMode 
                   ? 'bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent hover:from-purple-300 hover:to-cyan-300' 
@@ -62,6 +62,26 @@ const Header = ({ onToggleSidebar, darkMode }) => {
           
           {/* Right side buttons */}
           <div className="flex items-center space-x-4">
+            {/* Notification Icon */}
+            <button
+              className={`relative p-2 rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-opacity-50 group ${
+                darkMode
+                  ? 'text-gray-300 hover:text-purple-400 hover:bg-purple-900/20 hover:shadow-lg hover:shadow-purple-500/25 focus:ring-purple-400'
+                  : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50 hover:shadow-lg hover:shadow-purple-300/25 focus:ring-purple-400'
+              }`}
+              aria-label="View notifications"
+            >
+              <Bell className={`w-6 h-6 transition-all duration-300 ${
+                darkMode 
+                  ? 'group-hover:drop-shadow-[0_0_8px_rgba(168,85,247,0.6)]' 
+                  : 'group-hover:drop-shadow-[0_0_8px_rgba(147,51,234,0.4)]'
+              }`} />
+              {/* Notification badge */}
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center transition-all duration-300 group-hover:scale-110">
+                3
+              </span>
+            </button>
+
             {/* Cyberpunk Logout Button */}
             <button
               onClick={handleLogout}

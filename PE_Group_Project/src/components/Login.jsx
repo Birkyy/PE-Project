@@ -37,8 +37,8 @@ const Login = () => {
         localStorage.setItem('user', JSON.stringify(response.data.user));
       }
       
-      // Navigate to member home after successful login
-      navigate('/member-home');
+      // Navigate to dashboard after successful login
+      navigate('/home');
     } catch (error) {
       setError(error.response?.data?.message || 'Login failed');
     } finally {
@@ -56,7 +56,7 @@ const Login = () => {
     
     localStorage.setItem('token', 'demo-token');
     localStorage.setItem('user', JSON.stringify(demoUser));
-    navigate('/member-home');
+    navigate('/home');
   };
 
   return (

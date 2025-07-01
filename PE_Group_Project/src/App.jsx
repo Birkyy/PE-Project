@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { ThemeProvider } from './context/ThemeContext';
 import Login from './components/Login';
 import Register from './components/Register';
-import Home from './components/Pages/Home';
+import Dashboard from './components/Pages/Dashboard';
 import Profile from './components/Pages/Profile';
 import MyProjects from './components/Pages/MyProjects';
 import UsersManagement from './components/Pages/UsersManagement';
@@ -19,14 +19,9 @@ function App() {
             <Route path="/register" element={<Register />} />
             
             {/* Protected Routes */}
-            <Route path="/dashboard" element={
+            <Route path="/home" element={
               <ProtectedRoute>
-                <Home />
-              </ProtectedRoute>
-            } />
-            <Route path="/member-home" element={
-              <ProtectedRoute>
-                <Home />
+                <Dashboard />
               </ProtectedRoute>
             } />
             <Route path="/my-projects" element={

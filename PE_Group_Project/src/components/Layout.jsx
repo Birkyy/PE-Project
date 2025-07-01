@@ -1,24 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useTheme } from '../context/ThemeContext';
 import Header from './Header';
 import Footer from './Footer';
 import Sidebar from './Sidebar';
 
 const Layout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(true); // Default to dark mode for cyberpunk theme
-
-  // Load theme preference from localStorage
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-      setDarkMode(savedTheme === 'dark');
-    }
-  }, []);
-
-  // Save theme preference to localStorage
-  useEffect(() => {
-    localStorage.setItem('theme', darkMode ? 'dark' : 'light');
-  }, [darkMode]);
+  const { darkMode, toggleDarkMode } = useTheme();
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -26,10 +14,6 @@ const Layout = ({ children }) => {
 
   const closeSidebar = () => {
     setIsSidebarOpen(false);
-  };
-
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
   };
 
   return (
