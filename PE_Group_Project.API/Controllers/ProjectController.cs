@@ -78,17 +78,7 @@ namespace PE_Group_Project.API.Controllers
             _context.Projects.Add(project);
             _context.SaveChanges();
 
-            var projectDTO = new ProjectDTO
-            {
-                Id = project.Id,
-                ProjectName = project.ProjectName,
-                Date = project.Date,
-                Status = project.Status,
-                ProjectManagerInCharge = project.ProjectManagerInCharge,
-                Contributors = project.Contributors
-            };
-
-            return CreatedAtAction(nameof(GetProjectById), new { id = project.Id }, projectDTO);
+            return CreatedAtAction(nameof(GetProjectById), new { id = project.Id }, project);
         }
 
         [HttpPut]
@@ -116,17 +106,7 @@ namespace PE_Group_Project.API.Controllers
             project.Contributors = updateProjectRequestDTO.Contributors;
             _context.SaveChanges();
 
-            var projectDTO = new ProjectDTO
-            {
-                Id = project.Id,
-                ProjectName = project.ProjectName,
-                Date = project.Date,
-                Status = project.Status,
-                ProjectManagerInCharge = project.ProjectManagerInCharge,
-                Contributors = project.Contributors
-            };
-
-            return Ok(projectDTO);
+            return Ok(project);
         }
 
         [HttpDelete]
