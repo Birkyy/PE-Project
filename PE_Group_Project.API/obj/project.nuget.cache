@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "Q0uLF4ay7uQ=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\laose\\Desktop\\Y3S3\\Programming Elective (II)\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\laose\\.nuget\\packages\\microsoft.aspnetcore.openapi\\9.0.3\\microsoft.aspnetcore.openapi.9.0.3.nupkg.sha512",
+    "C:\\Users\\laose\\.nuget\\packages\\microsoft.openapi\\1.6.17\\microsoft.openapi.1.6.17.nupkg.sha512"
+  ],
+  "logs": []
+}
