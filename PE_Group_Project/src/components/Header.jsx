@@ -77,7 +77,7 @@ const Header = ({ onToggleSidebar, darkMode }) => {
                   : 'group-hover:drop-shadow-[0_0_8px_rgba(147,51,234,0.4)]'
               }`} />
               {/* Notification badge */}
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center transition-all duration-300 group-hover:scale-110">
+              <span className="notification-badge group-hover:scale-110">
                 3
               </span>
             </button>

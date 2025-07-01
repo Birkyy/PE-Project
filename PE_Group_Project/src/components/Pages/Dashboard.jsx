@@ -104,36 +104,36 @@ const Dashboard = () => {
     <Layout>
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {/* Welcome Section */}
-        <div className="mb-8">
+        <div className="mb-8 animate-fade-in">
           <h1 className={`text-3xl font-bold mb-2 ${
             darkMode 
-              ? 'bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent'
+              ? 'text-gradient-purple text-glow-purple'
               : 'text-gray-900'
           }`}>
-            Welcome back, {user?.username || 'User'}! 👋
+            Welcome back, {user?.username || 'User'}!
           </h1>
-          <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Here's what's happening with your projects today.</p>
+          <p className={`text-responsive-lg ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Here's what's happening with your projects today.</p>
         </div>
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className={`${darkMode ? 'bg-gray-800 border-purple-500/30' : 'bg-white border-purple-300'} border rounded-lg p-6 hover:shadow-lg ${darkMode ? 'hover:shadow-purple-500/20' : 'hover:shadow-purple-300/30'} transition-all duration-300`}>
+          <div className={`${darkMode ? 'card-cyberpunk' : 'bg-white border-purple-300 border rounded-lg hover:shadow-purple-300/30 hover:shadow-lg'} p-6 transition-all duration-300 animate-fade-in`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Tasks</p>
+                <p className={`text-sm text-responsive ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Tasks</p>
                 <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>127</p>
               </div>
-              <Target className="w-8 h-8 text-purple-400" />
+              <Target className="w-8 h-8 text-purple-400 animate-float" />
             </div>
           </div>
 
-          <div className={`${darkMode ? 'bg-gray-800 border-cyan-500/30' : 'bg-white border-cyan-300'} border rounded-lg p-6 hover:shadow-lg ${darkMode ? 'hover:shadow-cyan-500/20' : 'hover:shadow-cyan-300/30'} transition-all duration-300`}>
+          <div className={`${darkMode ? 'card-cyberpunk-cyan' : 'bg-white border-cyan-300 border rounded-lg hover:shadow-cyan-300/30 hover:shadow-lg'} p-6 transition-all duration-300 animate-fade-in`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Completed</p>
+                <p className={`text-sm text-responsive ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Completed</p>
                 <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>89</p>
               </div>
-              <CheckCircle2 className="w-8 h-8 text-cyan-400" />
+              <CheckCircle2 className="w-8 h-8 text-cyan-400 animate-float" />
             </div>
           </div>
 
