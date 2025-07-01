@@ -121,9 +121,7 @@ const Profile = () => {
             }`}>
               User Profile
             </h2>
-            <p className={`text-lg ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              Manage your personal information and preferences
-            </p>
+
           </div>
 
           {/* Profile Card */}

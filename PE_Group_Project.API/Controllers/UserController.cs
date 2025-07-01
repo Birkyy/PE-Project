@@ -60,6 +60,13 @@ namespace PE_Group_Project.API.Controllers
                 return BadRequest("Invalid user data.");
             }
 
+            // Check if email already exists
+            var existingUser = _context.Users.FirstOrDefault(u => u.Email == createUserRequestDTO.Email);
+            if (existingUser != null)
+            {
+                return BadRequest("A user with this email already exists.");
+            }
+
             var user = new User
             {
                 Id = Guid.NewGuid(),
@@ -73,6 +80,58 @@ namespace PE_Group_Project.API.Controllers
             _context.SaveChanges();
 
             return CreatedAtAction(nameof(GetUserByEmail), new { email = user.Email }, user);
+        }
+
+        [HttpPut]
+        [Route("{email}")]
+        public IActionResult UpdateUser([FromRoute] string email, [FromBody] UpdateUserRequestDTO updateUserRequestDTO)
+        {
+            if (updateUserRequestDTO == null)
+            {
+                return BadRequest("Invalid user data.");
+            }
+
+            var user = _context.Users.FirstOrDefault(u => u.Email == email);
+            if (user == null)
+            {
+                return NotFound("User not found.");
+            }
+
+            // Check if the new email already exists (only if email is being changed)
+            if (updateUserRequestDTO.Email != email)
+            {
+                var existingUser = _context.Users.FirstOrDefault(u => u.Email == updateUserRequestDTO.Email);
+                if (existingUser != null)
+                {
+                    return BadRequest("A user with this email already exists.");
+                }
+            }
+
+            try
+            {
+                user.Username = updateUserRequestDTO.Username;
+                user.Email = updateUserRequestDTO.Email;
+                if (!string.IsNullOrEmpty(updateUserRequestDTO.Password))
+                {
+                    user.Password = updateUserRequestDTO.Password;
+                }
+                user.Role = updateUserRequestDTO.Role;
+
+                _context.SaveChanges();
+
+                var userDTO = new UserDTO
+                {
+                    Username = user.Username,
+                    Email = user.Email,
+                    Role = user.Role,
+                };
+
+                return Ok(userDTO);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Failed to update user: {ex.Message}");
+            }
         }
     }
 }
