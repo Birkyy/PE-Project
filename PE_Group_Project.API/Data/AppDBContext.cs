@@ -6,5 +6,6 @@ namespace PE_Group_Project.API.Data
     public class AppDBContext(DbContextOptions options) : DbContext(options)
     {
         public DbSet<User> Users { get; set; }
+        public DbSet<Project> Projects { get; set; }
     }
 }
