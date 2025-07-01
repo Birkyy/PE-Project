@@ -1,8 +1,25 @@
 import { useTheme } from '../../context/ThemeContext';
+import { Eye, Edit, Trash2 } from 'lucide-react';
 import Layout from '../Layout';
 
 const MyProjects = () => {
   const { darkMode } = useTheme();
+
+  const handleView = (projectName) => {
+    console.log(`Viewing ${projectName}`);
+    // Add view logic here
+  };
+
+  const handleEdit = (projectName) => {
+    console.log(`Editing ${projectName}`);
+    // Add edit logic here
+  };
+
+  const handleDelete = (projectName) => {
+    console.log(`Deleting ${projectName}`);
+    // Add delete logic here
+  };
+
   return (
     <Layout>
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
@@ -32,11 +49,38 @@ const MyProjects = () => {
                 <p className={`text-sm mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                   Web application development with modern React framework
                 </p>
-                <div className="flex items-center justify-between">
-                  <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>Due: Dec 25, 2024</span>
-                  <div className={`w-16 rounded-full h-2 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                    <div className="bg-purple-500 h-2 rounded-full w-3/4"></div>
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>Due: Dec 25, 2024</span>
+                    <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>75%</span>
                   </div>
+                  <div className={`w-full rounded-full h-2 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                    <div className="bg-purple-500 h-2 rounded-full" style={{width: '75%'}}></div>
+                  </div>
+                </div>
+                {/* Action Icons */}
+                <div className="flex justify-end space-x-2">
+                  <button 
+                    onClick={() => handleView('Project Alpha')}
+                    className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-purple-300' : 'hover:bg-gray-100 text-gray-600 hover:text-purple-600'}`}
+                    title="View Project"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </button>
+                  <button 
+                    onClick={() => handleEdit('Project Alpha')}
+                    className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-cyan-300' : 'hover:bg-gray-100 text-gray-600 hover:text-cyan-600'}`}
+                    title="Edit Project"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                  <button 
+                    onClick={() => handleDelete('Project Alpha')}
+                    className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-red-300' : 'hover:bg-gray-100 text-gray-600 hover:text-red-600'}`}
+                    title="Delete Project"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             </div>
@@ -51,11 +95,38 @@ const MyProjects = () => {
                 <p className={`text-sm mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                   Mobile application with cross-platform compatibility
                 </p>
-                <div className="flex items-center justify-between">
-                  <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>Due: Jan 15, 2025</span>
-                  <div className={`w-16 rounded-full h-2 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                    <div className="bg-cyan-500 h-2 rounded-full w-1/2"></div>
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>Due: Jan 15, 2025</span>
+                    <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>50%</span>
                   </div>
+                  <div className={`w-full rounded-full h-2 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                    <div className="bg-cyan-500 h-2 rounded-full" style={{width: '50%'}}></div>
+                  </div>
+                </div>
+                {/* Action Icons */}
+                <div className="flex justify-end space-x-2">
+                  <button 
+                    onClick={() => handleView('Project Beta')}
+                    className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-purple-300' : 'hover:bg-gray-100 text-gray-600 hover:text-purple-600'}`}
+                    title="View Project"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </button>
+                  <button 
+                    onClick={() => handleEdit('Project Beta')}
+                    className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-cyan-300' : 'hover:bg-gray-100 text-gray-600 hover:text-cyan-600'}`}
+                    title="Edit Project"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                  <button 
+                    onClick={() => handleDelete('Project Beta')}
+                    className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-red-300' : 'hover:bg-gray-100 text-gray-600 hover:text-red-600'}`}
+                    title="Delete Project"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             </div>
@@ -70,11 +141,38 @@ const MyProjects = () => {
                 <p className={`text-sm mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                   AI-powered analytics dashboard for business intelligence
                 </p>
-                <div className="flex items-center justify-between">
-                  <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>Due: Feb 28, 2025</span>
-                  <div className={`w-16 rounded-full h-2 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                    <div className="bg-pink-500 h-2 rounded-full w-1/4"></div>
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>Due: Feb 28, 2025</span>
+                    <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>25%</span>
                   </div>
+                  <div className={`w-full rounded-full h-2 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                    <div className="bg-pink-500 h-2 rounded-full" style={{width: '25%'}}></div>
+                  </div>
+                </div>
+                {/* Action Icons */}
+                <div className="flex justify-end space-x-2">
+                  <button 
+                    onClick={() => handleView('Project Gamma')}
+                    className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-purple-300' : 'hover:bg-gray-100 text-gray-600 hover:text-purple-600'}`}
+                    title="View Project"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </button>
+                  <button 
+                    onClick={() => handleEdit('Project Gamma')}
+                    className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-cyan-300' : 'hover:bg-gray-100 text-gray-600 hover:text-cyan-600'}`}
+                    title="Edit Project"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                  <button 
+                    onClick={() => handleDelete('Project Gamma')}
+                    className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-red-300' : 'hover:bg-gray-100 text-gray-600 hover:text-red-600'}`}
+                    title="Delete Project"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             </div>
