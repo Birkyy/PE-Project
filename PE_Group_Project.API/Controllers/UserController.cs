@@ -97,7 +97,7 @@ namespace PE_Group_Project.API.Controllers
             var existingUsername = _context.Users.FirstOrDefault(u =>
                 u.Username == registerRequestDTO.Username
             );
-            if(existingUsername != null)
+            if (existingUsername != null)
             {
                 return Conflict("User with this username already exists.");
             }
@@ -107,7 +107,7 @@ namespace PE_Group_Project.API.Controllers
 
             var user = new User
             {
-                Id = Guid.NewGuid(),
+                UserId = Guid.NewGuid(),
                 Username = registerRequestDTO.Username,
                 Email = registerRequestDTO.Email,
                 Password = hashedPassword,
@@ -120,6 +120,7 @@ namespace PE_Group_Project.API.Controllers
             // Return user DTO (without password) instead of full user object
             var userDTO = new UserDTO
             {
+                UserId = user.UserId,
                 Username = user.Username,
                 Email = user.Email,
                 Role = user.Role,
@@ -154,6 +155,7 @@ namespace PE_Group_Project.API.Controllers
 
             var userDTO = new UserDTO
             {
+                UserId = user.UserId,
                 Username = user.Username,
                 Email = user.Email,
                 Role = user.Role,
