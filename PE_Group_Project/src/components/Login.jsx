@@ -32,13 +32,31 @@ const Login = () => {
         localStorage.setItem('token', response.data.token);
       }
       
-      // Navigate to dashboard
-      navigate('/dashboard');
+      // Store user data
+      if (response.data.user) {
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      }
+      
+      // Navigate to member home after successful login
+      navigate('/member-home');
     } catch (error) {
       setError(error.response?.data?.message || 'Login failed');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSkip = () => {
+    // Set demo user data for skip functionality
+    const demoUser = {
+      username: 'Demo User',
+      email: 'demo@taskio.com',
+      role: 'project_member'
+    };
+    
+    localStorage.setItem('token', 'demo-token');
+    localStorage.setItem('user', JSON.stringify(demoUser));
+    navigate('/member-home');
   };
 
   return (
@@ -120,13 +138,25 @@ const Login = () => {
               </button>
             </div>
 
-            <div className="text-center">
-              <span className="text-sm text-gray-600">
-                Don't have an account?{' '}
-                <Link to="/register" className="font-medium hover:opacity-80" style={{ color: '#535c91' }}>
-                  Sign up
-                </Link>
-              </span>
+            <div className="text-center space-y-3">
+              <div>
+                <span className="text-sm text-gray-600">
+                  Don't have an account?{' '}
+                  <Link to="/register" className="font-medium hover:opacity-80" style={{ color: '#535c91' }}>
+                    Sign up
+                  </Link>
+                </span>
+              </div>
+              
+              <div className="border-t border-gray-200 pt-4">
+                <button
+                  type="button"
+                  onClick={handleSkip}
+                  className="w-full py-2 px-4 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-50 border border-gray-300 rounded-md transition-colors"
+                >
+                  🚀 Skip for now (Demo Mode)
+                </button>
+              </div>
             </div>
           </form>
         </div>
