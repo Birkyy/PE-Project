@@ -18,13 +18,21 @@ const UsersManagement = () => {
     username: '',
     email: '',
     password: '',
-    role: 'Project Member'
+    role: 'Project Member',
+    age: '',
+    gender: '',
+    nationality: '',
+    phoneNumber: ''
   });
   const [editFormData, setEditFormData] = useState({
     username: '',
     email: '',
     password: '',
-    role: 'Project Member'
+    role: 'Project Member',
+    age: '',
+    gender: '',
+    nationality: '',
+    phoneNumber: ''
   });
 
   const roles = [
@@ -46,8 +54,13 @@ const UsersManagement = () => {
       const transformedUsers = apiUsers.map((user, index) => ({
         id: index + 1,
         name: user.username,
+        username: user.username,
         email: user.email,
         role: user.role,
+        age: user.age,
+        gender: user.gender,
+        nationality: user.nationality,
+        phoneNumber: user.phoneNumber,
         status: 'Active' // Default status since API doesn't provide this
       }));
       
@@ -113,7 +126,11 @@ const UsersManagement = () => {
         Username: formData.username,
         Email: formData.email,
         Password: formData.password,
-        Role: formData.role
+        Role: formData.role,
+        Age: formData.age ? parseInt(formData.age) : null,
+        Gender: formData.gender || null,
+        Nationality: formData.nationality || null,
+        PhoneNumber: formData.phoneNumber || null
       });
 
       setSuccess('User created successfully!');
@@ -121,7 +138,11 @@ const UsersManagement = () => {
         username: '',
         email: '',
         password: '',
-        role: 'Project Member'
+        role: 'Project Member',
+        age: '',
+        gender: '',
+        nationality: '',
+        phoneNumber: ''
       });
       
       // Refresh users list
@@ -165,7 +186,11 @@ const UsersManagement = () => {
       const updateData = {
         Username: editFormData.username,
         Email: editFormData.email,
-        Role: editFormData.role
+        Role: editFormData.role,
+        Age: editFormData.age ? parseInt(editFormData.age) : null,
+        Gender: editFormData.gender || null,
+        Nationality: editFormData.nationality || null,
+        PhoneNumber: editFormData.phoneNumber || null
       };
 
       // Only include password if it's provided
@@ -246,7 +271,11 @@ const UsersManagement = () => {
           username: userData.username || user.name,
           email: userData.email,
           password: '', // Always leave empty for security
-          role: userData.role
+          role: userData.role,
+          age: userData.age || '',
+          gender: userData.gender || '',
+          nationality: userData.nationality || '',
+          phoneNumber: userData.phoneNumber || ''
         });
       } catch (apiError) {
         // If API call fails, use the user data we already have
@@ -255,7 +284,11 @@ const UsersManagement = () => {
           username: user.name,
           email: user.email,
           password: '',
-          role: user.role
+          role: user.role,
+          age: user.age || '',
+          gender: user.gender || '',
+          nationality: user.nationality || '',
+          phoneNumber: user.phoneNumber || ''
         });
       }
       
@@ -274,7 +307,11 @@ const UsersManagement = () => {
       username: '',
       email: '',
       password: '',
-      role: 'Project Member'
+      role: 'Project Member',
+      age: '',
+      gender: '',
+      nationality: '',
+      phoneNumber: ''
     });
     setError('');
     setSuccess('');
@@ -776,7 +813,7 @@ const UsersManagement = () => {
       {/* View User Modal */}
       {showViewModal && selectedUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-xl shadow-2xl w-full max-w-lg transform transition-all duration-300`}>
+          <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col transform transition-all duration-300`}>
             <div className={`px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
               <div className="flex items-center justify-between">
                 <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -793,7 +830,7 @@ const UsersManagement = () => {
               </div>
             </div>
 
-            <div className="px-6 py-6">
+            <div className="flex-1 overflow-y-auto px-6 py-6">
               {error && (
                 <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md">
                   {error}
@@ -816,15 +853,66 @@ const UsersManagement = () => {
               {/* User Details */}
               <div className="space-y-4">
                 <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
+                  <h5 className={`text-sm font-medium mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Personal Information
+                  </h5>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                        Username
+                        Name
                       </label>
                       <p className={`mt-1 text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                         {selectedUser.username || selectedUser.name}
                       </p>
                     </div>
+                    <div>
+                      <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Email
+                      </label>
+                      <p className={`mt-1 text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                        {selectedUser.email}
+                      </p>
+                    </div>
+                    <div>
+                      <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Age
+                      </label>
+                      <p className={`mt-1 text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                        {selectedUser.age || 'Not specified'}
+                      </p>
+                    </div>
+                    <div>
+                      <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Gender
+                      </label>
+                      <p className={`mt-1 text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                        {selectedUser.gender || 'Not specified'}
+                      </p>
+                    </div>
+                    <div>
+                      <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Phone Number
+                      </label>
+                      <p className={`mt-1 text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                        {selectedUser.phoneNumber || 'Not specified'}
+                      </p>
+                    </div>
+                    <div>
+                      <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Nationality
+                      </label>
+                      <p className={`mt-1 text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                        {selectedUser.nationality || 'Not specified'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
+                  <h5 className={`text-sm font-medium mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Role & Status
+                  </h5>
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                         Role
@@ -855,14 +943,6 @@ const UsersManagement = () => {
                         }`}>
                           {selectedUser.status}
                         </span>
-                      </p>
-                    </div>
-                    <div>
-                      <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                        Email
-                      </label>
-                      <p className={`mt-1 text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                        {selectedUser.email}
                       </p>
                     </div>
                   </div>
@@ -901,28 +981,29 @@ const UsersManagement = () => {
                   </div>
                 </div>
               </div>
+            </div>
 
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
-                  onClick={closeViewModal}
-                  className={`px-4 py-2 rounded-md transition-all duration-300 focus:outline-none focus:ring-2 ${
-                    darkMode
-                      ? 'text-gray-400 border border-gray-600 hover:text-white hover:bg-gray-700/50 focus:ring-gray-400/50'
-                      : 'text-gray-600 border border-gray-300 hover:text-gray-900 hover:bg-gray-100 focus:ring-gray-400/50'
-                  }`}
-                >
-                  Close
-                </button>
-                <button
-                  onClick={() => {
-                    closeViewModal();
-                    openEditModal(selectedUser);
-                  }}
-                  className="px-4 py-2 bg-gradient-to-r from-purple-600 to-cyan-600 text-white rounded-md hover:from-purple-700 hover:to-cyan-700 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/25 focus:outline-none focus:ring-2 focus:ring-purple-400/50"
-                >
-                  Edit User
-                </button>
-              </div>
+            {/* Modal Footer with Buttons */}
+            <div className={`px-6 py-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'} flex justify-end space-x-3`}>
+              <button
+                onClick={closeViewModal}
+                className={`px-4 py-2 rounded-md transition-all duration-300 focus:outline-none focus:ring-2 ${
+                  darkMode
+                    ? 'text-gray-400 border border-gray-600 hover:text-white hover:bg-gray-700/50 focus:ring-gray-400/50'
+                    : 'text-gray-600 border border-gray-300 hover:text-gray-900 hover:bg-gray-100 focus:ring-gray-400/50'
+                }`}
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  closeViewModal();
+                  openEditModal(selectedUser);
+                }}
+                className="px-4 py-2 bg-gradient-to-r from-purple-600 to-cyan-600 text-white rounded-md hover:from-purple-700 hover:to-cyan-700 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/25 focus:outline-none focus:ring-2 focus:ring-purple-400/50"
+              >
+                Edit User
+              </button>
             </div>
           </div>
         </div>

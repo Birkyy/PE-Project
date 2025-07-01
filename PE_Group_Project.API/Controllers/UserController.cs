@@ -25,6 +25,10 @@ namespace PE_Group_Project.API.Controllers
                         Username = user.Username,
                         Email = user.Email,
                         Role = user.Role,
+                        Age = user.Age,
+                        Gender = user.Gender,
+                        Nationality = user.Nationality,
+                        PhoneNumber = user.PhoneNumber
                     }
                 );
             }
@@ -47,6 +51,10 @@ namespace PE_Group_Project.API.Controllers
                 Username = user.Username,
                 Email = user.Email,
                 Role = user.Role,
+                Age = user.Age,
+                Gender = user.Gender,
+                Nationality = user.Nationality,
+                PhoneNumber = user.PhoneNumber
             };
 
             return Ok(userDTO);
@@ -74,6 +82,10 @@ namespace PE_Group_Project.API.Controllers
                 Email = createUserRequestDTO.Email,
                 Password = createUserRequestDTO.Password,
                 Role = createUserRequestDTO.Role,
+                Age = createUserRequestDTO.Age,
+                Gender = createUserRequestDTO.Gender,
+                Nationality = createUserRequestDTO.Nationality,
+                PhoneNumber = createUserRequestDTO.PhoneNumber
             };
 
             _context.Users.Add(user);
@@ -116,6 +128,10 @@ namespace PE_Group_Project.API.Controllers
                     user.Password = updateUserRequestDTO.Password;
                 }
                 user.Role = updateUserRequestDTO.Role;
+                user.Age = updateUserRequestDTO.Age;
+                user.Gender = updateUserRequestDTO.Gender;
+                user.Nationality = updateUserRequestDTO.Nationality;
+                user.PhoneNumber = updateUserRequestDTO.PhoneNumber;
 
                 _context.SaveChanges();
 
@@ -124,6 +140,10 @@ namespace PE_Group_Project.API.Controllers
                     Username = user.Username,
                     Email = user.Email,
                     Role = user.Role,
+                    Age = user.Age,
+                    Gender = user.Gender,
+                    Nationality = user.Nationality,
+                    PhoneNumber = user.PhoneNumber
                 };
 
                 return Ok(userDTO);
