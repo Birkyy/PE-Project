@@ -1,17 +1,41 @@
-import Header from "./Header";
-import Footer from "./Footer";
-import { Outlet } from "react-router-dom";
+import { useState } from 'react';
+import { useTheme } from '../context/ThemeContext';
+import Header from './Header';
+import Footer from './Footer';
+import Sidebar from './Sidebar';
 
-function Layout(){
-    return(
-        <div className="flex flex-col min-h-screen overflow-hidden">
-            <Header />
-                <main className="flex-1 bg-white overflow-hidden">
-                    <Outlet />
-                </main>
-            <Footer />
-        </div>
-    );
-}
+const Layout = ({ children }) => {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { darkMode, toggleDarkMode } = useTheme();
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const closeSidebar = () => {
+    setIsSidebarOpen(false);
+  };
+
+  return (
+    <div className={`min-h-screen flex flex-col transition-colors duration-300 ${
+      darkMode ? 'bg-gray-900' : 'bg-gray-50'
+    }`}>
+      <Header 
+        onToggleSidebar={toggleSidebar} 
+        darkMode={darkMode}
+      />
+      <main className="flex-1">
+        {children}
+      </main>
+      <Footer darkMode={darkMode} />
+      <Sidebar 
+        isOpen={isSidebarOpen}
+        onClose={closeSidebar}
+        darkMode={darkMode}
+        toggleDarkMode={toggleDarkMode}
+      />
+    </div>
+  );
+};
 
 export default Layout;

@@ -1,14 +1,8 @@
 namespace PE_Group_Project.API.Models.DTO
 {
-    public class ProjectDTO
+    public class CreateProjectRequestDTO
     {
-<<<<<<< HEAD
-=======
-<<<<<<< Updated upstream
         public Guid Id { get; set; }
-=======
->>>>>>> Stashed changes
->>>>>>> ProjectBackend
         public required string ProjectName { get; set; }
         public required DateTime Date { get; set; }
         public required string Status { get; set; }
