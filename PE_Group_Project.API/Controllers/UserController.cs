@@ -115,7 +115,7 @@ namespace PE_Group_Project.API.Controllers
             };
 
             _context.Users.Add(user);
-            _context.SaveChanges();
+            //_context.SaveChanges();
 
             // Return user DTO (without password) instead of full user object
             var userDTO = new UserDTO
