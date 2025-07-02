@@ -25,3 +25,4 @@ Debug/
 *.njsproj
 *.sln
 *.sw?
+/PE_Group_Project.API/obj/Debug/net9.0
