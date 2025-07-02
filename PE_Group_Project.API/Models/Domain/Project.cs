@@ -3,6 +3,7 @@ namespace PE_Group_Project.API.Models.Domain
     public class Project
     {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         public Guid ProjectId { get; set; }
         public required string Name { get; set; }
         public DateTime CreatedAt { get; set; }
@@ -13,6 +14,8 @@ namespace PE_Group_Project.API.Models.Domain
     }
 }
 =======
+=======
+>>>>>>> Stashed changes
         public Guid Id { get; set; }
         public required string ProjectName { get; set; }
         public required DateTime Date { get; set; }
@@ -20,5 +23,9 @@ namespace PE_Group_Project.API.Models.Domain
         public required Guid ProjectManagerInCharge { get; set; }
         public required List<Guid> Contributors { get; set; }
     }
+<<<<<<< Updated upstream
+} 
+>>>>>>> Stashed changes
+=======
 } 
 >>>>>>> Stashed changes
