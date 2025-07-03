@@ -26,12 +26,16 @@ const AddProject = () => {
     dueDate: '',
     priority: 'medium',
     status: 'to-do',
-    teamMembers: []
+    teamMembers: [],
+    projectLeader: null
   });
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isLeaderDropdownOpen, setIsLeaderDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [leaderSearchTerm, setLeaderSearchTerm] = useState('');
   const dropdownRef = useRef(null);
+  const leaderDropdownRef = useRef(null);
   
   // Filter users based on search term
   const filteredUsers = mockUsers.filter(user =>
@@ -40,11 +44,21 @@ const AddProject = () => {
     user.role.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Filter users for project leader based on leader search term
+  const filteredLeaderUsers = mockUsers.filter(user =>
+    user.name.toLowerCase().includes(leaderSearchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(leaderSearchTerm.toLowerCase()) ||
+    user.role.toLowerCase().includes(leaderSearchTerm.toLowerCase())
+  );
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
+      }
+      if (leaderDropdownRef.current && !leaderDropdownRef.current.contains(event.target)) {
+        setIsLeaderDropdownOpen(false);
       }
     };
 
@@ -80,6 +94,22 @@ const AddProject = () => {
     }));
   };
 
+  const handleLeaderSelect = (user) => {
+    setFormData(prev => ({
+      ...prev,
+      projectLeader: user
+    }));
+    setLeaderSearchTerm('');
+    setIsLeaderDropdownOpen(false);
+  };
+
+  const handleLeaderRemove = () => {
+    setFormData(prev => ({
+      ...prev,
+      projectLeader: null
+    }));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log('Project data:', formData);
@@ -96,10 +126,13 @@ const AddProject = () => {
       dueDate: '',
       priority: 'medium',
       status: 'to-do',
-      teamMembers: []
+      teamMembers: [],
+      projectLeader: null
     });
     setSearchTerm('');
+    setLeaderSearchTerm('');
     setIsDropdownOpen(false);
+    setIsLeaderDropdownOpen(false);
     navigate('/my-projects');
   };
 
@@ -164,67 +197,120 @@ const AddProject = () => {
                 />
               </div>
 
-              {/* Due Date and Priority Row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    <Calendar className="w-4 h-4 inline mr-2" />
-                    Due Date
-                  </label>
-                  <input
-                    type="date"
-                    name="dueDate"
-                    value={formData.dueDate}
-                    onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 ${
-                      darkMode 
-                        ? 'bg-gray-700 border-gray-600 text-white focus:border-purple-400' 
-                        : 'bg-white border-gray-300 text-gray-900 focus:border-purple-500'
-                    }`}
-                  />
-                </div>
-
-                <div>
-                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Priority Level
-                  </label>
-                  <select
-                    name="priority"
-                    value={formData.priority}
-                    onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 ${
-                      darkMode 
-                        ? 'bg-gray-700 border-gray-600 text-white focus:border-purple-400' 
-                        : 'bg-white border-gray-300 text-gray-900 focus:border-purple-500'
-                    }`}
-                  >
-                    <option value="low">Low Priority</option>
-                    <option value="medium">Medium Priority</option>
-                    <option value="high">High Priority</option>
-                    <option value="urgent">Urgent</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Status */}
-              <div>
+              {/* Project Leader */}
+              <div className="relative">
                 <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Status
+                  <UserCheck className="w-4 h-4 inline mr-2" />
+                  Project Leader
                 </label>
-                                  <select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 ${
+                
+                {/* Selected Leader Display */}
+                {formData.projectLeader && (
+                  <div className="mb-3">
+                    <div 
+                      className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm w-fit ${
+                        darkMode 
+                          ? 'bg-cyan-900/50 text-cyan-300 border border-cyan-700' 
+                          : 'bg-cyan-100 text-cyan-700 border border-cyan-300'
+                      }`}
+                    >
+                      <UserCheck className="w-3 h-3" />
+                      <span>{formData.projectLeader.name}</span>
+                      <button
+                        type="button"
+                        onClick={handleLeaderRemove}
+                        className={`hover:bg-red-500 hover:text-white rounded-full p-0.5 transition-colors ${
+                          darkMode ? 'text-cyan-400 hover:bg-red-600' : 'text-cyan-600 hover:bg-red-500'
+                        }`}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Leader Dropdown Trigger */}
+                <div className="relative" ref={leaderDropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setIsLeaderDropdownOpen(!isLeaderDropdownOpen)}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 flex items-center justify-between ${
                       darkMode 
                         ? 'bg-gray-700 border-gray-600 text-white focus:border-purple-400' 
                         : 'bg-white border-gray-300 text-gray-900 focus:border-purple-500'
                     }`}
                   >
-                    <option value="to-do">To-Do</option>
-                    <option value="in-progress">In Progress</option>
-                    <option value="done">Done</option>
-                  </select>
+                    <span className={!formData.projectLeader ? (darkMode ? 'text-gray-400' : 'text-gray-500') : ''}>
+                      {!formData.projectLeader 
+                        ? 'Select project leader...' 
+                        : formData.projectLeader.name
+                      }
+                    </span>
+                    <ChevronDown className={`w-4 h-4 transition-transform ${isLeaderDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* Leader Dropdown Content */}
+                  {isLeaderDropdownOpen && (
+                    <div className={`absolute z-50 w-full mt-1 border rounded-lg shadow-lg max-h-64 overflow-hidden ${
+                      darkMode 
+                        ? 'bg-gray-700 border-gray-600' 
+                        : 'bg-white border-gray-300'
+                    }`}>
+                      {/* Search Input */}
+                      <div className="p-2 border-b border-gray-200 dark:border-gray-600">
+                        <div className="relative">
+                          <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
+                            darkMode ? 'text-gray-400' : 'text-gray-500'
+                          }`} />
+                          <input
+                            type="text"
+                            placeholder="Search for project leader..."
+                            value={leaderSearchTerm}
+                            onChange={(e) => setLeaderSearchTerm(e.target.value)}
+                            className={`w-full pl-10 pr-3 py-2 border rounded focus:outline-none focus:ring-1 focus:ring-purple-400 ${
+                              darkMode 
+                                ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                            }`}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Users List */}
+                      <div className="max-h-48 overflow-y-auto">
+                        {filteredLeaderUsers.length === 0 ? (
+                          <div className={`px-3 py-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                            No users found
+                          </div>
+                        ) : (
+                          filteredLeaderUsers.map(user => {
+                            const isSelected = formData.projectLeader && formData.projectLeader.id === user.id;
+                            return (
+                              <button
+                                key={user.id}
+                                type="button"
+                                onClick={() => handleLeaderSelect(user)}
+                                className={`w-full px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors flex items-center justify-between ${
+                                  isSelected 
+                                    ? (darkMode ? 'bg-cyan-900/30 text-cyan-300' : 'bg-cyan-50 text-cyan-600')
+                                    : (darkMode ? 'text-white' : 'text-gray-900')
+                                }`}
+                              >
+                                <div>
+                                  <div className="font-medium">{user.name}</div>
+                                  <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                    {user.email} • {user.role}
+                                  </div>
+                                </div>
+                                {isSelected && <UserCheck className="w-4 h-4 text-green-500" />}
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Team Members */}
@@ -347,6 +433,69 @@ const AddProject = () => {
                     </div>
                   )}
                 </div>
+              </div>
+
+              {/* Due Date and Priority Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <Calendar className="w-4 h-4 inline mr-2" />
+                    Due Date
+                  </label>
+                  <input
+                    type="date"
+                    name="dueDate"
+                    value={formData.dueDate}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 ${
+                      darkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white focus:border-purple-400' 
+                        : 'bg-white border-gray-300 text-gray-900 focus:border-purple-500'
+                    }`}
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Priority Level
+                  </label>
+                  <select
+                    name="priority"
+                    value={formData.priority}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 ${
+                      darkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white focus:border-purple-400' 
+                        : 'bg-white border-gray-300 text-gray-900 focus:border-purple-500'
+                    }`}
+                  >
+                    <option value="low">Low Priority</option>
+                    <option value="medium">Medium Priority</option>
+                    <option value="high">High Priority</option>
+                    <option value="urgent">Urgent</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Status */}
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Status
+                </label>
+                                  <select
+                    name="status"
+                    value={formData.status}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 ${
+                      darkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white focus:border-purple-400' 
+                        : 'bg-white border-gray-300 text-gray-900 focus:border-purple-500'
+                    }`}
+                  >
+                    <option value="to-do">To-Do</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="done">Done</option>
+                  </select>
               </div>
 
 
