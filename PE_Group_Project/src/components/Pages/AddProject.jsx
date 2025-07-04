@@ -40,15 +40,13 @@ const AddProject = () => {
   // Filter users based on search term
   const filteredUsers = mockUsers.filter(user =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.role.toLowerCase().includes(searchTerm.toLowerCase())
+    user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Filter users for project leader based on leader search term
   const filteredLeaderUsers = mockUsers.filter(user =>
     user.name.toLowerCase().includes(leaderSearchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(leaderSearchTerm.toLowerCase()) ||
-    user.role.toLowerCase().includes(leaderSearchTerm.toLowerCase())
+    user.email.toLowerCase().includes(leaderSearchTerm.toLowerCase())
   );
 
   // Close dropdown when clicking outside
@@ -299,7 +297,7 @@ const AddProject = () => {
                                 <div>
                                   <div className="font-medium">{user.name}</div>
                                   <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                    {user.email} • {user.role}
+                                    {user.email}
                                   </div>
                                 </div>
                                 {isSelected && <UserCheck className="w-4 h-4 text-green-500" />}
@@ -421,7 +419,7 @@ const AddProject = () => {
                                 <div>
                                   <div className="font-medium">{user.name}</div>
                                   <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                    {user.email} • {user.role}
+                                    {user.email}
                                   </div>
                                 </div>
                                 {isSelected && <UserCheck className="w-4 h-4 text-green-500" />}

@@ -14,9 +14,8 @@ const Profile = () => {
   
   const [profileData, setProfileData] = useState({
     username: '',
-    role: '',
     gender: '',
-    phone: '',
+    phoneNumber: '',
     email: '',
     nationality: ''
   });
@@ -31,9 +30,8 @@ const Profile = () => {
       const user = JSON.parse(userData);
       setProfileData({
         username: user.username || 'Demo User',
-        role: user.role || 'project_member',
         gender: user.gender || '',
-        phone: user.phone || '',
+        phoneNumber: user.phone || '',
         email: user.email || 'demo@taskio.com',
         nationality: user.nationality || ''
       });
@@ -50,7 +48,7 @@ const Profile = () => {
   const handlePhoneChange = (value) => {
     setProfileData({
       ...profileData,
-      phone: value || ''
+      phoneNumber: value || ''
     });
   };
 
@@ -87,24 +85,14 @@ const Profile = () => {
       const user = JSON.parse(userData);
       setProfileData({
         username: user.username || 'Demo User',
-        role: user.role || 'project_member',
         gender: user.gender || '',
-        phone: user.phone || '',
+        phoneNumber: user.phone || '',
         email: user.email || 'demo@taskio.com',
         nationality: user.nationality || ''
       });
     }
     setIsEditing(false);
     setError('');
-  };
-
-  const getRoleDisplayName = (role) => {
-    switch(role) {
-      case 'project_member': return 'Project Member';
-      case 'project_admin': return 'Project Admin';
-      case 'team_lead': return 'Team Lead';
-      default: return role;
-    }
   };
 
   return (
@@ -177,24 +165,6 @@ const Profile = () => {
                   />
                 </div>
 
-                {/* Role - Read Only */}
-                <div>
-                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Role
-                    <span className={`text-xs ml-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>(Cannot be changed)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={getRoleDisplayName(profileData.role)}
-                    disabled={true}
-                    className={`w-full px-3 py-2 rounded-md cursor-not-allowed ${
-                      darkMode 
-                        ? 'text-gray-400 bg-gray-700/30 border border-gray-600/30'
-                        : 'text-gray-500 bg-gray-100 border border-gray-300'
-                    }`}
-                  />
-                </div>
-
                 {/* Gender */}
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -235,7 +205,7 @@ const Profile = () => {
                   <div className={`phone-input-custom ${!isEditing ? 'disabled' : ''} ${darkMode ? 'dark' : 'light'}`}>
                     <PhoneInput
                       placeholder="Enter phone number"
-                      value={profileData.phone}
+                      value={profileData.phoneNumber}
                       onChange={handlePhoneChange}
                       disabled={!isEditing}
                       defaultCountry="US"

@@ -8,8 +8,7 @@ const Register = () => {
     username: '',
     email: '',
     password: '',
-    confirmPassword: '',
-    role: ''
+    confirmPassword: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -46,8 +45,7 @@ const Register = () => {
       const response = await api.post('/auth/register', {
         username: formData.username,
         email: formData.email,
-        password: formData.password,
-        role: formData.role
+        password: formData.password
       });
       console.log('Registration successful:', response.data);
       setSuccess('Registration successful! Redirecting to login...');
@@ -126,26 +124,6 @@ const Register = () => {
                   className="appearance-none block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md placeholder-gray-400 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 sm:text-sm transition-all duration-300"
                   placeholder="Enter your email"
                 />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-300">
-                Role
-              </label>
-              <div className="mt-1">
-                <select
-                  id="role"
-                  name="role"
-                  required
-                  value={formData.role}
-                  onChange={handleChange}
-                  className="appearance-none block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 sm:text-sm transition-all duration-300"
-                >
-                  <option value="" className="bg-gray-700">Select your role</option>
-                  <option value="project_member" className="bg-gray-700">Project Member</option>
-                  <option value="project_admin" className="bg-gray-700">Project Admin</option>
-                </select>
               </div>
             </div>
 

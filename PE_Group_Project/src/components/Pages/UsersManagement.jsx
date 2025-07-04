@@ -18,7 +18,6 @@ const UsersManagement = () => {
     username: '',
     email: '',
     password: '',
-    role: 'Project Member',
     age: '',
     gender: '',
     nationality: '',
@@ -28,18 +27,11 @@ const UsersManagement = () => {
     username: '',
     email: '',
     password: '',
-    role: 'Project Member',
     age: '',
     gender: '',
     nationality: '',
     phoneNumber: ''
   });
-
-  const roles = [
-    'Project Admin',
-    'Team Lead', 
-    'Project Member'
-  ];
 
   // Fetch users from API
   const fetchUsers = async () => {
@@ -56,7 +48,6 @@ const UsersManagement = () => {
         name: user.username,
         username: user.username,
         email: user.email,
-        role: user.role,
         age: user.age,
         gender: user.gender,
         nationality: user.nationality,
@@ -77,10 +68,10 @@ const UsersManagement = () => {
       
       // Fallback to hardcoded data if API fails
       setUsers([
-        { id: 1, name: 'John Doe', email: 'john@taskio.com', role: 'Project Admin', status: 'Active' },
-        { id: 2, name: 'Jane Smith', email: 'jane@taskio.com', role: 'Project Member', status: 'Active' },
-        { id: 3, name: 'Mike Johnson', email: 'mike@taskio.com', role: 'Team Lead', status: 'Inactive' },
-        { id: 4, name: 'Sarah Wilson', email: 'sarah@taskio.com', role: 'Project Member', status: 'Active' }
+        { id: 1, name: 'John Doe', email: 'john@taskio.com', status: 'Active' },
+        { id: 2, name: 'Jane Smith', email: 'jane@taskio.com', status: 'Active' },
+        { id: 3, name: 'Mike Johnson', status: 'Inactive' },
+        { id: 4, name: 'Sarah Wilson', status: 'Active' }
       ]);
     } finally {
       setLoading(false);
@@ -95,8 +86,7 @@ const UsersManagement = () => {
   // Filter users based on search term
   const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.role.toLowerCase().includes(searchTerm.toLowerCase())
+    user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleInputChange = (e) => {
@@ -126,7 +116,6 @@ const UsersManagement = () => {
         Username: formData.username,
         Email: formData.email,
         Password: formData.password,
-        Role: formData.role,
         Age: formData.age ? parseInt(formData.age) : null,
         Gender: formData.gender || null,
         Nationality: formData.nationality || null,
@@ -138,7 +127,6 @@ const UsersManagement = () => {
         username: '',
         email: '',
         password: '',
-        role: 'Project Member',
         age: '',
         gender: '',
         nationality: '',
@@ -186,7 +174,6 @@ const UsersManagement = () => {
       const updateData = {
         Username: editFormData.username,
         Email: editFormData.email,
-        Role: editFormData.role,
         Age: editFormData.age ? parseInt(editFormData.age) : null,
         Gender: editFormData.gender || null,
         Nationality: editFormData.nationality || null,
@@ -249,7 +236,10 @@ const UsersManagement = () => {
       username: '',
       email: '',
       password: '',
-      role: 'Project Member'
+      age: '',
+      gender: '',
+      nationality: '',
+      phoneNumber: ''
     });
     setError('');
     setSuccess('');
@@ -271,7 +261,6 @@ const UsersManagement = () => {
           username: userData.username || user.name,
           email: userData.email,
           password: '', // Always leave empty for security
-          role: userData.role,
           age: userData.age || '',
           gender: userData.gender || '',
           nationality: userData.nationality || '',
@@ -284,7 +273,6 @@ const UsersManagement = () => {
           username: user.name,
           email: user.email,
           password: '',
-          role: user.role,
           age: user.age || '',
           gender: user.gender || '',
           nationality: user.nationality || '',
@@ -307,7 +295,6 @@ const UsersManagement = () => {
       username: '',
       email: '',
       password: '',
-      role: 'Project Member',
       age: '',
       gender: '',
       nationality: '',
@@ -412,9 +399,6 @@ const UsersManagement = () => {
                       User
                     </th>
                     <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                      Role
-                    </th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       Status
                     </th>
                     <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -455,15 +439,6 @@ const UsersManagement = () => {
                             <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{user.email}</div>
                           </div>
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs font-medium rounded ${
-                          darkMode 
-                            ? 'bg-purple-900/50 text-purple-300' 
-                            : 'bg-purple-100 text-purple-700'
-                        }`}>
-                          {user.role}
-                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 text-xs font-medium rounded ${
@@ -623,28 +598,6 @@ const UsersManagement = () => {
                     placeholder="Enter password"
                   />
                 </div>
-
-                <div>
-                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Role
-                  </label>
-                  <select
-                    name="role"
-                    value={formData.role}
-                    onChange={handleInputChange}
-                    className={`w-full px-3 py-2 rounded-md border transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${
-                      darkMode
-                        ? 'bg-gray-700 border-gray-600 text-white'
-                        : 'bg-white border-gray-300 text-gray-900'
-                    }`}
-                  >
-                    {roles.map((role) => (
-                      <option key={role} value={role}>
-                        {role}
-                      </option>
-                    ))}
-                  </select>
-                </div>
               </div>
 
               <div className="flex justify-end space-x-3 mt-6">
@@ -760,28 +713,6 @@ const UsersManagement = () => {
                     }`}
                     placeholder="Enter new password"
                   />
-                </div>
-
-                <div>
-                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Role
-                  </label>
-                  <select
-                    name="role"
-                    value={editFormData.role}
-                    onChange={handleEditInputChange}
-                    className={`w-full px-3 py-2 rounded-md border transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${
-                      darkMode
-                        ? 'bg-gray-700 border-gray-600 text-white'
-                        : 'bg-white border-gray-300 text-gray-900'
-                    }`}
-                  >
-                    {roles.map((role) => (
-                      <option key={role} value={role}>
-                        {role}
-                      </option>
-                    ))}
-                  </select>
                 </div>
               </div>
 
@@ -908,47 +839,6 @@ const UsersManagement = () => {
                   </div>
                 </div>
 
-                <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
-                  <h5 className={`text-sm font-medium mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Role & Status
-                  </h5>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                        Role
-                      </label>
-                      <p className={`mt-1 text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                        <span className={`px-2 py-1 text-xs font-medium rounded ${
-                          darkMode 
-                            ? 'bg-purple-900/50 text-purple-300' 
-                            : 'bg-purple-100 text-purple-700'
-                        }`}>
-                          {selectedUser.role}
-                        </span>
-                      </p>
-                    </div>
-                    <div>
-                      <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                        Status
-                      </label>
-                      <p className={`mt-1 text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                        <span className={`px-2 py-1 text-xs font-medium rounded ${
-                          selectedUser.status === 'Active' 
-                            ? darkMode 
-                              ? 'bg-green-900/50 text-green-300'
-                              : 'bg-green-100 text-green-700'
-                            : darkMode 
-                              ? 'bg-red-900/50 text-red-300'
-                              : 'bg-red-100 text-red-700'
-                        }`}>
-                          {selectedUser.status}
-                        </span>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Additional Profile Information */}
                 <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
                   <h5 className={`text-sm font-medium mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Account Information
