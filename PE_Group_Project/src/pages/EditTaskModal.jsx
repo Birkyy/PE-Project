@@ -12,7 +12,7 @@ const mockUsers = [
   { id: 6, name: 'Lisa Davis', email: 'lisa.davis@company.com', role: 'QA Engineer' }
 ];
 
-const EditTaskModal = ({ isOpen, onClose, onSubmit, projectDeadline, task }) => {
+const EditTaskModal = ({ task, onClose, onSave }) => {
   const { darkMode } = useTheme();
   const [taskData, setTaskData] = useState({
     title: '',
@@ -41,7 +41,7 @@ const EditTaskModal = ({ isOpen, onClose, onSubmit, projectDeadline, task }) => 
 
   // Initialize form with task data when modal is opened
   useEffect(() => {
-    if (isOpen && task) {
+    if (task) {
       // Find the assigned user from mockUsers
       const assignedUser = mockUsers.find(user => user.name === task.assignedTo);
       
@@ -57,7 +57,7 @@ const EditTaskModal = ({ isOpen, onClose, onSubmit, projectDeadline, task }) => 
       setSearchTerm('');
       setIsDropdownOpen(false);
     }
-  }, [isOpen, task]);
+  }, [task]);
 
   // Handle click outside dropdown
   useEffect(() => {
@@ -76,18 +76,11 @@ const EditTaskModal = ({ isOpen, onClose, onSubmit, projectDeadline, task }) => 
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Validate deadline against project deadline
-    if (projectDeadline && new Date(taskData.deadline) > new Date(projectDeadline)) {
-      setError('Task deadline cannot be later than the project deadline');
-      return;
-    }
-
-    onSubmit({
+    onSave({
       ...taskData,
       id: task.id, // Preserve the task ID
       assignedTo: taskData.assignedTo ? taskData.assignedTo.name : ''
     });
-    onClose();
   };
 
   const handleUserSelect = (user) => {
@@ -106,7 +99,7 @@ const EditTaskModal = ({ isOpen, onClose, onSubmit, projectDeadline, task }) => 
     }));
   };
 
-  if (!isOpen) return null;
+  if (!task) return null;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -198,18 +191,12 @@ const EditTaskModal = ({ isOpen, onClose, onSubmit, projectDeadline, task }) => 
               <label htmlFor="deadline" className={`block text-sm font-medium mb-1 ${
                 darkMode ? 'text-gray-300' : 'text-gray-700'
               }`}>
-                Deadline * {projectDeadline && (
-                  <span className="text-xs ml-1">
-                    (Project deadline: {new Date(projectDeadline).toLocaleDateString()})
-                  </span>
-                )}
+                Deadline *
               </label>
               <input
                 type="date"
                 id="deadline"
                 required
-                min={minDate}
-                max={projectDeadline}
                 value={taskData.deadline}
                 onChange={(e) => {
                   setTaskData({ ...taskData, deadline: e.target.value });
@@ -265,101 +252,112 @@ const EditTaskModal = ({ isOpen, onClose, onSubmit, projectDeadline, task }) => 
                     : 'bg-white border-gray-300 text-gray-900'
                 } p-2.5 focus:ring-2 focus:ring-blue-500`}
               >
-                <option value="todo">Todo</option>
-                <option value="in-progress">In Progress</option>
-                <option value="completed">Completed</option>
+                <option value="Todo">Todo</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
               </select>
             </div>
 
-            {/* Assigned To Dropdown */}
-            <div>
+            {/* Assigned To */}
+            <div className="relative" ref={dropdownRef}>
               <label className={`block text-sm font-medium mb-1 ${
                 darkMode ? 'text-gray-300' : 'text-gray-700'
               }`}>
                 Assigned To
               </label>
-              <div className="relative" ref={dropdownRef}>
-                {/* Selected User Display */}
-                {taskData.assignedTo ? (
-                  <div className="flex items-center justify-between p-2.5 border rounded-lg mb-2">
-                    <div className="flex items-center gap-2">
-                      <UserCheck className="w-5 h-5" />
-                      <div>
-                        <div className={darkMode ? 'text-white' : 'text-gray-900'}>{taskData.assignedTo.name}</div>
-                        <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{taskData.assignedTo.role}</div>
-                      </div>
+              
+              {taskData.assignedTo ? (
+                <div className={`flex items-center justify-between p-2.5 rounded-lg border ${
+                  darkMode
+                    ? 'bg-gray-700 border-gray-600 text-white'
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    <UserCheck className="w-5 h-5" />
+                    <div>
+                      <p className="font-medium">{taskData.assignedTo.name}</p>
+                      <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        {taskData.assignedTo.role}
+                      </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={handleUserRemove}
-                      className={`p-1 rounded-full hover:bg-gray-100 ${darkMode ? 'hover:bg-gray-700' : ''}`}
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
                   </div>
-                ) : (
+                  <button
+                    type="button"
+                    onClick={handleUserRemove}
+                    className={`p-1 rounded-full hover:bg-opacity-80 ${
+                      darkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-100'
+                    }`}
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              ) : (
+                <div className="relative">
                   <button
                     type="button"
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className={`w-full flex items-center justify-between p-2.5 border rounded-lg ${
+                    className={`w-full flex items-center justify-between p-2.5 rounded-lg border ${
                       darkMode
                         ? 'bg-gray-700 border-gray-600 text-white'
                         : 'bg-white border-gray-300 text-gray-900'
                     }`}
                   >
-                    <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>Select team member</span>
+                    <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
+                      Select team member
+                    </span>
                     <ChevronDown className="w-5 h-5" />
                   </button>
-                )}
 
-                {/* Dropdown Menu */}
-                {isDropdownOpen && (
-                  <div className={`absolute z-10 mt-1 w-full rounded-lg border shadow-lg ${
-                    darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'
-                  }`}>
-                    <div className="p-2">
-                      <div className="relative">
-                        <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
-                          darkMode ? 'text-gray-400' : 'text-gray-500'
-                        }`} />
-                        <input
-                          type="text"
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          placeholder="Search team members..."
-                          className={`w-full pl-9 pr-3 py-2 border rounded-md ${
-                            darkMode
-                              ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400'
-                              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                          }`}
-                        />
+                  {isDropdownOpen && (
+                    <div className={`absolute z-10 w-full mt-1 rounded-lg border shadow-lg ${
+                      darkMode
+                        ? 'bg-gray-700 border-gray-600'
+                        : 'bg-white border-gray-200'
+                    }`}>
+                      <div className="p-2">
+                        <div className="relative">
+                          <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
+                            darkMode ? 'text-gray-400' : 'text-gray-500'
+                          }`} />
+                          <input
+                            type="text"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder="Search team members..."
+                            className={`w-full pl-9 pr-3 py-2 rounded-md border ${
+                              darkMode
+                                ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400'
+                                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                            }`}
+                          />
+                        </div>
+                      </div>
+                      <div className="max-h-60 overflow-y-auto">
+                        {filteredUsers.map(user => (
+                          <button
+                            key={user.id}
+                            type="button"
+                            onClick={() => handleUserSelect(user)}
+                            className={`w-full flex items-center gap-2 px-4 py-2 text-left hover:bg-opacity-80 ${
+                              darkMode
+                                ? 'hover:bg-gray-600 text-white'
+                                : 'hover:bg-gray-100 text-gray-900'
+                            }`}
+                          >
+                            <UserCheck className="w-5 h-5" />
+                            <div>
+                              <p className="font-medium">{user.name}</p>
+                              <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                {user.role}
+                              </p>
+                            </div>
+                          </button>
+                        ))}
                       </div>
                     </div>
-                    <div className="max-h-60 overflow-y-auto">
-                      {filteredUsers.map(user => (
-                        <button
-                          key={user.id}
-                          type="button"
-                          onClick={() => handleUserSelect(user)}
-                          className={`w-full text-left px-4 py-2 hover:bg-gray-100 ${
-                            darkMode ? 'hover:bg-gray-600 text-white' : 'text-gray-900'
-                          }`}
-                        >
-                          <div className="font-medium">{user.name}</div>
-                          <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                            {user.role}
-                          </div>
-                        </button>
-                      ))}
-                      {filteredUsers.length === 0 && (
-                        <div className={`px-4 py-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                          No team members found
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Submit Button */}
@@ -367,17 +365,21 @@ const EditTaskModal = ({ isOpen, onClose, onSubmit, projectDeadline, task }) => 
               <button
                 type="button"
                 onClick={onClose}
-                className={`px-4 py-2 rounded-lg ${
+                className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
                   darkMode
-                    ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-                    : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                    ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
                 }`}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className={`px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white`}
+                className={`px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors ${
+                  darkMode
+                    ? 'bg-blue-600 hover:bg-blue-700'
+                    : 'bg-blue-500 hover:bg-blue-600'
+                }`}
               >
                 Save Changes
               </button>
