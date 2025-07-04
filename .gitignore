@@ -26,3 +26,5 @@ Debug/
 *.sln
 *.sw?
 /PE_Group_Project.API/obj/Debug/net9.0
+PE_Group_Project.API/obj/Debug/net9.0/PE_Group_Project.API.AssemblyInfo.cs
+PE_Group_Project.API/obj/Debug/net9.0/PE_Group_Project.API.AssemblyInfoInputs.cache
