@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import Layout from '../components/Layout';
 import api from '../API/api';
-import { Shield, Search, Edit2, Trash2, X, Eye, EyeOff } from 'lucide-react';
+import { Shield, Search, Edit2, Trash2, X, Eye, EyeOff, Unlock, Lock } from 'lucide-react';
 
 const UsersManagement = () => {
   const { darkMode } = useTheme();
@@ -36,6 +36,7 @@ const UsersManagement = () => {
     role: 'user'
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [lockedAccounts, setLockedAccounts] = useState([]);
 
   // Fetch users from API
   const fetchUsers = async () => {
@@ -85,9 +86,51 @@ const UsersManagement = () => {
     }
   };
 
-  // Load users on component mount
+  // Account lock management functions
+  const getLockedAccounts = () => {
+    const locked = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('accountLocked_')) {
+        const email = key.replace('accountLocked_', '');
+        const lockTime = localStorage.getItem(`lockTime_${email}`);
+        const failedAttempts = localStorage.getItem(`failedAttempts_${email}`);
+        locked.push({
+          email,
+          lockTime: lockTime ? new Date(lockTime) : new Date(),
+          failedAttempts: failedAttempts ? parseInt(failedAttempts) : 0
+        });
+      }
+    }
+    return locked;
+  };
+
+  const unlockAccount = (email) => {
+    localStorage.removeItem(`accountLocked_${email}`);
+    localStorage.removeItem(`lockTime_${email}`);
+    localStorage.removeItem(`failedAttempts_${email}`);
+    
+    // Update locked accounts list
+    setLockedAccounts(getLockedAccounts());
+    setSuccess(`Account ${email} has been unlocked successfully!`);
+    
+    // Clear success message after 3 seconds
+    setTimeout(() => setSuccess(''), 3000);
+  };
+
+  // Load users and locked accounts on component mount
   useEffect(() => {
     fetchUsers();
+    setLockedAccounts(getLockedAccounts());
+  }, []);
+
+  // Refresh locked accounts every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLockedAccounts(getLockedAccounts());
+    }, 30000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   // Filter users based on search term
@@ -475,6 +518,59 @@ const UsersManagement = () => {
             </div>
 
           </div>
+
+          {/* Locked Accounts Section */}
+          {lockedAccounts.length > 0 && (
+            <div className={`mb-6 p-4 rounded-lg border ${
+              darkMode 
+                ? 'bg-red-900/20 border-red-500/50' 
+                : 'bg-red-50 border-red-200'
+            }`}>
+              <div className="flex items-center mb-4">
+                <Lock className={`w-5 h-5 mr-2 ${darkMode ? 'text-red-400' : 'text-red-600'}`} />
+                <h3 className={`font-semibold ${darkMode ? 'text-red-400' : 'text-red-800'}`}>
+                  Locked Accounts ({lockedAccounts.length})
+                </h3>
+              </div>
+              <div className="space-y-3">
+                {lockedAccounts.map((account) => (
+                  <div key={account.email} className={`flex items-center justify-between p-3 rounded-lg ${
+                    darkMode ? 'bg-gray-800/50' : 'bg-white/80'
+                  }`}>
+                    <div>
+                      <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                        {account.email}
+                      </p>
+                      <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        Locked: {account.lockTime.toLocaleDateString()} at {account.lockTime.toLocaleTimeString()}
+                      </p>
+                      <p className={`text-xs ${darkMode ? 'text-red-400' : 'text-red-600'}`}>
+                        Failed attempts: {account.failedAttempts}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => unlockAccount(account.email)}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        darkMode
+                          ? 'bg-green-600 text-white hover:bg-green-700'
+                          : 'bg-green-500 text-white hover:bg-green-600'
+                      }`}
+                    >
+                      <Unlock className="w-4 h-4" />
+                      Unlock
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Success Message */}
+          {success && (
+            <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-md">
+              {success}
+            </div>
+          )}
           
           {/* Users Table */}
           <div className={`${darkMode ? 'bg-gray-800 border-purple-500/30' : 'bg-white border-purple-300'} border overflow-hidden shadow-xl rounded-lg`}>
