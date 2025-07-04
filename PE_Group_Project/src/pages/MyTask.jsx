@@ -1,10 +1,11 @@
 import { useParams } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { useTheme } from '../context/ThemeContext';
-import { Plus, Edit, Trash2, Search, MoveRight, Clock, Edit2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, MoveRight, Clock, Edit2, ChevronRight, ChevronLeft, User, Eye } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import AddTaskModal from './AddTaskModal';
 import EditTaskModal from './EditTaskModal';
+import ViewTaskModal from './ViewTaskModal';
 
 const statusList = [
   { key: 'Todo', color: 'blue' },
@@ -81,8 +82,10 @@ const MyTask = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [currentProject, setCurrentProject] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
 
   // Load project data
   useEffect(() => {
@@ -91,6 +94,14 @@ const MyTask = () => {
       setCurrentProject(project);
     }
   }, [projectName]);
+
+  // Load current user data
+  useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      setCurrentUser(JSON.parse(userStr));
+    }
+  }, []);
 
   // Task handlers
   const handleCreateTask = (taskData) => {
@@ -128,6 +139,12 @@ const MyTask = () => {
     return currentIndex < statusList.length - 1 ? statusList[currentIndex + 1].key : null;
   };
 
+  // Get previous status in the workflow
+  const getPreviousStatus = (currentStatus) => {
+    const currentIndex = statusList.findIndex(s => s.key === currentStatus);
+    return currentIndex > 0 ? statusList[currentIndex - 1].key : null;
+  };
+
   // Filter tasks based on search query
   const filterTasks = (taskList, status) => {
     return taskList
@@ -161,6 +178,16 @@ const MyTask = () => {
     setIsEditModalOpen(true);
   };
 
+  const isTaskAssignedToMe = (task) => {
+    if (!currentUser) return false;
+    return task.assignedTo === currentUser.username || task.assignedTo === currentUser.email;
+  };
+
+  const openViewModal = (task) => {
+    setSelectedTask(task);
+    setIsViewModalOpen(true);
+  };
+
   const renderTaskCard = (task) => {
     const isOverdue = isTaskOverdue(task);
     const priorityColors = {
@@ -168,6 +195,10 @@ const MyTask = () => {
       medium: darkMode ? 'bg-yellow-500/20 text-yellow-300' : 'bg-yellow-100 text-yellow-800',
       high: darkMode ? 'bg-red-500/20 text-red-300' : 'bg-red-100 text-red-800'
     };
+
+    const nextStatus = getNextStatus(task.status);
+    const previousStatus = getPreviousStatus(task.status);
+    const isMyTask = isTaskAssignedToMe(task);
 
     return (
       <div
@@ -177,10 +208,60 @@ const MyTask = () => {
         } shadow-sm`}
       >
         <div className="flex justify-between items-start mb-2">
-          <h3 className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-            {task.title}
-          </h3>
           <div className="flex items-center gap-2">
+            <h3 className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+              {task.title}
+            </h3>
+            {isMyTask && (
+              <span
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                  darkMode ? 'bg-purple-500/20 text-purple-300' : 'bg-purple-100 text-purple-800'
+                }`}
+                title="Assigned to me"
+              >
+                <User className="w-3 h-3" />
+                My Task
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => openViewModal(task)}
+              className={`p-1.5 rounded-lg ${
+                darkMode
+                  ? 'hover:bg-gray-700 text-gray-400 hover:text-gray-300'
+                  : 'hover:bg-gray-100 text-gray-600 hover:text-gray-900'
+              }`}
+              title="View details"
+            >
+              <Eye className="w-4 h-4" />
+            </button>
+            {previousStatus && (
+              <button
+                onClick={() => handleChangeStatus(task, previousStatus)}
+                className={`p-1.5 rounded-lg ${
+                  darkMode
+                    ? 'hover:bg-gray-700 text-gray-400 hover:text-gray-300'
+                    : 'hover:bg-gray-100 text-gray-600 hover:text-gray-900'
+                }`}
+                title={`Move to ${previousStatus}`}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+            )}
+            {nextStatus && (
+              <button
+                onClick={() => handleChangeStatus(task, nextStatus)}
+                className={`p-1.5 rounded-lg ${
+                  darkMode
+                    ? 'hover:bg-gray-700 text-gray-400 hover:text-gray-300'
+                    : 'hover:bg-gray-100 text-gray-600 hover:text-gray-900'
+                }`}
+                title={`Move to ${nextStatus}`}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            )}
             <button
               onClick={() => openEditModal(task)}
               className={`p-1.5 rounded-lg ${
@@ -304,25 +385,33 @@ const MyTask = () => {
         </div>
       </div>
 
-      {/* Add Task Modal */}
-      <AddTaskModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onSubmit={handleCreateTask}
-        projectDeadline={currentProject?.dueDate}
-      />
-
-      {/* Edit Task Modal */}
-      <EditTaskModal
-        isOpen={isEditModalOpen}
-        onClose={() => {
-          setIsEditModalOpen(false);
-          setSelectedTask(null);
-        }}
-        onSubmit={handleEditTask}
-        projectDeadline={currentProject?.dueDate}
-        task={selectedTask}
-      />
+      {isViewModalOpen && (
+        <ViewTaskModal
+          task={selectedTask}
+          onClose={() => {
+            setIsViewModalOpen(false);
+            setSelectedTask(null);
+          }}
+        />
+      )}
+      
+      {isEditModalOpen && (
+        <EditTaskModal
+          task={selectedTask}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedTask(null);
+          }}
+          onSave={handleEditTask}
+        />
+      )}
+      
+      {isAddModalOpen && (
+        <AddTaskModal
+          onClose={() => setIsAddModalOpen(false)}
+          onSave={handleCreateTask}
+        />
+      )}
     </Layout>
   );
 };
