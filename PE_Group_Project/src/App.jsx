@@ -2,14 +2,15 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { ThemeProvider } from './context/ThemeContext';
 import Login from './components/Login';
 import Register from './components/Register';
-import Dashboard from './Pages/Dashboard';
-import Profile from './Pages/Profile';
-import MyProjects from './Pages/MyProjects';
+import Dashboard from './pages/Dashboard';
+import Profile from './pages/Profile';
+import MyProjects from './pages/MyProjects';
 import AddProject from './pages/AddProject';
 import Project from './pages/Project';
 import UsersManagement from './pages/UsersManagement';
 import ProtectedRoute from './components/ProtectedRoute';
 import MyTask from './pages/MyTask';
+import Archive from './pages/Archive';
 import Privacy from './pages/Privacy';
 import HelpSupport from './pages/HelpSupport';
 
@@ -32,6 +33,11 @@ function App() {
             <Route path="/my-projects" element={
               <ProtectedRoute>
                 <MyProjects />
+              </ProtectedRoute>
+            } />
+            <Route path="/archive" element={
+              <ProtectedRoute>
+                <Archive />
               </ProtectedRoute>
             } />
             <Route path="/project/:id" element={

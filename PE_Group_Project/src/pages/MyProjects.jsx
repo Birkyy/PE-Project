@@ -1,6 +1,6 @@
 import { useTheme } from '../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
-import { Trash2, Search, Calendar, Users, Save, X, ChevronDown, UserCheck, Plus } from 'lucide-react';
+import { Trash2, Search, Calendar, Users, Save, X, ChevronDown, UserCheck, Plus, Archive } from 'lucide-react';
 import Layout from '../components/Layout';
 import { useState, useRef, useEffect } from 'react';
 
@@ -15,7 +15,7 @@ const MyProjects = () => {
   const leaderDropdownRef = useRef(null);
 
   // Example project data (replace with real data as needed)
-  const projects = [
+  const [projects, setProjects] = useState([
     {
       id: 1,
       name: 'Project Alpha',
@@ -40,7 +40,7 @@ const MyProjects = () => {
       progress: 25,
       color: 'pink'
     }
-  ];
+  ]);
 
   const mockUsers = [
     { id: 1, name: 'John Doe', email: 'john.doe@company.com', role: 'Frontend Developer' },
@@ -56,6 +56,16 @@ const MyProjects = () => {
   const handleDelete = (projectName) => {
     console.log(`Deleting ${projectName}`);
     // Add delete logic here
+  };
+
+  const handleArchive = (projectId, projectName) => {
+    if (window.confirm(`Are you sure you want to archive "${projectName}"? It will be moved to the Archive section.`)) {
+      console.log(`Archiving project ${projectId}: ${projectName}`);
+      // Remove project from active projects list
+      setProjects(prevProjects => prevProjects.filter(project => project.id !== projectId));
+      // In a real app, this would make an API call to archive the project
+      alert(`"${projectName}" has been archived successfully!`);
+    }
   };
 
   const handleProjectClick = (projectId) => {
@@ -160,6 +170,8 @@ const MyProjects = () => {
                 </div>
                 <input
                   type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search projects..."
                   className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 ${
                     darkMode 
@@ -173,7 +185,10 @@ const MyProjects = () => {
           
           {/* Projects Grid */}
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {projects.map((project) => (
+            {projects.filter(project =>
+              project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              project.description.toLowerCase().includes(searchTerm.toLowerCase())
+            ).map((project) => (
               <div
                 key={project.name}
                 className={`${darkMode ? `bg-gray-800 border-${project.color}-500/30` : `bg-white border-${project.color}-300`} border overflow-hidden shadow-xl rounded-lg hover:shadow-lg ${darkMode ? `hover:shadow-${project.color}-500/20` : `hover:shadow-${project.color}-300/30`} transition-all duration-300 cursor-pointer`}
@@ -194,6 +209,13 @@ const MyProjects = () => {
                   </div>
                   {/* Action Icons */}
                   <div className="flex justify-end space-x-2" onClick={e => e.stopPropagation()}>
+                    <button 
+                      onClick={() => handleArchive(project.id, project.name)}
+                      className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-yellow-300' : 'hover:bg-gray-100 text-gray-600 hover:text-yellow-600'}`}
+                      title="Archive Project"
+                    >
+                      <Archive className="w-4 h-4" />
+                    </button>
                     <button 
                       onClick={() => handleDelete(project.name)}
                       className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-red-300' : 'hover:bg-gray-100 text-gray-600 hover:text-red-600'}`}

@@ -7,7 +7,8 @@ import {
   Settings, 
   LogOut, 
   Shield,
-  HelpCircle
+  HelpCircle,
+  Archive
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, onClose, darkMode, toggleDarkMode }) => {
@@ -26,6 +27,10 @@ const Sidebar = ({ isOpen, onClose, darkMode, toggleDarkMode }) => {
   };
 
   const settingsItems = [
+    { icon: Archive, label: 'Archive', action: () => {
+      onClose();
+      navigate('/archive');
+    }},
     { icon: Shield, label: 'Privacy', action: () => {
       onClose();
       navigate('/privacy');
