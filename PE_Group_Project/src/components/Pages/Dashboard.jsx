@@ -82,6 +82,33 @@ const Dashboard = () => {
     { id: 6, title: 'Update Documentation', project: 'API Service', due: '2024-12-17', priority: 'medium' }
   ];
 
+  const dailyTimeline = [
+    { id: 1, time: '09:00', title: 'Team Standup Meeting', type: 'meeting', status: 'completed', duration: '30 min' },
+    { id: 2, time: '10:30', title: 'Code Review - Authentication Module', type: 'task', status: 'completed', duration: '1 hour' },
+    { id: 3, time: '12:00', title: 'Lunch Break', type: 'break', status: 'completed', duration: '1 hour' },
+    { id: 4, time: '14:00', title: 'API Integration Testing', type: 'task', status: 'in-progress', duration: '2 hours' },
+    { id: 5, time: '16:30', title: 'Client Presentation Prep', type: 'task', status: 'upcoming', duration: '1 hour' },
+    { id: 6, time: '17:30', title: 'Sprint Planning Session', type: 'meeting', status: 'upcoming', duration: '1.5 hours' }
+  ];
+
+  const getTimelineStatusColor = (status) => {
+    switch (status) {
+      case 'completed': return 'bg-green-500';
+      case 'in-progress': return 'bg-yellow-500';
+      case 'upcoming': return 'bg-gray-400';
+      default: return 'bg-gray-400';
+    }
+  };
+
+  const getTimelineTypeIcon = (type) => {
+    switch (type) {
+      case 'meeting': return '👥';
+      case 'task': return '📋';
+      case 'break': return '☕';
+      default: return '📅';
+    }
+  };
+
 
 
   return (
@@ -143,9 +170,11 @@ const Dashboard = () => {
         </div>
 
         {/* Main Dashboard Grid */}
-        <div className="grid grid-cols-1 gap-8 mb-8">
-          {/* Tasks Section - Side by Side */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 mb-8">
+          {/* Main Content */}
+          <div className="lg:col-span-3 space-y-8">
+            {/* Tasks Section - Side by Side */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Upcoming Tasks */}
             <div className={`${darkMode ? 'bg-gray-800 border-purple-500/30' : 'bg-white border-purple-300'} border rounded-lg p-6`}>
               <div className="flex items-center justify-between mb-4">
@@ -202,118 +231,176 @@ const Dashboard = () => {
             </div>
           </div>
 
+            {/* Visual Analytics */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Weekly Progress Chart */}
+              <div className={`${darkMode ? 'bg-gray-800 border-purple-500/30' : 'bg-white border-purple-300'} border rounded-lg p-6`}>
+                <h3 className={`text-lg font-semibold flex items-center mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  <BarChart3 className="w-5 h-5 mr-2 text-purple-400" />
+                  Weekly Task Progress
+                </h3>
+                                 <ResponsiveContainer width="100%" height={350}>
+                   <AreaChart data={weeklyProgressData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#374151" : "#E5E7EB"} />
+                    <XAxis dataKey="day" stroke={darkMode ? "#9CA3AF" : "#6B7280"} />
+                    <YAxis stroke={darkMode ? "#9CA3AF" : "#6B7280"} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: darkMode ? '#1F2937' : '#FFFFFF', 
+                        border: darkMode ? '1px solid #6B7280' : '1px solid #D1D5DB', 
+                        borderRadius: '8px',
+                        color: darkMode ? '#F3F4F6' : '#111827'
+                      }} 
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="tasks" 
+                      stroke="#8B5CF6" 
+                      fill="url(#colorGradient)" 
+                      strokeWidth={2}
+                    />
+                    <defs>
+                      <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
 
-        </div>
-
-        {/* Visual Analytics */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Weekly Progress Chart */}
-          <div className={`${darkMode ? 'bg-gray-800 border-purple-500/30' : 'bg-white border-purple-300'} border rounded-lg p-6`}>
-            <h3 className={`text-lg font-semibold flex items-center mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-              <BarChart3 className="w-5 h-5 mr-2 text-purple-400" />
-              Weekly Task Progress
-            </h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={weeklyProgressData}>
-                <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#374151" : "#E5E7EB"} />
-                <XAxis dataKey="day" stroke={darkMode ? "#9CA3AF" : "#6B7280"} />
-                <YAxis stroke={darkMode ? "#9CA3AF" : "#6B7280"} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: darkMode ? '#1F2937' : '#FFFFFF', 
-                    border: darkMode ? '1px solid #6B7280' : '1px solid #D1D5DB', 
-                    borderRadius: '8px',
-                    color: darkMode ? '#F3F4F6' : '#111827'
-                  }} 
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="tasks" 
-                  stroke="#8B5CF6" 
-                  fill="url(#colorGradient)" 
-                  strokeWidth={2}
-                />
-                <defs>
-                  <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Project Distribution */}
-          <div className={`${darkMode ? 'bg-gray-800 border-cyan-500/30' : 'bg-white border-cyan-300'} border rounded-lg p-6`}>
-            <h3 className={`text-lg font-semibold flex items-center mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-              <PieChart className="w-5 h-5 mr-2 text-cyan-400" />
-              Project Distribution
-            </h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <RechartsPieChart>
-                <Pie
-                  data={projectDistributionData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {projectDistributionData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+              {/* Project Distribution */}
+              <div className={`${darkMode ? 'bg-gray-800 border-cyan-500/30' : 'bg-white border-cyan-300'} border rounded-lg p-6`}>
+                <h3 className={`text-lg font-semibold flex items-center mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  <PieChart className="w-5 h-5 mr-2 text-cyan-400" />
+                  Project Distribution
+                </h3>
+                                 <ResponsiveContainer width="100%" height={350}>
+                   <RechartsPieChart>
+                    <Pie
+                      data={projectDistributionData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {projectDistributionData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: darkMode ? '#1F2937' : '#FFFFFF', 
+                        border: darkMode ? '1px solid #6B7280' : '1px solid #D1D5DB', 
+                        borderRadius: '8px',
+                        color: darkMode ? '#F3F4F6' : '#111827'
+                      }} 
+                    />
+                  </RechartsPieChart>
+                </ResponsiveContainer>
+                <div className="mt-4 space-y-2">
+                  {projectDistributionData.map((item) => (
+                    <div key={item.name} className="flex items-center justify-between text-sm">
+                      <div className="flex items-center">
+                        <div 
+                          className="w-3 h-3 rounded-full mr-2" 
+                          style={{ backgroundColor: item.color }}
+                        ></div>
+                        <span className={`${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{item.name}</span>
+                      </div>
+                      <span className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{item.value}%</span>
+                    </div>
                   ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: darkMode ? '#1F2937' : '#FFFFFF', 
-                    border: darkMode ? '1px solid #6B7280' : '1px solid #D1D5DB', 
-                    borderRadius: '8px',
-                    color: darkMode ? '#F3F4F6' : '#111827'
-                  }} 
-                />
-              </RechartsPieChart>
-            </ResponsiveContainer>
-            <div className="mt-4 space-y-2">
-              {projectDistributionData.map((item) => (
-                <div key={item.name} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center">
-                    <div 
-                      className="w-3 h-3 rounded-full mr-2" 
-                      style={{ backgroundColor: item.color }}
-                    ></div>
-                    <span className={`${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{item.name}</span>
-                  </div>
-                  <span className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{item.value}%</span>
                 </div>
-              ))}
+              </div>
+
+              
+              {/* Task Completion Trends - Full Width */}
+              <div className={`${darkMode ? 'bg-gray-800 border-pink-500/30' : 'bg-white border-pink-300'} border rounded-lg p-6 lg:col-span-2`}>
+                <h3 className={`text-lg font-semibold flex items-center mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  <TrendingUp className="w-5 h-5 mr-2 text-pink-400" />
+                  Task Completion Trends
+                </h3>
+                <ResponsiveContainer width="100%" height={350}>
+                  <BarChart data={taskProgressData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#374151" : "#E5E7EB"} />
+                    <XAxis dataKey="name" stroke={darkMode ? "#9CA3AF" : "#6B7280"} />
+                    <YAxis stroke={darkMode ? "#9CA3AF" : "#6B7280"} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: darkMode ? '#1F2937' : '#FFFFFF', 
+                        border: darkMode ? '1px solid #6B7280' : '1px solid #D1D5DB', 
+                        borderRadius: '8px',
+                        color: darkMode ? '#F3F4F6' : '#111827'
+                      }} 
+                    />
+                    <Bar dataKey="completed" stackId="a" fill="#06B6D4" name="Completed" />
+                    <Bar dataKey="pending" stackId="a" fill="#EC4899" name="Pending" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
 
-          {/* Task Completion Trends */}
-          <div className={`${darkMode ? 'bg-gray-800 border-pink-500/30' : 'bg-white border-pink-300'} border rounded-lg p-6`}>
-            <h3 className={`text-lg font-semibold flex items-center mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-              <TrendingUp className="w-5 h-5 mr-2 text-pink-400" />
-              Task Completion Trends
-            </h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={taskProgressData}>
-                <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#374151" : "#E5E7EB"} />
-                <XAxis dataKey="name" stroke={darkMode ? "#9CA3AF" : "#6B7280"} />
-                <YAxis stroke={darkMode ? "#9CA3AF" : "#6B7280"} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: darkMode ? '#1F2937' : '#FFFFFF', 
-                    border: darkMode ? '1px solid #6B7280' : '1px solid #D1D5DB', 
-                    borderRadius: '8px',
-                    color: darkMode ? '#F3F4F6' : '#111827'
-                  }} 
-                />
-                <Bar dataKey="completed" stackId="a" fill="#06B6D4" name="Completed" />
-                <Bar dataKey="pending" stackId="a" fill="#EC4899" name="Pending" />
-              </BarChart>
-            </ResponsiveContainer>
+          {/* Right Sidebar - Daily Timeline */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-24">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className={`text-lg font-semibold flex items-center ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  <Clock className="w-5 h-5 mr-2 text-indigo-400" />
+                  Today's Timeline
+                </h3>
+              </div>
+              <div className={`text-xs mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              </div>
+              
+              <div className="relative">
+                {/* Timeline line */}
+                <div className={`absolute left-6 top-0 bottom-0 w-0.5 ${darkMode ? 'bg-gray-600' : 'bg-gray-300'}`}></div>
+                
+                {/* Timeline items */}
+                <div className="space-y-6">
+                  {dailyTimeline.map((item, index) => (
+                    <div key={item.id} className="relative flex items-start">
+                      {/* Timeline dot */}
+                      <div className={`relative z-10 w-3 h-3 rounded-full border-2 ${getTimelineStatusColor(item.status)} ${darkMode ? 'border-gray-900' : 'border-gray-50'} shadow-sm`}></div>
+                      
+                      {/* Timeline content */}
+                      <div className="ml-6 flex-1">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <span className="text-sm">{getTimelineTypeIcon(item.type)}</span>
+                          <span className={`text-xs font-medium ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                            {item.time}
+                          </span>
+                        </div>
+                        <p className={`text-sm font-medium mb-1 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                          {item.title}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            item.status === 'completed' 
+                              ? 'bg-green-100 text-green-800' 
+                              : item.status === 'in-progress'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {item.status.replace('-', ' ')}
+                          </span>
+                          <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            {item.duration}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
+
         </div>
       </div>
     </Layout>
