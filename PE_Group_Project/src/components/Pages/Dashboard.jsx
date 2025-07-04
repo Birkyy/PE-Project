@@ -83,20 +83,20 @@ const Dashboard = () => {
     { id: 6, title: 'Update Documentation', project: 'API Service', due: '2024-12-17', priority: 'medium' }
   ];
 
-  const recentActivity = [
-    { id: 1, action: 'Completed', item: 'User Authentication Module', time: '2 hours ago', type: 'completed' },
-    { id: 2, action: 'Updated', item: 'Project Timeline', time: '4 hours ago', type: 'updated' },
-    { id: 3, action: 'Created', item: 'New Task: Frontend Testing', time: '1 day ago', type: 'created' },
-    { id: 4, action: 'Assigned', item: 'Database Optimization Task', time: '2 days ago', type: 'assigned' }
+  const notifications = [
+    { id: 1, name: 'User Authentication Module', type: 'task', status: 'Completed', time: '2 hours ago' },
+    { id: 2, name: 'Project Beta', type: 'project', status: 'In Progress', time: '4 hours ago' },
+    { id: 3, name: 'Frontend Testing', type: 'task', status: 'Todo', time: '1 day ago' },
+    { id: 4, name: 'Database Optimization Task', type: 'task', status: 'Overdue', time: '2 days ago' }
   ];
 
-  const getActivityIcon = (type) => {
-    switch (type) {
-      case 'completed': return <CheckCircle2 className="w-4 h-4 text-green-400" />;
-      case 'updated': return <Activity className="w-4 h-4 text-blue-400" />;
-      case 'created': return <Target className="w-4 h-4 text-purple-400" />;
-      case 'assigned': return <Users className="w-4 h-4 text-cyan-400" />;
-      default: return <Activity className="w-4 h-4 text-gray-400" />;
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Completed': return 'text-green-400';
+      case 'In Progress': return 'text-yellow-400';
+      case 'Todo': return 'text-blue-400';
+      case 'Overdue': return 'text-red-400';
+      default: return 'text-gray-400';
     }
   };
 
@@ -213,23 +213,21 @@ const Dashboard = () => {
             )}
           </div>
 
-          {/* Recent Activity */}
+          {/* Notifications List */}
           <div className={`${darkMode ? 'bg-gray-800 border-cyan-500/30' : 'bg-white border-cyan-300'} border rounded-lg p-6`}>
             <h3 className={`text-lg font-semibold flex items-center mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
               <Activity className="w-5 h-5 mr-2 text-cyan-400" />
-              Recent Activity
+              Notifications
             </h3>
             <div className="space-y-4">
-              {recentActivity.map((activity) => (
-                <div key={activity.id} className="flex items-start space-x-3">
+              {notifications.map((note) => (
+                <div key={note.id} className="flex items-start space-x-3">
                   <div className="flex-shrink-0 mt-1">
-                    {getActivityIcon(activity.type)}
+                    <span className={`font-bold ${getStatusColor(note.status)}`}>{note.status}</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                      <span className="font-medium">{activity.action}</span> {activity.item}
-                    </p>
-                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{activity.time}</p>
+                    <p className={`text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>{note.name}</p>
+                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{note.time}</p>
                   </div>
                 </div>
               ))}
