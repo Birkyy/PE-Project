@@ -13,4 +13,4 @@ namespace PE_Group_Project.API.Models.Domain
         public required string Status { get; set; }
         public required string Priority { get; set; }
     }
-} 
+}
