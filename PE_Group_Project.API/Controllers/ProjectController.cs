@@ -53,7 +53,7 @@ namespace PE_Group_Project.API.Controllers
                 Status = project.Status,
                 PriorityLevel = project.PriorityLevel,
                 ProjectManagerInCharge = project.ProjectManagerInCharge,
-                Contributors = project.Contributors
+                Contributors = project.Contributors,
             };
 
             return Ok(projectDTO);
@@ -75,7 +75,7 @@ namespace PE_Group_Project.API.Controllers
                 Status = createProjectRequestDTO.Status,
                 PriorityLevel = createProjectRequestDTO.PriorityLevel,
                 ProjectManagerInCharge = createProjectRequestDTO.ProjectManagerInCharge,
-                Contributors = createProjectRequestDTO.Contributors
+                Contributors = createProjectRequestDTO.Contributors,
             };
 
             _context.Projects.Add(project);
@@ -86,7 +86,10 @@ namespace PE_Group_Project.API.Controllers
 
         [HttpPut]
         [Route("{id:guid}")]
-        public IActionResult UpdateProjectById([FromRoute] Guid id, [FromBody] UpdateProjectRequestDTO updateProjectRequestDTO)
+        public IActionResult UpdateProjectById(
+            [FromRoute] Guid id,
+            [FromBody] UpdateProjectRequestDTO updateProjectRequestDTO
+        )
         {
             var project = _context.Projects.FirstOrDefault(p => p.ProjectId == id);
 

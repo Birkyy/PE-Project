@@ -25,4 +25,9 @@ Debug/
 *.njsproj
 *.sln
 *.sw?
+PE_Group_Project.API/obj/Debug/net9.0/PE_Group_Project.API.AssemblyInfo.cs
+PE_Group_Project.API/obj/Debug/net9.0/PE_Group_Project.API.AssemblyInfoInputs.cache
+PE_Group_Project.API/obj/Debug/net9.0/PE_Group_Project.API.assets.cache
+PE_Group_Project.API/obj/Debug/net9.0/PE_Group_Project.API.csproj.AssemblyReference.cache
+/PE_Group_Project.API/obj/Debug/net9.0
 /PE_Group_Project.API/obj/Debug/net9.0
