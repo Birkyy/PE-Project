@@ -30,5 +30,7 @@ namespace PE_Group_Project.API.Data
                 .WithMany(p => p.Contributors)
                 .HasForeignKey(up => up.ProjectId);
         }
+
+        public DbSet<TaskComment> TaskComments { get; set; }
     }
 }
