@@ -1,6 +1,6 @@
 import { useTheme } from '../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
-import { Trash2, Search, Calendar, Users, Save, X, ChevronDown, UserCheck } from 'lucide-react';
+import { Trash2, Search, Calendar, Users, Save, X, ChevronDown, UserCheck, Plus } from 'lucide-react';
 import Layout from '../components/Layout';
 import { useState, useRef, useEffect } from 'react';
 
@@ -60,6 +60,10 @@ const MyProjects = () => {
 
   const handleProjectClick = (projectId) => {
     navigate(`/project/${projectId}`);
+  };
+
+  const handleAddProject = () => {
+    navigate('/add-project');
   };
 
   const filteredUsers = mockUsers.filter(user =>
@@ -125,13 +129,29 @@ const MyProjects = () => {
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="text-center mb-8">
-            <h2 className={`text-3xl font-extrabold mb-4 ${
-              darkMode 
-                ? 'bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent'
-                : 'text-gray-900'
-            }`}>
-              My Projects
-            </h2>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex-1"></div>
+              <h2 className={`text-3xl font-extrabold ${
+                darkMode 
+                  ? 'bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent'
+                  : 'text-gray-900'
+              }`}>
+                My Projects
+              </h2>
+              <div className="flex-1 flex justify-end">
+                <button
+                  onClick={handleAddProject}
+                  className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                    darkMode
+                      ? 'text-white bg-purple-600 hover:bg-purple-700 focus:ring-purple-500 hover:shadow-lg hover:shadow-purple-500/25'
+                      : 'text-white bg-purple-600 hover:bg-purple-700 focus:ring-purple-500 hover:shadow-lg hover:shadow-purple-300/30'
+                  }`}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Project
+                </button>
+              </div>
+            </div>
             {/* Search Bar */}
             <div className="max-w-md mx-auto mb-8">
               <div className="relative">
