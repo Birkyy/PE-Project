@@ -12,7 +12,7 @@ const mockUsers = [
   { id: 6, name: 'Lisa Davis', email: 'lisa.davis@company.com', role: 'QA Engineer' }
 ];
 
-const AddTaskModal = ({ isOpen, onClose, onSubmit, projectDeadline }) => {
+const AddTaskModal = ({ isOpen, onClose, onSubmit }) => {
   const { darkMode } = useTheme();
   const [taskData, setTaskData] = useState({
     title: '',
@@ -133,12 +133,6 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, projectDeadline }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Validate deadline against project deadline
-    if (projectDeadline && new Date(taskData.deadline) > new Date(projectDeadline)) {
-      setError('Task deadline cannot be later than the project deadline');
-      return;
-    }
-
     onSubmit({
       ...taskData,
       assignedTo: taskData.assignedTo ? taskData.assignedTo.name : ''
@@ -263,18 +257,13 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, projectDeadline }) => {
               <label htmlFor="deadline" className={`block text-sm font-medium mb-1 ${
                 darkMode ? 'text-gray-300' : 'text-gray-700'
               }`}>
-                Deadline * {projectDeadline && (
-                  <span className="text-xs ml-1">
-                    (Project deadline: {new Date(projectDeadline).toLocaleDateString()})
-                  </span>
-                )}
+                Deadline *
               </label>
               <input
                 type="date"
                 id="deadline"
                 required
                 min={minDate}
-                max={projectDeadline}
                 value={taskData.deadline}
                 onChange={(e) => {
                   setTaskData({ ...taskData, deadline: e.target.value });

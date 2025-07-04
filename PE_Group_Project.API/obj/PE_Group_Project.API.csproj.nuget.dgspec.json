@@ -1,22 +1,6 @@
 {
   "format": 1,
   "restore": {
-<<<<<<< Updated upstream
-    "D:\\PE II (2)\\PE-Project\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj": {}
-  },
-  "projects": {
-    "D:\\PE II (2)\\PE-Project\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj": {
-      "version": "1.0.0",
-      "restore": {
-        "projectUniqueName": "D:\\PE II (2)\\PE-Project\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj",
-        "projectName": "PE_Group_Project.API",
-        "projectPath": "D:\\PE II (2)\\PE-Project\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj",
-        "packagesPath": "C:\\Users\\Asus\\.nuget\\packages\\",
-        "outputPath": "D:\\PE II (2)\\PE-Project\\PE-Project\\PE_Group_Project.API\\obj\\",
-        "projectStyle": "PackageReference",
-        "configFilePaths": [
-          "C:\\Users\\Asus\\AppData\\Roaming\\NuGet\\NuGet.Config"
-=======
     "C:\\Users\\User\\Documents\\GitHub\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj": {}
   },
   "projects": {
@@ -31,7 +15,6 @@
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\User\\AppData\\Roaming\\NuGet\\NuGet.Config"
->>>>>>> Stashed changes
         ],
         "originalTargetFrameworks": [
           "net9.0"

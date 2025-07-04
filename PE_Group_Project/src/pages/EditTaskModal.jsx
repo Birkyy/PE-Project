@@ -12,15 +12,15 @@ const mockUsers = [
   { id: 6, name: 'Lisa Davis', email: 'lisa.davis@company.com', role: 'QA Engineer' }
 ];
 
-const EditTaskModal = ({ task, onClose, onSave }) => {
+const EditTaskModal = ({ isOpen, task, onClose, onSubmit }) => {
   const { darkMode } = useTheme();
   const [taskData, setTaskData] = useState({
     title: '',
     description: '',
     deadline: '',
     priority: 'medium',
-    assignedTo: null,
-    status: 'todo'
+    assignedTo: '',
+    status: 'Todo'
   });
   const [error, setError] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -41,23 +41,25 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
 
   // Initialize form with task data when modal is opened
   useEffect(() => {
-    if (task) {
+    if (task && isOpen) {
       // Find the assigned user from mockUsers
       const assignedUser = mockUsers.find(user => user.name === task.assignedTo);
       
       setTaskData({
+        id: task.id,
         title: task.title,
         description: task.description,
         deadline: task.deadline,
-        priority: task.priority,
-        assignedTo: assignedUser || null,
-        status: task.status
+        priority: task.priority || 'medium',
+        status: task.status || 'Todo',
+        assignedTo: assignedUser ? assignedUser.name : task.assignedTo,
+        comments: task.comments || []
       });
       setError('');
       setSearchTerm('');
       setIsDropdownOpen(false);
     }
-  }, [task]);
+  }, [task, isOpen]);
 
   // Handle click outside dropdown
   useEffect(() => {
@@ -76,17 +78,21 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    onSave({
+    // Submit the updated task data while preserving the original task's data
+    onSubmit({
+      ...task,
       ...taskData,
-      id: task.id, // Preserve the task ID
-      assignedTo: taskData.assignedTo ? taskData.assignedTo.name : ''
+      id: task.id,
+      comments: task.comments || []
     });
+    
+    onClose();
   };
 
   const handleUserSelect = (user) => {
     setTaskData(prev => ({
       ...prev,
-      assignedTo: user
+      assignedTo: user.name
     }));
     setSearchTerm('');
     setIsDropdownOpen(false);
@@ -95,11 +101,11 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
   const handleUserRemove = () => {
     setTaskData(prev => ({
       ...prev,
-      assignedTo: null
+      assignedTo: ''
     }));
   };
 
-  if (!task) return null;
+  if (!isOpen || !task) return null;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -154,7 +160,7 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
                 id="title"
                 required
                 value={taskData.title}
-                onChange={(e) => setTaskData({ ...taskData, title: e.target.value })}
+                onChange={(e) => setTaskData(prev => ({ ...prev, title: e.target.value }))}
                 className={`w-full rounded-lg border ${
                   darkMode
                     ? 'bg-gray-700 border-gray-600 text-white'
@@ -175,7 +181,7 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
                 id="description"
                 required
                 value={taskData.description}
-                onChange={(e) => setTaskData({ ...taskData, description: e.target.value })}
+                onChange={(e) => setTaskData(prev => ({ ...prev, description: e.target.value }))}
                 rows="3"
                 className={`w-full rounded-lg border ${
                   darkMode
@@ -184,6 +190,54 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
                 } p-2.5 focus:ring-2 focus:ring-blue-500`}
                 placeholder="Enter task description"
               />
+            </div>
+
+            {/* Status Input */}
+            <div>
+              <label htmlFor="status" className={`block text-sm font-medium mb-1 ${
+                darkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                Status *
+              </label>
+              <select
+                id="status"
+                required
+                value={taskData.status}
+                onChange={(e) => setTaskData(prev => ({ ...prev, status: e.target.value }))}
+                className={`w-full rounded-lg border ${
+                  darkMode
+                    ? 'bg-gray-700 border-gray-600 text-white'
+                    : 'bg-white border-gray-300 text-gray-900'
+                } p-2.5 focus:ring-2 focus:ring-blue-500`}
+              >
+                <option value="Todo">Todo</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+              </select>
+            </div>
+
+            {/* Priority Input */}
+            <div>
+              <label htmlFor="priority" className={`block text-sm font-medium mb-1 ${
+                darkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                Priority *
+              </label>
+              <select
+                id="priority"
+                required
+                value={taskData.priority}
+                onChange={(e) => setTaskData(prev => ({ ...prev, priority: e.target.value }))}
+                className={`w-full rounded-lg border ${
+                  darkMode
+                    ? 'bg-gray-700 border-gray-600 text-white'
+                    : 'bg-white border-gray-300 text-gray-900'
+                } p-2.5 focus:ring-2 focus:ring-blue-500`}
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
             </div>
 
             {/* Deadline Input */}
@@ -197,11 +251,9 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
                 type="date"
                 id="deadline"
                 required
+                min={minDate}
                 value={taskData.deadline}
-                onChange={(e) => {
-                  setTaskData({ ...taskData, deadline: e.target.value });
-                  setError(''); // Clear error when date is changed
-                }}
+                onChange={(e) => setTaskData(prev => ({ ...prev, deadline: e.target.value }))}
                 className={`w-full rounded-lg border ${
                   darkMode
                     ? 'bg-gray-700 border-gray-600 text-white'
@@ -210,150 +262,99 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
               />
             </div>
 
-            {/* Priority Select */}
-            <div>
-              <label htmlFor="priority" className={`block text-sm font-medium mb-1 ${
-                darkMode ? 'text-gray-300' : 'text-gray-700'
-              }`}>
-                Priority *
-              </label>
-              <select
-                id="priority"
-                required
-                value={taskData.priority}
-                onChange={(e) => setTaskData({ ...taskData, priority: e.target.value })}
-                className={`w-full rounded-lg border ${
-                  darkMode
-                    ? 'bg-gray-700 border-gray-600 text-white'
-                    : 'bg-white border-gray-300 text-gray-900'
-                } p-2.5 focus:ring-2 focus:ring-blue-500`}
-              >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-              </select>
-            </div>
-
-            {/* Status Select */}
-            <div>
-              <label htmlFor="status" className={`block text-sm font-medium mb-1 ${
-                darkMode ? 'text-gray-300' : 'text-gray-700'
-              }`}>
-                Status *
-              </label>
-              <select
-                id="status"
-                required
-                value={taskData.status}
-                onChange={(e) => setTaskData({ ...taskData, status: e.target.value })}
-                className={`w-full rounded-lg border ${
-                  darkMode
-                    ? 'bg-gray-700 border-gray-600 text-white'
-                    : 'bg-white border-gray-300 text-gray-900'
-                } p-2.5 focus:ring-2 focus:ring-blue-500`}
-              >
-                <option value="Todo">Todo</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Completed">Completed</option>
-              </select>
-            </div>
-
-            {/* Assigned To */}
+            {/* Assigned To Input */}
             <div className="relative" ref={dropdownRef}>
               <label className={`block text-sm font-medium mb-1 ${
                 darkMode ? 'text-gray-300' : 'text-gray-700'
               }`}>
-                Assigned To
+                Assigned To *
               </label>
-              
-              {taskData.assignedTo ? (
-                <div className={`flex items-center justify-between p-2.5 rounded-lg border ${
-                  darkMode
-                    ? 'bg-gray-700 border-gray-600 text-white'
-                    : 'bg-white border-gray-300 text-gray-900'
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setIsDropdownOpen(true);
+                  }}
+                  onClick={() => setIsDropdownOpen(true)}
+                  placeholder={taskData.assignedTo || "Search users..."}
+                  className={`w-full rounded-lg border ${
+                    darkMode
+                      ? 'bg-gray-700 border-gray-600 text-white'
+                      : 'bg-white border-gray-300 text-gray-900'
+                  } p-2.5 pr-10 focus:ring-2 focus:ring-blue-500`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className={`absolute inset-y-0 right-0 flex items-center px-2 ${
+                    darkMode ? 'text-gray-400' : 'text-gray-500'
+                  }`}
+                >
+                  <ChevronDown className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Selected User */}
+              {taskData.assignedTo && (
+                <div className={`mt-2 p-2 rounded-lg flex items-center justify-between ${
+                  darkMode ? 'bg-gray-700' : 'bg-gray-100'
                 }`}>
                   <div className="flex items-center gap-2">
-                    <UserCheck className="w-5 h-5" />
-                    <div>
-                      <p className="font-medium">{taskData.assignedTo.name}</p>
-                      <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                        {taskData.assignedTo.role}
-                      </p>
-                    </div>
+                    <UserCheck className={`w-5 h-5 ${
+                      darkMode ? 'text-green-400' : 'text-green-600'
+                    }`} />
+                    <span className={darkMode ? 'text-white' : 'text-gray-900'}>
+                      {taskData.assignedTo}
+                    </span>
                   </div>
                   <button
                     type="button"
                     onClick={handleUserRemove}
-                    className={`p-1 rounded-full hover:bg-opacity-80 ${
-                      darkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-100'
+                    className={`p-1 rounded-full ${
+                      darkMode
+                        ? 'hover:bg-gray-600 text-gray-400'
+                        : 'hover:bg-gray-200 text-gray-600'
                     }`}
                   >
-                    <X className="w-5 h-5" />
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
-              ) : (
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className={`w-full flex items-center justify-between p-2.5 rounded-lg border ${
-                      darkMode
-                        ? 'bg-gray-700 border-gray-600 text-white'
-                        : 'bg-white border-gray-300 text-gray-900'
-                    }`}
-                  >
-                    <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
-                      Select team member
-                    </span>
-                    <ChevronDown className="w-5 h-5" />
-                  </button>
+              )}
 
-                  {isDropdownOpen && (
-                    <div className={`absolute z-10 w-full mt-1 rounded-lg border shadow-lg ${
-                      darkMode
-                        ? 'bg-gray-700 border-gray-600'
-                        : 'bg-white border-gray-200'
-                    }`}>
-                      <div className="p-2">
-                        <div className="relative">
-                          <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
-                            darkMode ? 'text-gray-400' : 'text-gray-500'
-                          }`} />
-                          <input
-                            type="text"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Search team members..."
-                            className={`w-full pl-9 pr-3 py-2 rounded-md border ${
-                              darkMode
-                                ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400'
-                                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                            }`}
-                          />
+              {/* Dropdown */}
+              {isDropdownOpen && (
+                <div className={`absolute z-10 mt-1 w-full rounded-lg shadow-lg ${
+                  darkMode ? 'bg-gray-700' : 'bg-white'
+                } border ${
+                  darkMode ? 'border-gray-600' : 'border-gray-200'
+                }`}>
+                  {filteredUsers.length > 0 ? (
+                    filteredUsers.map(user => (
+                      <button
+                        key={user.id}
+                        type="button"
+                        onClick={() => handleUserSelect(user)}
+                        className={`w-full text-left px-4 py-2 first:rounded-t-lg last:rounded-b-lg ${
+                          darkMode
+                            ? 'hover:bg-gray-600 text-gray-200'
+                            : 'hover:bg-gray-100 text-gray-900'
+                        }`}
+                      >
+                        <div className="font-medium">{user.name}</div>
+                        <div className={`text-sm ${
+                          darkMode ? 'text-gray-400' : 'text-gray-500'
+                        }`}>
+                          {user.role}
                         </div>
-                      </div>
-                      <div className="max-h-60 overflow-y-auto">
-                        {filteredUsers.map(user => (
-                          <button
-                            key={user.id}
-                            type="button"
-                            onClick={() => handleUserSelect(user)}
-                            className={`w-full flex items-center gap-2 px-4 py-2 text-left hover:bg-opacity-80 ${
-                              darkMode
-                                ? 'hover:bg-gray-600 text-white'
-                                : 'hover:bg-gray-100 text-gray-900'
-                            }`}
-                          >
-                            <UserCheck className="w-5 h-5" />
-                            <div>
-                              <p className="font-medium">{user.name}</p>
-                              <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                {user.role}
-                              </p>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
+                      </button>
+                    ))
+                  ) : (
+                    <div className={`px-4 py-2 text-sm ${
+                      darkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}>
+                      No users found
                     </div>
                   )}
                 </div>
@@ -365,20 +366,20 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
               <button
                 type="button"
                 onClick={onClose}
-                className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-lg ${
                   darkMode
-                    ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
-                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                    ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                 }`}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className={`px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors ${
+                className={`px-4 py-2 rounded-lg ${
                   darkMode
-                    ? 'bg-blue-600 hover:bg-blue-700'
-                    : 'bg-blue-500 hover:bg-blue-600'
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                    : 'bg-blue-500 hover:bg-blue-600 text-white'
                 }`}
               >
                 Save Changes

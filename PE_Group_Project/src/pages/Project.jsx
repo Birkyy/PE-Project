@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
-import { File, Download, ExternalLink, Calendar, Users, Clock, AlertCircle, Plus, ListTodo, Edit, Trash2, Search, MoveRight, ChevronRight, ChevronLeft, User, Eye } from 'lucide-react';
+import { File, Download, ExternalLink, Calendar, Users, Clock, AlertCircle, Plus, ListTodo, Edit, Trash2, Search, MoveRight, ChevronRight, ChevronLeft, User, Eye, ArrowLeft } from 'lucide-react';
 import Layout from '../components/Layout';
 import AddTaskModal from './AddTaskModal';
 import EditTaskModal from './EditTaskModal';
 import ViewTaskModal from './ViewTaskModal';
+import EditProjectModal from './EditProjectModal';
 
 const statusList = [
   { key: 'Todo', color: 'blue' },
@@ -23,11 +24,13 @@ const isTaskOverdue = (task) => {
 function Project() {
     const { darkMode } = useTheme();
     const { id } = useParams();
+    const navigate = useNavigate();
     const [project, setProject] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+    const [isEditProjectModalOpen, setIsEditProjectModalOpen] = useState(false);
     const [selectedTask, setSelectedTask] = useState(null);
     const [tasks, setTasks] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
@@ -84,7 +87,13 @@ function Project() {
     const handleEditTask = (updatedTask) => {
         setTasks(prevTasks =>
             prevTasks.map(task =>
-                task.id === updatedTask.id ? updatedTask : task
+                task.id === updatedTask.id ? {
+                    ...task,
+                    ...updatedTask,
+                    status: updatedTask.status || task.status,
+                    priority: updatedTask.priority || task.priority,
+                    comments: task.comments || [] // Preserve comments
+                } : task
             )
         );
         setIsEditModalOpen(false);
@@ -158,6 +167,25 @@ function Project() {
 
     const handleDownload = (file) => {
         window.open(file.url, '_blank');
+    };
+
+    const handleEditProject = (updatedProject) => {
+        // Here you would typically make an API call to update the project
+        setProject(prev => ({
+            ...prev,
+            name: updatedProject.projectName,
+            description: updatedProject.description,
+            status: updatedProject.status,
+            priority: updatedProject.priorityLevel,
+            dueDate: updatedProject.date,
+            attachments: updatedProject.files
+        }));
+        setIsEditProjectModalOpen(false);
+    };
+
+    // Add navigation handler
+    const handleBack = () => {
+        navigate('/my-projects');
     };
 
     const renderTaskCard = (task) => {
@@ -279,15 +307,51 @@ function Project() {
         <Layout>
             <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
                 <div className="px-4 py-6 sm:px-0">
+                    {/* Back button and Project Title */}
+                    <div className="flex items-center gap-4 mb-6">
+                        <button
+                            onClick={handleBack}
+                            className={`p-2 rounded-full transition-colors duration-200 ${
+                                darkMode 
+                                    ? 'hover:bg-gray-700 text-gray-400 hover:text-purple-400' 
+                                    : 'hover:bg-gray-100 text-gray-600 hover:text-purple-600'
+                            }`}
+                            title="Back to Projects"
+                        >
+                            <ArrowLeft className="w-6 h-6" />
+                        </button>
+                        <div className="flex-1">
+                            <h1 className={`text-3xl font-extrabold ${
+                                darkMode 
+                                    ? 'bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent' 
+                                    : 'text-gray-900'
+                            }`}>
+                                {project.name}
+                            </h1>
+                        </div>
+                    </div>
+
                     {/* Project Header */}
                     <div className="mb-8">
                         <div className="flex justify-between items-start mb-4">
                             <div>
-                                <h1 className={`text-3xl font-bold mb-4 ${
-                                    darkMode ? 'text-white' : 'text-gray-900'
-                                }`}>
-                                    {project.name}
-                                </h1>
+                                <div className="flex items-center gap-4 mb-4">
+                                    <h1 className={`text-3xl font-bold ${
+                                        darkMode ? 'text-white' : 'text-gray-900'
+                                    }`}>
+                                        {project.name}
+                                    </h1>
+                                    <button
+                                        onClick={() => setIsEditProjectModalOpen(true)}
+                                        className={`p-2 rounded-lg ${
+                                            darkMode
+                                                ? 'hover:bg-gray-700 text-gray-400'
+                                                : 'hover:bg-gray-100 text-gray-600'
+                                        }`}
+                                    >
+                                        <Edit className="w-5 h-5" />
+                                    </button>
+                                </div>
                                 <div className="flex flex-wrap gap-3">
                                     <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(project.status)}`}>
                                         {project.status}
@@ -338,93 +402,43 @@ function Project() {
 
                     {/* Project Details Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                        {/* Description */}
+                        {/* Project Info */}
                         <div className={`p-6 rounded-lg ${
                             darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
                         } border`}>
                             <h2 className={`text-lg font-medium mb-4 ${
                                 darkMode ? 'text-white' : 'text-gray-900'
                             }`}>
-                                Description
-                            </h2>
-                            <p className={`text-sm ${
-                                darkMode ? 'text-gray-300' : 'text-gray-600'
-                            }`}>
-                                {project.description}
-                            </p>
-                        </div>
-
-                        {/* Team Members */}
-                        <div className={`p-6 rounded-lg ${
-                            darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-                        } border`}>
-                            <h2 className={`text-lg font-medium mb-4 flex items-center gap-2 ${
-                                darkMode ? 'text-white' : 'text-gray-900'
-                            }`}>
-                                <Users className="w-5 h-5" />
-                                Team Members
-                            </h2>
-                            <div className="space-y-3">
-                                {project.teamMembers.map(member => (
-                                    <div key={member.id} className={`flex items-center justify-between p-3 rounded-lg ${
-                                        darkMode ? 'bg-gray-700/50' : 'bg-gray-50'
-                                    }`}>
-                                        <div>
-                                            <p className={`text-sm font-medium ${
-                                                darkMode ? 'text-gray-200' : 'text-gray-900'
-                                            }`}>
-                                                {member.name}
-                                            </p>
-                                            <p className={`text-xs ${
-                                                darkMode ? 'text-gray-400' : 'text-gray-500'
-                                            }`}>
-                                                {member.role}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Dates */}
-                        <div className={`p-6 rounded-lg ${
-                            darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-                        } border`}>
-                            <h2 className={`text-lg font-medium mb-4 flex items-center gap-2 ${
-                                darkMode ? 'text-white' : 'text-gray-900'
-                            }`}>
-                                <Calendar className="w-5 h-5" />
-                                Timeline
+                                Project Information
                             </h2>
                             <div className="space-y-4">
                                 <div>
-                                    <p className={`text-sm font-medium ${
-                                        darkMode ? 'text-gray-400' : 'text-gray-500'
-                                    }`}>
-                                        Start Date
-                                    </p>
                                     <p className={`text-sm ${
-                                        darkMode ? 'text-gray-200' : 'text-gray-900'
+                                        darkMode ? 'text-gray-400' : 'text-gray-600'
                                     }`}>
-                                        {formatDate(project.startDate)}
+                                        {project.description}
                                     </p>
                                 </div>
-                                <div>
-                                    <p className={`text-sm font-medium ${
+                                <div className="flex items-center gap-2">
+                                    <Calendar className={`w-5 h-5 ${
                                         darkMode ? 'text-gray-400' : 'text-gray-500'
-                                    }`}>
-                                        Due Date
-                                    </p>
-                                    <p className={`text-sm ${
-                                        darkMode ? 'text-gray-200' : 'text-gray-900'
-                                    }`}>
-                                        {formatDate(project.dueDate)}
-                                    </p>
+                                    }`} />
+                                    <span className={darkMode ? 'text-gray-300' : 'text-gray-700'}>
+                                        Due: {formatDate(project.dueDate)}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Users className={`w-5 h-5 ${
+                                        darkMode ? 'text-gray-400' : 'text-gray-500'
+                                    }`} />
+                                    <span className={darkMode ? 'text-gray-300' : 'text-gray-700'}>
+                                        {project.teamMembers.length} Team Members
+                                    </span>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Attachments */}
+                        {/* Project Attachments */}
                         <div className={`p-6 rounded-lg ${
                             darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
                         } border`}>
@@ -432,65 +446,64 @@ function Project() {
                                 darkMode ? 'text-white' : 'text-gray-900'
                             }`}>
                                 <File className="w-5 h-5" />
-                                Attachments ({project.attachments.length})
+                                Attachments
                             </h2>
-                            <div className="space-y-2">
-                                {project.attachments.map(file => (
-                                    <div
-                                        key={file.id}
-                                        className={`flex items-center justify-between p-3 rounded-lg ${
-                                            darkMode 
-                                                ? 'bg-gray-700/50 hover:bg-gray-700' 
-                                                : 'bg-gray-50 hover:bg-gray-100'
-                                        } transition-colors`}
-                                    >
-                                        <div className="flex items-center space-x-3">
-                                            <File className={darkMode ? 'text-blue-400' : 'text-blue-600'} />
-                                            <div>
-                                                <p className={`text-sm font-medium ${
-                                                    darkMode ? 'text-gray-200' : 'text-gray-900'
-                                                }`}>
-                                                    {file.name}
-                                                </p>
-                                                <p className={`text-xs ${
+                            <div className="space-y-3">
+                                {project.attachments && project.attachments.length > 0 ? (
+                                    project.attachments.map(file => (
+                                        <div
+                                            key={file.id}
+                                            className={`flex items-center justify-between p-3 rounded-lg ${
+                                                darkMode ? 'bg-gray-700' : 'bg-gray-50'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <File className={`w-5 h-5 ${
                                                     darkMode ? 'text-gray-400' : 'text-gray-500'
-                                                }`}>
-                                                    {formatFileSize(file.size)}
-                                                </p>
+                                                }`} />
+                                                <div>
+                                                    <p className={`font-medium ${
+                                                        darkMode ? 'text-white' : 'text-gray-900'
+                                                    }`}>
+                                                        {file.name}
+                                                    </p>
+                                                    <p className={`text-sm ${
+                                                        darkMode ? 'text-gray-400' : 'text-gray-500'
+                                                    }`}>
+                                                        {formatFileSize(file.size)}
+                                                    </p>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <button
-                                                onClick={() => handleDownload(file)}
-                                                className={`p-2 rounded-lg transition-colors ${
-                                                    darkMode
-                                                        ? 'hover:bg-gray-600 text-gray-400 hover:text-gray-200'
-                                                        : 'hover:bg-gray-200 text-gray-600 hover:text-gray-900'
-                                                }`}
-                                                title="Download file"
-                                            >
-                                                <Download className="w-4 h-4" />
-                                            </button>
-                                            {file.url && (
-                                                <a
-                                                    href={file.url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className={`p-2 rounded-lg transition-colors ${
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => handleDownload(file)}
+                                                    className={`p-2 rounded-lg ${
                                                         darkMode
-                                                            ? 'hover:bg-gray-600 text-gray-400 hover:text-gray-200'
-                                                            : 'hover:bg-gray-200 text-gray-600 hover:text-gray-900'
+                                                            ? 'hover:bg-gray-600 text-gray-400'
+                                                            : 'hover:bg-gray-200 text-gray-600'
+                                                    }`}
+                                                    title="Download"
+                                                >
+                                                    <Download className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => window.open(file.url, '_blank')}
+                                                    className={`p-2 rounded-lg ${
+                                                        darkMode
+                                                            ? 'hover:bg-gray-600 text-gray-400'
+                                                            : 'hover:bg-gray-200 text-gray-600'
                                                     }`}
                                                     title="Open in new tab"
                                                 >
                                                     <ExternalLink className="w-4 h-4" />
-                                                </a>
-                                            )}
+                                                </button>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
-                                {project.attachments.length === 0 && (
-                                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                    ))
+                                ) : (
+                                    <p className={`text-center py-4 ${
+                                        darkMode ? 'text-gray-400' : 'text-gray-500'
+                                    }`}>
                                         No attachments yet
                                     </p>
                                 )}
@@ -526,7 +539,6 @@ function Project() {
                 isOpen={isAddTaskModalOpen}
                 onClose={() => setIsAddTaskModalOpen(false)}
                 onSubmit={handleCreateTask}
-                projectDeadline={project.dueDate}
             />
             {selectedTask && (
                 <>
@@ -538,7 +550,6 @@ function Project() {
                         }}
                         onSubmit={handleEditTask}
                         task={selectedTask}
-                        projectDeadline={project.dueDate}
                     />
                     <ViewTaskModal
                         task={selectedTask}
@@ -550,6 +561,12 @@ function Project() {
                     />
                 </>
             )}
+            <EditProjectModal
+                isOpen={isEditProjectModalOpen}
+                onClose={() => setIsEditProjectModalOpen(false)}
+                onSubmit={handleEditProject}
+                project={project}
+            />
         </Layout>
     );
 }
