@@ -12,5 +12,6 @@ namespace PE_Group_Project.API.Models.Domain
         public string? Nationality { get; set; }
         public string? PhoneNumber { get; set; }
         public DateTime LastLoginTime { get; set; }
+        public ICollection<UserProject> UserProjects { get; set; } = new List<UserProject>();
     }
 }

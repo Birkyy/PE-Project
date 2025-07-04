@@ -25,26 +25,25 @@ namespace PE_Group_Project.API.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetUsers()
+        [Route("{id:guid}")]
+        public IActionResult GetUserById([FromRoute] Guid id)
         {
-            var users = _context.Users.ToList();
-            var usersDTO = new List<UserDTO>();
-            foreach (var user in users)
+            var user = _context.Users.FirstOrDefault(u => u.UserId == id);
+            if (user == null)
             {
-                usersDTO.Add(
-                    new UserDTO
-                    {
-                        Username = user.Username,
-                        Email = user.Email,
-                        Role = user.Role,
-                        Age = user.Age,
-                        Gender = user.Gender,
-                        Nationality = user.Nationality,
-                        PhoneNumber = user.PhoneNumber,
-                    }
-                );
+                return NotFound();
             }
-            return Ok(usersDTO);
+            var userDTO = new UserDTO
+            {
+                Username = user.Username,
+                Email = user.Email,
+                Role = user.Role,
+                Age = user.Age,
+                Gender = user.Gender,
+                Nationality = user.Nationality,
+                PhoneNumber = user.PhoneNumber,
+            };
+            return Ok(userDTO);
         }
 
         [HttpGet]
@@ -119,9 +118,8 @@ namespace PE_Group_Project.API.Controllers
             };
 
             _context.Users.Add(user);
-            //_context.SaveChanges();
+            _context.SaveChanges();
 
-            // Return user DTO (without password) instead of full user object
             var userDTO = new UserDTO
             {
                 UserId = user.UserId,
@@ -176,9 +174,9 @@ namespace PE_Group_Project.API.Controllers
         }
 
         [HttpPut]
-        [Route("{email}")]
+        [Route("{id:guid}")]
         public IActionResult UpdateUser(
-            [FromRoute] string email,
+            [FromRoute] Guid id,
             [FromBody] UpdateUserRequestDTO updateUserRequestDTO
         )
         {
@@ -187,14 +185,13 @@ namespace PE_Group_Project.API.Controllers
                 return BadRequest("Invalid user data.");
             }
 
-            var user = _context.Users.FirstOrDefault(u => u.Email == email);
+            var user = _context.Users.FirstOrDefault(u => u.UserId == id);
             if (user == null)
             {
                 return NotFound("User not found.");
             }
 
-            // Check if the new email already exists (only if email is being changed)
-            if (updateUserRequestDTO.Email != email)
+            if (updateUserRequestDTO.Email != user.Email)
             {
                 var existingUser = _context.Users.FirstOrDefault(u =>
                     u.Email == updateUserRequestDTO.Email
@@ -202,6 +199,17 @@ namespace PE_Group_Project.API.Controllers
                 if (existingUser != null)
                 {
                     return BadRequest("A user with this email already exists.");
+                }
+            }
+
+            if (updateUserRequestDTO.Username != user.Username)
+            {
+                var existingUser = _context.Users.FirstOrDefault(u =>
+                    u.Username == updateUserRequestDTO.Username
+                );
+                if (existingUser != null)
+                {
+                    return BadRequest("A user with this username already exists.");
                 }
             }
 

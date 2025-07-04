@@ -8,6 +8,6 @@ namespace PE_Group_Project.API.Models.Domain
         public required string Status { get; set; }
         public required string PriorityLevel { get; set; }
         public required Guid ProjectManagerInCharge { get; set; }
-        public required List<Guid> Contributors { get; set; }
+        public ICollection<UserProject> Contributors { get; set; } = new List<UserProject>();
     }
 }
