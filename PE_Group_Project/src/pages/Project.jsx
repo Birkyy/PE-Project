@@ -26,7 +26,78 @@ function Project() {
     const { id } = useParams();
     const navigate = useNavigate();
     const [project, setProject] = useState(null);
-    const [tasks, setTasks] = useState([]);
+    const [tasks, setTasks] = useState([
+        {
+            id: 1,
+            title: "Design UI Components",
+            description: "Create reusable UI components for the project dashboard",
+            status: "In Progress",
+            priority: "high",
+            assignedTo: "John Doe",
+            deadline: "2024-12-20",
+            comments: [
+                {
+                    id: 1,
+                    author: "John Doe",
+                    text: "Working on the component structure",
+                    timestamp: "2024-12-10T10:30:00Z"
+                }
+            ],
+            attachments: [
+                {
+                    id: 1,
+                    name: "Component_Designs.pdf",
+                    size: 2048576,
+                    type: "application/pdf",
+                    url: "#"
+                },
+                {
+                    id: 2,
+                    name: "Wireframes.png",
+                    size: 1024000,
+                    type: "image/png", 
+                    url: "#"
+                }
+            ]
+        },
+        {
+            id: 2,
+            title: "Database Schema",
+            description: "Design and implement the database schema for user management",
+            status: "Todo",
+            priority: "medium",
+            assignedTo: "Jane Smith",
+            deadline: "2024-12-25",
+            comments: [],
+            attachments: [
+                {
+                    id: 3,
+                    name: "Schema_Draft.sql",
+                    size: 15360,
+                    type: "text/sql",
+                    url: "#"
+                }
+            ]
+        },
+        {
+            id: 3,
+            title: "API Integration",
+            description: "Integrate third-party APIs for authentication and notifications",
+            status: "Completed",
+            priority: "low",
+            assignedTo: "John Doe", 
+            deadline: "2024-12-15",
+            comments: [
+                {
+                    id: 2,
+                    author: "Jane Smith",
+                    text: "API documentation looks good",
+                    timestamp: "2024-12-08T14:15:00Z"
+                }
+            ],
+            attachments: []
+        }
+    ]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     
@@ -81,7 +152,8 @@ function Project() {
             id: Date.now(),
             ...taskData,
             status: 'Todo',
-            comments: []
+            comments: [],
+            attachments: taskData.attachments || []
         };
         setTasks([...tasks, newTask]);
         setIsAddTaskModalOpen(false);
@@ -95,7 +167,8 @@ function Project() {
                     ...updatedTask,
                     status: updatedTask.status || task.status,
                     priority: updatedTask.priority || task.priority,
-                    comments: task.comments || [] // Preserve comments
+                    comments: task.comments || [], // Preserve comments
+                    attachments: updatedTask.attachments || task.attachments || [] // Preserve attachments
                 } : task
             )
         );
@@ -558,6 +631,10 @@ function Project() {
                 onClose={() => {
                     setIsViewModalOpen(false);
                     setViewTask(null);
+                }}
+                onAddComment={(commentText) => {
+                    // Add comment handler - you can implement this based on your needs
+                    console.log('Adding comment:', commentText);
                 }}
             />
             <EditProjectModal
