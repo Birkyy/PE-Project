@@ -6,10 +6,7 @@ namespace PE_Group_Project.API.Data
     public class AppDBContext(DbContextOptions options) : DbContext(options)
     {
         public DbSet<User> Users { get; set; }
-<<<<<<< Updated upstream
         public DbSet<Project> Projects { get; set; }
-=======
-        public DbSet<User> Project { get; set; }
->>>>>>> Stashed changes
+        public DbSet<ProjectTask> ProjectTasks { get; set; }
     }
 }

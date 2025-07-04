@@ -21,10 +21,11 @@ namespace PE_Group_Project.API.Controllers
             {
                 projectsDTO.Add(new ProjectDTO
                 {
-                    Id = project.Id,
+                    ProjectId = project.ProjectId,
                     ProjectName = project.ProjectName,
                     Date = project.Date,
                     Status = project.Status,
+                    PriorityLevel = project.PriorityLevel,
                     ProjectManagerInCharge = project.ProjectManagerInCharge,
                     Contributors = project.Contributors
                 });
@@ -37,7 +38,7 @@ namespace PE_Group_Project.API.Controllers
         [Route("{id:guid}")]
         public IActionResult GetProjectById([FromRoute] Guid id)
         {
-            var project = _context.Projects.FirstOrDefault(p => p.Id == id);
+            var project = _context.Projects.FirstOrDefault(p => p.ProjectId == id);
 
             if (project == null)
             {
@@ -46,10 +47,11 @@ namespace PE_Group_Project.API.Controllers
 
             var projectDTO = new ProjectDTO
             {
-                Id = project.Id,
+                ProjectId = project.ProjectId,
                 ProjectName = project.ProjectName,
                 Date = project.Date,
                 Status = project.Status,
+                PriorityLevel = project.PriorityLevel,
                 ProjectManagerInCharge = project.ProjectManagerInCharge,
                 Contributors = project.Contributors
             };
@@ -67,10 +69,11 @@ namespace PE_Group_Project.API.Controllers
 
             var project = new Project
             {
-                Id = createProjectRequestDTO.Id != Guid.Empty ? createProjectRequestDTO.Id : Guid.NewGuid(),
+                ProjectId = createProjectRequestDTO.ProjectId != Guid.Empty ? createProjectRequestDTO.ProjectId : Guid.NewGuid(),
                 ProjectName = createProjectRequestDTO.ProjectName,
                 Date = createProjectRequestDTO.Date,
                 Status = createProjectRequestDTO.Status,
+                PriorityLevel = createProjectRequestDTO.PriorityLevel,
                 ProjectManagerInCharge = createProjectRequestDTO.ProjectManagerInCharge,
                 Contributors = createProjectRequestDTO.Contributors
             };
@@ -78,30 +81,31 @@ namespace PE_Group_Project.API.Controllers
             _context.Projects.Add(project);
             _context.SaveChanges();
 
-            return CreatedAtAction(nameof(GetProjectById), new { id = project.Id }, project);
+            return CreatedAtAction(nameof(GetProjectById), new { id = project.ProjectId }, project);
         }
 
         [HttpPut]
         [Route("{id:guid}")]
         public IActionResult UpdateProjectById([FromRoute] Guid id, [FromBody] UpdateProjectRequestDTO updateProjectRequestDTO)
         {
-            var project = _context.Projects.FirstOrDefault(p => p.Id == id);
+            var project = _context.Projects.FirstOrDefault(p => p.ProjectId == id);
 
             if (project == null)
             {
                 return NotFound();
             }
 
-            // Optionally, ensure the DTO Id matches the route Id
-            if (updateProjectRequestDTO.Id != Guid.Empty && updateProjectRequestDTO.Id != id)
+            // Optionally, ensure the DTO ProjectId matches the route Id
+            if (updateProjectRequestDTO.ProjectId != Guid.Empty && updateProjectRequestDTO.ProjectId != id)
             {
-                return BadRequest("Id in body does not match Id in route.");
+                return BadRequest("ProjectId in body does not match ProjectId in route.");
             }
 
             // Update properties
             project.ProjectName = updateProjectRequestDTO.ProjectName;
             project.Date = updateProjectRequestDTO.Date;
             project.Status = updateProjectRequestDTO.Status;
+            project.PriorityLevel = updateProjectRequestDTO.PriorityLevel;
             project.ProjectManagerInCharge = updateProjectRequestDTO.ProjectManagerInCharge;
             project.Contributors = updateProjectRequestDTO.Contributors;
             _context.SaveChanges();
@@ -113,7 +117,7 @@ namespace PE_Group_Project.API.Controllers
         [Route("{id:guid}")]
         public IActionResult DeleteProjectById([FromRoute] Guid id)
         {
-            var project = _context.Projects.FirstOrDefault(p => p.Id == id);
+            var project = _context.Projects.FirstOrDefault(p => p.ProjectId == id);
 
             if (project == null)
             {
