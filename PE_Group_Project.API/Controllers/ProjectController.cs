@@ -19,16 +19,18 @@ namespace PE_Group_Project.API.Controllers
 
             foreach (var project in projects)
             {
-                projectsDTO.Add(new ProjectDTO
-                {
-                    ProjectId = project.ProjectId,
-                    ProjectName = project.ProjectName,
-                    Date = project.Date,
-                    Status = project.Status,
-                    PriorityLevel = project.PriorityLevel,
-                    ProjectManagerInCharge = project.ProjectManagerInCharge,
-                    Contributors = project.Contributors
-                });
+                projectsDTO.Add(
+                    new ProjectDTO
+                    {
+                        ProjectId = project.ProjectId,
+                        ProjectName = project.ProjectName,
+                        Date = project.Date,
+                        Status = project.Status,
+                        PriorityLevel = project.PriorityLevel,
+                        ProjectManagerInCharge = project.ProjectManagerInCharge,
+                        Contributors = project.Contributors,
+                    }
+                );
             }
 
             return Ok(projectsDTO);
@@ -69,7 +71,10 @@ namespace PE_Group_Project.API.Controllers
 
             var project = new Project
             {
-                ProjectId = createProjectRequestDTO.ProjectId != Guid.Empty ? createProjectRequestDTO.ProjectId : Guid.NewGuid(),
+                ProjectId =
+                    createProjectRequestDTO.ProjectId != Guid.Empty
+                        ? createProjectRequestDTO.ProjectId
+                        : Guid.NewGuid(),
                 ProjectName = createProjectRequestDTO.ProjectName,
                 Date = createProjectRequestDTO.Date,
                 Status = createProjectRequestDTO.Status,
@@ -99,7 +104,10 @@ namespace PE_Group_Project.API.Controllers
             }
 
             // Optionally, ensure the DTO ProjectId matches the route Id
-            if (updateProjectRequestDTO.ProjectId != Guid.Empty && updateProjectRequestDTO.ProjectId != id)
+            if (
+                updateProjectRequestDTO.ProjectId != Guid.Empty
+                && updateProjectRequestDTO.ProjectId != id
+            )
             {
                 return BadRequest("ProjectId in body does not match ProjectId in route.");
             }
