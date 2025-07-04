@@ -9,7 +9,6 @@ import {
   TrendingUp, 
   Users, 
   Target,
-  Activity,
   BarChart3,
   PieChart
 } from 'lucide-react';
@@ -83,22 +82,7 @@ const Dashboard = () => {
     { id: 6, title: 'Update Documentation', project: 'API Service', due: '2024-12-17', priority: 'medium' }
   ];
 
-  const notifications = [
-    { id: 1, name: 'User Authentication Module', type: 'task', status: 'Completed', time: '2 hours ago' },
-    { id: 2, name: 'Project Beta', type: 'project', status: 'In Progress', time: '4 hours ago' },
-    { id: 3, name: 'Frontend Testing', type: 'task', status: 'Todo', time: '1 day ago' },
-    { id: 4, name: 'Database Optimization Task', type: 'task', status: 'Overdue', time: '2 days ago' }
-  ];
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Completed': return 'text-green-400';
-      case 'In Progress': return 'text-yellow-400';
-      case 'Todo': return 'text-blue-400';
-      case 'Overdue': return 'text-red-400';
-      default: return 'text-gray-400';
-    }
-  };
 
   return (
     <Layout>
@@ -159,9 +143,9 @@ const Dashboard = () => {
         </div>
 
         {/* Main Dashboard Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-          {/* Personal Dashboard */}
-          <div className="lg:col-span-2 space-y-6">
+        <div className="grid grid-cols-1 gap-8 mb-8">
+          {/* Tasks Section - Side by Side */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Upcoming Tasks */}
             <div className={`${darkMode ? 'bg-gray-800 border-purple-500/30' : 'bg-white border-purple-300'} border rounded-lg p-6`}>
               <div className="flex items-center justify-between mb-4">
@@ -187,17 +171,17 @@ const Dashboard = () => {
             </div>
 
             {/* Overdue Tasks */}
-            {overdueTasks.length > 0 && (
-              <div className={`${darkMode ? 'bg-gray-800 border-red-500/30' : 'bg-white border-red-300'} border rounded-lg p-6`}>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className={`text-lg font-semibold flex items-center ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                    <AlertTriangle className="w-5 h-5 mr-2 text-red-400" />
-                    Overdue Tasks
-                  </h3>
-                  <span className="text-sm text-red-400">{overdueTasks.length} overdue</span>
-                </div>
-                <div className="space-y-3">
-                  {overdueTasks.map((task) => (
+            <div className={`${darkMode ? 'bg-gray-800 border-red-500/30' : 'bg-white border-red-300'} border rounded-lg p-6`}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className={`text-lg font-semibold flex items-center ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  <AlertTriangle className="w-5 h-5 mr-2 text-red-400" />
+                  Overdue Tasks
+                </h3>
+                <span className="text-sm text-red-400">{overdueTasks.length} overdue</span>
+              </div>
+              <div className="space-y-3">
+                {overdueTasks.length > 0 ? (
+                  overdueTasks.map((task) => (
                     <div key={task.id} className={`flex items-center justify-between p-3 rounded-lg border ${darkMode ? 'bg-red-900/20 border-red-500/30' : 'bg-red-50 border-red-200'}`}>
                       <div className="flex-1">
                         <h4 className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{task.title}</h4>
@@ -207,36 +191,22 @@ const Dashboard = () => {
                         <span className="text-red-400 text-sm">Due: {task.due}</span>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  ))
+                ) : (
+                  <div className={`text-center py-8 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    <AlertTriangle className="w-12 h-12 mx-auto mb-3 text-gray-400 opacity-50" />
+                    <p>No overdue tasks</p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-
-          {/* Notifications List */}
-          <div className={`${darkMode ? 'bg-gray-800 border-cyan-500/30' : 'bg-white border-cyan-300'} border rounded-lg p-6`}>
-            <h3 className={`text-lg font-semibold flex items-center mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-              <Activity className="w-5 h-5 mr-2 text-cyan-400" />
-              Notifications
-            </h3>
-            <div className="space-y-4">
-              {notifications.map((note) => (
-                <div key={note.id} className="flex items-start space-x-3">
-                  <div className="flex-shrink-0 mt-1">
-                    <span className={`font-bold ${getStatusColor(note.status)}`}>{note.status}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>{note.name}</p>
-                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{note.time}</p>
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
+
+
         </div>
 
         {/* Visual Analytics */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Weekly Progress Chart */}
           <div className={`${darkMode ? 'bg-gray-800 border-purple-500/30' : 'bg-white border-purple-300'} border rounded-lg p-6`}>
             <h3 className={`text-lg font-semibold flex items-center mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -319,31 +289,31 @@ const Dashboard = () => {
               ))}
             </div>
           </div>
-        </div>
 
-        {/* Task Completion Trends */}
-        <div className={`${darkMode ? 'bg-gray-800 border-pink-500/30' : 'bg-white border-pink-300'} border rounded-lg p-6`}>
-          <h3 className={`text-lg font-semibold flex items-center mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-            <TrendingUp className="w-5 h-5 mr-2 text-pink-400" />
-            Task Completion Trends
-          </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={taskProgressData}>
-              <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#374151" : "#E5E7EB"} />
-              <XAxis dataKey="name" stroke={darkMode ? "#9CA3AF" : "#6B7280"} />
-              <YAxis stroke={darkMode ? "#9CA3AF" : "#6B7280"} />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: darkMode ? '#1F2937' : '#FFFFFF', 
-                  border: darkMode ? '1px solid #6B7280' : '1px solid #D1D5DB', 
-                  borderRadius: '8px',
-                  color: darkMode ? '#F3F4F6' : '#111827'
-                }} 
-              />
-              <Bar dataKey="completed" stackId="a" fill="#06B6D4" name="Completed" />
-              <Bar dataKey="pending" stackId="a" fill="#EC4899" name="Pending" />
-            </BarChart>
-          </ResponsiveContainer>
+          {/* Task Completion Trends */}
+          <div className={`${darkMode ? 'bg-gray-800 border-pink-500/30' : 'bg-white border-pink-300'} border rounded-lg p-6`}>
+            <h3 className={`text-lg font-semibold flex items-center mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+              <TrendingUp className="w-5 h-5 mr-2 text-pink-400" />
+              Task Completion Trends
+            </h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={taskProgressData}>
+                <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#374151" : "#E5E7EB"} />
+                <XAxis dataKey="name" stroke={darkMode ? "#9CA3AF" : "#6B7280"} />
+                <YAxis stroke={darkMode ? "#9CA3AF" : "#6B7280"} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: darkMode ? '#1F2937' : '#FFFFFF', 
+                    border: darkMode ? '1px solid #6B7280' : '1px solid #D1D5DB', 
+                    borderRadius: '8px',
+                    color: darkMode ? '#F3F4F6' : '#111827'
+                  }} 
+                />
+                <Bar dataKey="completed" stackId="a" fill="#06B6D4" name="Completed" />
+                <Bar dataKey="pending" stackId="a" fill="#EC4899" name="Pending" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
     </Layout>
