@@ -1,3 +1,5 @@
+using PE_Group_Project.API.Models.Domain;
+
 namespace PE_Group_Project.API.Models.DTO
 {
     public class UserDTO

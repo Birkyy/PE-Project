@@ -1,0 +1,374 @@
+import { useState, useEffect } from 'react';
+import { useTheme } from '../context/ThemeContext';
+import Layout from '../components/Layout';
+import { 
+  Calendar, 
+  Clock, 
+  CheckCircle2, 
+  AlertTriangle, 
+  Users, 
+  Target,
+  BarChart3,
+  PieChart
+} from 'lucide-react';
+import {
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line,
+  Area,
+  AreaChart
+} from 'recharts';
+
+const Dashboard = () => {
+  const [user, setUser] = useState(null);
+  const { darkMode } = useTheme();
+
+  useEffect(() => {
+    // Load user data
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      setUser(JSON.parse(userData));
+    }
+  }, []);
+
+  // Sample data for analytics
+
+  const projectDistributionData = [
+    { name: 'Development', value: 35, color: '#8B5CF6' },
+    { name: 'Design', value: 25, color: '#06B6D4' },
+    { name: 'Testing', value: 20, color: '#EC4899' },
+    { name: 'Documentation', value: 15, color: '#10B981' },
+    { name: 'Research', value: 5, color: '#F59E0B' }
+  ];
+
+  const weeklyProgressData = [
+    { day: 'Mon', tasks: 20 },
+    { day: 'Tue', tasks: 35 },
+    { day: 'Wed', tasks: 28 },
+    { day: 'Thu', tasks: 42 },
+    { day: 'Fri', tasks: 38 },
+    { day: 'Sat', tasks: 15 },
+    { day: 'Sun', tasks: 8 }
+  ];
+
+  const upcomingTasks = [
+    { id: 1, title: 'Complete API Integration', project: 'E-commerce App', due: '2024-12-20', priority: 'high' },
+    { id: 2, title: 'Review UI Components', project: 'Dashboard System', due: '2024-12-21', priority: 'medium' },
+    { id: 3, title: 'Database Migration', project: 'Analytics Platform', due: '2024-12-22', priority: 'high' },
+    { id: 4, title: 'User Testing Session', project: 'Mobile App', due: '2024-12-23', priority: 'low' }
+  ];
+
+  const overdueTasks = [
+    { id: 5, title: 'Fix Login Bug', project: 'Web Portal', due: '2024-12-15', priority: 'critical' },
+    { id: 6, title: 'Update Documentation', project: 'API Service', due: '2024-12-17', priority: 'medium' }
+  ];
+
+  const dailyTimeline = [
+    { id: 1, time: '09:00', title: 'Team Standup Meeting', type: 'meeting', status: 'completed', duration: '30 min' },
+    { id: 2, time: '10:30', title: 'Code Review - Authentication Module', type: 'task', status: 'completed', duration: '1 hour' },
+    { id: 3, time: '12:00', title: 'Lunch Break', type: 'break', status: 'completed', duration: '1 hour' },
+    { id: 4, time: '14:00', title: 'API Integration Testing', type: 'task', status: 'in-progress', duration: '2 hours' },
+    { id: 5, time: '16:30', title: 'Client Presentation Prep', type: 'task', status: 'upcoming', duration: '1 hour' },
+    { id: 6, time: '17:30', title: 'Sprint Planning Session', type: 'meeting', status: 'upcoming', duration: '1.5 hours' }
+  ];
+
+  const getTimelineStatusColor = (status) => {
+    switch (status) {
+      case 'completed': return 'bg-green-500';
+      case 'in-progress': return 'bg-yellow-500';
+      case 'upcoming': return 'bg-gray-400';
+      default: return 'bg-gray-400';
+    }
+  };
+
+  const getTimelineTypeIcon = (type) => {
+    switch (type) {
+      case 'meeting': return '👥';
+      case 'task': return '📋';
+      case 'break': return '☕';
+      default: return '📅';
+    }
+  };
+
+
+
+  return (
+    <Layout>
+      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        {/* Welcome Section */}
+        <div className="mb-8">
+          <h1 className={`text-3xl font-bold mb-2 ${
+            darkMode 
+              ? 'text-white'
+              : 'text-black'
+          }`}>
+            Welcome back, {user?.username || 'User'}!
+          </h1>
+          <p className={`text-lg ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Here's what's happening with your projects today.</p>
+        </div>
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className={`${darkMode ? 'bg-gray-800 border-purple-500/30' : 'bg-white border-purple-300'} border rounded-lg p-6 hover:shadow-lg ${darkMode ? 'hover:shadow-purple-500/20' : 'hover:shadow-purple-300/30'} transition-all duration-300`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Tasks</p>
+                <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>127</p>
+              </div>
+              <Target className="w-8 h-8 text-purple-400" />
+            </div>
+          </div>
+
+          <div className={`${darkMode ? 'bg-gray-800 border-cyan-500/30' : 'bg-white border-cyan-300'} border rounded-lg p-6 hover:shadow-lg ${darkMode ? 'hover:shadow-cyan-500/20' : 'hover:shadow-cyan-300/30'} transition-all duration-300`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Completed</p>
+                <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>89</p>
+              </div>
+              <CheckCircle2 className="w-8 h-8 text-cyan-400" />
+            </div>
+          </div>
+
+          <div className={`${darkMode ? 'bg-gray-800 border-yellow-500/30' : 'bg-white border-yellow-300'} border rounded-lg p-6 hover:shadow-lg ${darkMode ? 'hover:shadow-yellow-500/20' : 'hover:shadow-yellow-300/30'} transition-all duration-300`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>In Progress</p>
+                <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>32</p>
+              </div>
+              <Clock className="w-8 h-8 text-yellow-400" />
+            </div>
+          </div>
+
+          <div className={`${darkMode ? 'bg-gray-800 border-red-500/30' : 'bg-white border-red-300'} border rounded-lg p-6 hover:shadow-lg ${darkMode ? 'hover:shadow-red-500/20' : 'hover:shadow-red-300/30'} transition-all duration-300`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Overdue</p>
+                <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>6</p>
+              </div>
+              <AlertTriangle className="w-8 h-8 text-red-400" />
+            </div>
+          </div>
+        </div>
+
+        {/* Main Dashboard Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 mb-8">
+          {/* Main Content */}
+          <div className="lg:col-span-3 space-y-8">
+            {/* Tasks Section - Side by Side */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Upcoming Tasks */}
+            <div className={`${darkMode ? 'bg-gray-800 border-purple-500/30' : 'bg-white border-purple-300'} border rounded-lg p-6`}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className={`text-lg font-semibold flex items-center ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  <Calendar className="w-5 h-5 mr-2 text-purple-400" />
+                  Upcoming Tasks
+                </h3>
+                <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{upcomingTasks.length} tasks</span>
+              </div>
+              <div className="space-y-3">
+                {upcomingTasks.map((task) => (
+                  <div key={task.id} className={`flex items-center justify-between p-3 rounded-lg border ${darkMode ? 'bg-gray-700/50 border-gray-600/50' : 'bg-gray-50 border-gray-200'}`}>
+                    <div className="flex-1">
+                      <h4 className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{task.title}</h4>
+                      <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{task.project}</p>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{task.due}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Overdue Tasks */}
+            <div className={`${darkMode ? 'bg-gray-800 border-red-500/30' : 'bg-white border-red-300'} border rounded-lg p-6`}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className={`text-lg font-semibold flex items-center ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  <AlertTriangle className="w-5 h-5 mr-2 text-red-400" />
+                  Overdue Tasks
+                </h3>
+                <span className="text-sm text-red-400">{overdueTasks.length} overdue</span>
+              </div>
+              <div className="space-y-3">
+                {overdueTasks.length > 0 ? (
+                  overdueTasks.map((task) => (
+                    <div key={task.id} className={`flex items-center justify-between p-3 rounded-lg border ${darkMode ? 'bg-red-900/20 border-red-500/30' : 'bg-red-50 border-red-200'}`}>
+                      <div className="flex-1">
+                        <h4 className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{task.title}</h4>
+                        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{task.project}</p>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <span className="text-red-400 text-sm">Due: {task.due}</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className={`text-center py-8 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    <AlertTriangle className="w-12 h-12 mx-auto mb-3 text-gray-400 opacity-50" />
+                    <p>No overdue tasks</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+            {/* Visual Analytics */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Weekly Progress Chart */}
+              <div className={`${darkMode ? 'bg-gray-800 border-purple-500/30' : 'bg-white border-purple-300'} border rounded-lg p-6`}>
+                <h3 className={`text-lg font-semibold flex items-center mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  <BarChart3 className="w-5 h-5 mr-2 text-purple-400" />
+                  Weekly Task Progress
+                </h3>
+                                 <ResponsiveContainer width="100%" height={350}>
+                   <AreaChart data={weeklyProgressData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#374151" : "#E5E7EB"} />
+                    <XAxis dataKey="day" stroke={darkMode ? "#9CA3AF" : "#6B7280"} />
+                    <YAxis stroke={darkMode ? "#9CA3AF" : "#6B7280"} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: darkMode ? '#1F2937' : '#FFFFFF', 
+                        border: darkMode ? '1px solid #6B7280' : '1px solid #D1D5DB', 
+                        borderRadius: '8px',
+                        color: darkMode ? '#F3F4F6' : '#111827'
+                      }} 
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="tasks" 
+                      stroke="#8B5CF6" 
+                      fill="url(#colorGradient)" 
+                      strokeWidth={2}
+                    />
+                    <defs>
+                      <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Project Distribution */}
+              <div className={`${darkMode ? 'bg-gray-800 border-cyan-500/30' : 'bg-white border-cyan-300'} border rounded-lg p-6`}>
+                <h3 className={`text-lg font-semibold flex items-center mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  <PieChart className="w-5 h-5 mr-2 text-cyan-400" />
+                  Project Distribution
+                </h3>
+                                 <ResponsiveContainer width="100%" height={350}>
+                   <RechartsPieChart>
+                    <Pie
+                      data={projectDistributionData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {projectDistributionData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: darkMode ? '#1F2937' : '#FFFFFF', 
+                        border: darkMode ? '1px solid #6B7280' : '1px solid #D1D5DB', 
+                        borderRadius: '8px',
+                        color: darkMode ? '#F3F4F6' : '#111827'
+                      }} 
+                    />
+                  </RechartsPieChart>
+                </ResponsiveContainer>
+                <div className="mt-4 space-y-2">
+                  {projectDistributionData.map((item) => (
+                    <div key={item.name} className="flex items-center justify-between text-sm">
+                      <div className="flex items-center">
+                        <div 
+                          className="w-3 h-3 rounded-full mr-2" 
+                          style={{ backgroundColor: item.color }}
+                        ></div>
+                        <span className={`${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{item.name}</span>
+                      </div>
+                      <span className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{item.value}%</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+
+            </div>
+          </div>
+
+          {/* Right Sidebar - Daily Timeline */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-24">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className={`text-lg font-semibold flex items-center ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  <Clock className="w-5 h-5 mr-2 text-indigo-400" />
+                  Today's Timeline
+                </h3>
+              </div>
+              <div className={`text-xs mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              </div>
+              
+              <div className="relative">
+                {/* Timeline line */}
+                <div className={`absolute left-6 top-0 bottom-0 w-0.5 ${darkMode ? 'bg-gray-600' : 'bg-gray-300'}`}></div>
+                
+                {/* Timeline items */}
+                <div className="space-y-6">
+                  {dailyTimeline.map((item, index) => (
+                    <div key={item.id} className="relative flex items-start">
+                      {/* Timeline dot */}
+                      <div className={`relative z-10 w-3 h-3 rounded-full border-2 ${getTimelineStatusColor(item.status)} ${darkMode ? 'border-gray-900' : 'border-gray-50'} shadow-sm`}></div>
+                      
+                      {/* Timeline content */}
+                      <div className="ml-6 flex-1">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <span className="text-sm">{getTimelineTypeIcon(item.type)}</span>
+                          <span className={`text-xs font-medium ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                            {item.time}
+                          </span>
+                        </div>
+                        <p className={`text-sm font-medium mb-1 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                          {item.title}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            item.status === 'completed' 
+                              ? 'bg-green-100 text-green-800' 
+                              : item.status === 'in-progress'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {item.status.replace('-', ' ')}
+                          </span>
+                          <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            {item.duration}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </Layout>
+  );
+};
+
+export default Dashboard; 

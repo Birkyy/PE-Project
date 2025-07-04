@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace PE_Group_Project.API.Models.Domain
 {
     public class User

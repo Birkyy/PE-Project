@@ -24,7 +24,7 @@ const Header = ({ onToggleSidebar, darkMode }) => {
   ];
 
   return (
-    <nav className={`${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg border-b ${darkMode ? 'border-purple-500/30' : 'border-gray-200'} transition-colors duration-300`}>
+    <nav className={`sticky top-0 z-50 ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg border-b ${darkMode ? 'border-purple-500/30' : 'border-gray-200'} transition-colors duration-300`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">

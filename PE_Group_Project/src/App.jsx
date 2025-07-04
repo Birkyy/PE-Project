@@ -2,12 +2,13 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { ThemeProvider } from './context/ThemeContext';
 import Login from './components/Login';
 import Register from './components/Register';
-import Dashboard from './components/Pages/Dashboard';
-import Profile from './components/Pages/Profile';
-import MyProjects from './components/Pages/MyProjects';
-import AddProject from './components/Pages/AddProject';
-import UsersManagement from './components/Pages/UsersManagement';
+import Dashboard from './Pages/Dashboard';
+import Profile from './Pages/Profile';
+import MyProjects from './Pages/MyProjects';
+import AddProject from './pages/AddProject';
+import UsersManagement from './pages/UsersManagement';
 import ProtectedRoute from './components/ProtectedRoute';
+import MyTask from './pages/MyTask';
 
 function App() {
   return (
@@ -43,6 +44,11 @@ function App() {
             <Route path="/profile" element={
               <ProtectedRoute>
                 <Profile />
+              </ProtectedRoute>
+            } />
+            <Route path="/my-tasks/:projectName" element={
+              <ProtectedRoute>
+                <MyTask />
               </ProtectedRoute>
             } />
           </Routes>

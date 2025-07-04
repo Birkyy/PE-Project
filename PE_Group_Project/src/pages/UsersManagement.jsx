@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useTheme } from '../../context/ThemeContext';
-import Layout from '../Layout';
-import api from '../../utils/api';
+import { useTheme } from '../context/ThemeContext';
+import Layout from '../components/Layout';
+import api from '../API/api';
+import { Shield, Search, Edit2, Trash2, X, Eye, EyeOff } from 'lucide-react';
 
 const UsersManagement = () => {
   const { darkMode } = useTheme();
@@ -18,28 +19,23 @@ const UsersManagement = () => {
     username: '',
     email: '',
     password: '',
-    role: 'Project Member',
     age: '',
     gender: '',
     nationality: '',
-    phoneNumber: ''
+    phoneNumber: '',
+    role: 'User'
   });
   const [editFormData, setEditFormData] = useState({
     username: '',
     email: '',
     password: '',
-    role: 'Project Member',
     age: '',
     gender: '',
     nationality: '',
-    phoneNumber: ''
+    phoneNumber: '',
+    role: 'user'
   });
-
-  const roles = [
-    'Project Admin',
-    'Team Lead', 
-    'Project Member'
-  ];
+  const [showPassword, setShowPassword] = useState(false);
 
   // Fetch users from API
   const fetchUsers = async () => {
@@ -56,12 +52,14 @@ const UsersManagement = () => {
         name: user.username,
         username: user.username,
         email: user.email,
-        role: user.role,
         age: user.age,
         gender: user.gender,
         nationality: user.nationality,
         phoneNumber: user.phoneNumber,
-        status: 'Active' // Default status since API doesn't provide this
+        status: 'Active', // Default status since API doesn't provide this
+        role: user.role,
+        department: user.department,
+        position: user.position
       }));
       
       setUsers(transformedUsers);
@@ -77,10 +75,10 @@ const UsersManagement = () => {
       
       // Fallback to hardcoded data if API fails
       setUsers([
-        { id: 1, name: 'John Doe', email: 'john@taskio.com', role: 'Project Admin', status: 'Active' },
-        { id: 2, name: 'Jane Smith', email: 'jane@taskio.com', role: 'Project Member', status: 'Active' },
-        { id: 3, name: 'Mike Johnson', email: 'mike@taskio.com', role: 'Team Lead', status: 'Inactive' },
-        { id: 4, name: 'Sarah Wilson', email: 'sarah@taskio.com', role: 'Project Member', status: 'Active' }
+        { id: 1, name: 'John Doe', email: 'john@taskio.com', status: 'Active', role: 'user', department: 'Engineering', position: 'Software Developer' },
+        { id: 2, name: 'Jane Smith', email: 'jane@taskio.com', status: 'Active', role: 'admin', department: 'Management', position: 'Project Manager' },
+        { id: 3, name: 'Mike Johnson', status: 'Inactive', role: 'user', department: '', position: '' },
+        { id: 4, name: 'Sarah Wilson', status: 'Active', role: 'user', department: '', position: '' }
       ]);
     } finally {
       setLoading(false);
@@ -96,7 +94,9 @@ const UsersManagement = () => {
   const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.role.toLowerCase().includes(searchTerm.toLowerCase())
+    user.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.position.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleInputChange = (e) => {
@@ -123,14 +123,15 @@ const UsersManagement = () => {
 
     try {
       const response = await api.post('/user', {
-        Username: formData.username,
+        FirstName: formData.username.split(' ')[0],
+        LastName: formData.username.split(' ').slice(1).join(' '),
         Email: formData.email,
         Password: formData.password,
-        Role: formData.role,
         Age: formData.age ? parseInt(formData.age) : null,
         Gender: formData.gender || null,
         Nationality: formData.nationality || null,
-        PhoneNumber: formData.phoneNumber || null
+        PhoneNumber: formData.phoneNumber || null,
+        Role: formData.role
       });
 
       setSuccess('User created successfully!');
@@ -138,11 +139,11 @@ const UsersManagement = () => {
         username: '',
         email: '',
         password: '',
-        role: 'Project Member',
         age: '',
         gender: '',
         nationality: '',
-        phoneNumber: ''
+        phoneNumber: '',
+        role: 'User'
       });
       
       // Refresh users list
@@ -186,11 +187,11 @@ const UsersManagement = () => {
       const updateData = {
         Username: editFormData.username,
         Email: editFormData.email,
-        Role: editFormData.role,
         Age: editFormData.age ? parseInt(editFormData.age) : null,
         Gender: editFormData.gender || null,
         Nationality: editFormData.nationality || null,
-        PhoneNumber: editFormData.phoneNumber || null
+        PhoneNumber: editFormData.phoneNumber || null,
+        Role: editFormData.role || null
       };
 
       // Only include password if it's provided
@@ -249,7 +250,11 @@ const UsersManagement = () => {
       username: '',
       email: '',
       password: '',
-      role: 'Project Member'
+      age: '',
+      gender: '',
+      nationality: '',
+      phoneNumber: '',
+      role: 'User'
     });
     setError('');
     setSuccess('');
@@ -271,11 +276,11 @@ const UsersManagement = () => {
           username: userData.username || user.name,
           email: userData.email,
           password: '', // Always leave empty for security
-          role: userData.role,
           age: userData.age || '',
           gender: userData.gender || '',
           nationality: userData.nationality || '',
-          phoneNumber: userData.phoneNumber || ''
+          phoneNumber: userData.phoneNumber || '',
+          role: userData.role || 'user'
         });
       } catch (apiError) {
         // If API call fails, use the user data we already have
@@ -284,11 +289,11 @@ const UsersManagement = () => {
           username: user.name,
           email: user.email,
           password: '',
-          role: user.role,
           age: user.age || '',
           gender: user.gender || '',
           nationality: user.nationality || '',
-          phoneNumber: user.phoneNumber || ''
+          phoneNumber: user.phoneNumber || '',
+          role: user.role || 'user'
         });
       }
       
@@ -307,11 +312,11 @@ const UsersManagement = () => {
       username: '',
       email: '',
       password: '',
-      role: 'Project Member',
       age: '',
       gender: '',
       nationality: '',
-      phoneNumber: ''
+      phoneNumber: '',
+      role: 'user'
     });
     setError('');
     setSuccess('');
@@ -353,6 +358,75 @@ const UsersManagement = () => {
     setSelectedUser(null);
     setError('');
     setSuccess('');
+  };
+
+  const handleEditClick = (user) => {
+    setSelectedUser(user);
+    setEditFormData({
+      username: user.name,
+      email: user.email,
+      password: '',
+      age: user.age || '',
+      gender: user.gender || '',
+      nationality: user.nationality || '',
+      phoneNumber: user.phoneNumber || '',
+      role: user.role || 'user'
+    });
+    setShowEditModal(true);
+  };
+
+  const handleEditSubmit = (e) => {
+    e.preventDefault();
+    
+    // Validate password if it's being changed
+    if (editFormData.password) {
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+      if (!passwordRegex.test(editFormData.password)) {
+        alert('Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number and one special character');
+        return;
+      }
+    }
+
+    setUsers(users.map(user => {
+      if (user.id === selectedUser.id) {
+        return {
+          ...user,
+          role: editFormData.role,
+          // Password would be handled by the backend
+        };
+      }
+      return user;
+    }));
+
+    setShowEditModal(false);
+    setSelectedUser(null);
+    setEditFormData({
+      username: '',
+      email: '',
+      password: '',
+      age: '',
+      gender: '',
+      nationality: '',
+      phoneNumber: '',
+      role: 'user'
+    });
+  };
+
+  const handleDeleteUser = (userId) => {
+    if (window.confirm('Are you sure you want to delete this user?')) {
+      setUsers(users.filter(user => user.id !== userId));
+    }
+  };
+
+  const getRoleBadgeColor = (role) => {
+    switch (role?.toLowerCase()) {
+      case 'admin':
+        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100';
+      case 'user':
+        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100';
+      default:
+        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100';
+    }
   };
 
   return (
@@ -405,24 +479,27 @@ const UsersManagement = () => {
           {/* Users Table */}
           <div className={`${darkMode ? 'bg-gray-800 border-purple-500/30' : 'bg-white border-purple-300'} border overflow-hidden shadow-xl rounded-lg`}>
             <div className="overflow-x-auto">
-              <table className={`min-w-full ${darkMode ? 'divide-y divide-gray-700' : 'divide-y divide-gray-200'}`}>
-                <thead className={`${darkMode ? 'bg-gray-900/50' : 'bg-gray-50'}`}>
+              <table className={`min-w-full divide-y divide-gray-200 ${darkMode ? 'dark:divide-gray-700' : ''}`}>
+                <thead className={darkMode ? 'bg-gray-800' : 'bg-gray-50'}>
                   <tr>
-                    <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                      User
+                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                      Name
                     </th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                      Email
+                    </th>
+                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
                       Role
                     </th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
                       Status
                     </th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className={`${darkMode ? 'divide-y divide-gray-700' : 'divide-y divide-gray-200'}`}>
+                <tbody className={`divide-y divide-gray-200 ${darkMode ? 'dark:divide-gray-700' : ''}`}>
                   {loading && users.length === 0 ? (
                     <tr>
                       <td colSpan={4} className="px-6 py-12 text-center">
@@ -444,44 +521,35 @@ const UsersManagement = () => {
                     </tr>
                   ) : (
                     filteredUsers.map((user) => (
-                    <tr key={user.id} className={`transition-colors duration-300 ${darkMode ? 'hover:bg-gray-700/30' : 'hover:bg-gray-50'}`}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="h-10 w-10 rounded-full bg-gradient-to-r from-purple-500 to-cyan-500 flex items-center justify-center text-white font-medium">
-                            {user.name.split(' ').map(n => n[0]).join('')}
-                          </div>
-                          <div className="ml-4">
-                            <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{user.name}</div>
-                            <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{user.email}</div>
-                          </div>
-                        </div>
+                    <tr key={user.id} className={darkMode ? 'bg-gray-800' : 'bg-white'}>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
+                        {user.name}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs font-medium rounded ${
-                          darkMode 
-                            ? 'bg-purple-900/50 text-purple-300' 
-                            : 'bg-purple-100 text-purple-700'
-                        }`}>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
+                        {user.email}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <span className={getRoleBadgeColor(user.role)}>
                           {user.role}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs font-medium rounded ${
-                          user.status === 'Active' 
-                            ? darkMode 
-                              ? 'bg-green-900/50 text-green-300'
-                              : 'bg-green-100 text-green-700'
-                            : darkMode 
-                              ? 'bg-red-900/50 text-red-300'
-                              : 'bg-red-100 text-red-700'
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          user.status === 'Active'
+                            ? darkMode
+                              ? 'bg-green-500/20 text-green-300'
+                              : 'bg-green-100 text-green-800'
+                            : darkMode
+                            ? 'bg-red-500/20 text-red-300'
+                            : 'bg-red-100 text-red-800'
                         }`}>
                           {user.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <div className="flex space-x-2">
                           <button 
-                            onClick={() => openEditModal(user)}
+                            onClick={() => handleEditClick(user)}
                             className={`transition-colors duration-300 ${darkMode ? 'text-purple-400 hover:text-purple-300' : 'text-purple-600 hover:text-purple-500'}`}
                           >
                             Edit
@@ -492,7 +560,10 @@ const UsersManagement = () => {
                           >
                             View
                           </button>
-                          <button className={`transition-colors duration-300 ${darkMode ? 'text-red-400 hover:text-red-300' : 'text-red-600 hover:text-red-500'}`}>
+                          <button
+                            onClick={() => handleDeleteUser(user.id)}
+                            className={`transition-colors duration-300 ${darkMode ? 'text-red-400 hover:text-red-300' : 'text-red-600 hover:text-red-500'}`}
+                          >
                             Delete
                           </button>
                         </div>
@@ -624,25 +695,21 @@ const UsersManagement = () => {
                   />
                 </div>
 
-                <div>
-                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                <div className="mb-4">
+                  <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                     Role
                   </label>
                   <select
                     name="role"
                     value={formData.role}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-2 rounded-md border transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${
-                      darkMode
-                        ? 'bg-gray-700 border-gray-600 text-white'
-                        : 'bg-white border-gray-300 text-gray-900'
+                    className={`w-full p-2 border rounded-md ${
+                      darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
                     }`}
+                    required
                   >
-                    {roles.map((role) => (
-                      <option key={role} value={role}>
-                        {role}
-                      </option>
-                    ))}
+                    <option value="User">User</option>
+                    <option value="Admin">Admin</option>
                   </select>
                 </div>
               </div>
@@ -692,7 +759,7 @@ const UsersManagement = () => {
               </div>
             </div>
 
-            <form onSubmit={handleEditUser} className="px-6 py-6">
+            <form onSubmit={handleEditSubmit} className="px-6 py-6">
               {error && (
                 <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md">
                   {error}
@@ -748,18 +815,28 @@ const UsersManagement = () => {
                   <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Password (leave empty to keep current)
                   </label>
-                  <input
-                    type="password"
-                    name="password"
-                    value={editFormData.password}
-                    onChange={handleEditInputChange}
-                    className={`w-full px-3 py-2 rounded-md border transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${
-                      darkMode
-                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
-                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                    }`}
-                    placeholder="Enter new password"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      name="password"
+                      value={editFormData.password}
+                      onChange={handleEditInputChange}
+                      className={`w-full pr-10 rounded-md border ${
+                        darkMode
+                          ? 'bg-gray-700 border-gray-600 text-white'
+                          : 'bg-white border-gray-300 text-gray-900'
+                      } p-2.5`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className={`absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded-full ${
+                        darkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
 
                 <div>
@@ -770,17 +847,14 @@ const UsersManagement = () => {
                     name="role"
                     value={editFormData.role}
                     onChange={handleEditInputChange}
-                    className={`w-full px-3 py-2 rounded-md border transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${
+                    className={`w-full rounded-lg border ${
                       darkMode
                         ? 'bg-gray-700 border-gray-600 text-white'
                         : 'bg-white border-gray-300 text-gray-900'
-                    }`}
+                    } p-2.5`}
                   >
-                    {roles.map((role) => (
-                      <option key={role} value={role}>
-                        {role}
-                      </option>
-                    ))}
+                    <option value="user">User</option>
+                    <option value="admin">Administrator</option>
                   </select>
                 </div>
               </div>
@@ -910,47 +984,6 @@ const UsersManagement = () => {
 
                 <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
                   <h5 className={`text-sm font-medium mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Role & Status
-                  </h5>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                        Role
-                      </label>
-                      <p className={`mt-1 text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                        <span className={`px-2 py-1 text-xs font-medium rounded ${
-                          darkMode 
-                            ? 'bg-purple-900/50 text-purple-300' 
-                            : 'bg-purple-100 text-purple-700'
-                        }`}>
-                          {selectedUser.role}
-                        </span>
-                      </p>
-                    </div>
-                    <div>
-                      <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                        Status
-                      </label>
-                      <p className={`mt-1 text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                        <span className={`px-2 py-1 text-xs font-medium rounded ${
-                          selectedUser.status === 'Active' 
-                            ? darkMode 
-                              ? 'bg-green-900/50 text-green-300'
-                              : 'bg-green-100 text-green-700'
-                            : darkMode 
-                              ? 'bg-red-900/50 text-red-300'
-                              : 'bg-red-100 text-red-700'
-                        }`}>
-                          {selectedUser.status}
-                        </span>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Additional Profile Information */}
-                <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
-                  <h5 className={`text-sm font-medium mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Account Information
                   </h5>
                   <div className="space-y-2">
@@ -978,6 +1011,18 @@ const UsersManagement = () => {
                         2 hours ago
                       </span>
                     </div>
+                  </div>
+                </div>
+
+                <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
+                  <h5 className={`text-sm font-medium mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Role
+                  </h5>
+                  <div>
+                    <span className={`font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Role: </span>
+                    <span className={`${getRoleBadgeColor(selectedUser.role)}`}>
+                      {selectedUser.role}
+                    </span>
                   </div>
                 </div>
               </div>

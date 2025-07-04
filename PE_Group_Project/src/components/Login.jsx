@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import api from '../utils/api';
+import api from '../API/api';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -121,9 +121,9 @@ const Login = () => {
 
             <div className="flex items-center justify-between">
               <div className="text-sm">
-                <a href="#" className="font-medium text-purple-400 hover:text-purple-300 transition-colors duration-300">
-                  Forgot your password?
-                </a>
+                <Link to="/forgot-password" className="font-medium text-purple-400 hover:text-purple-300 transition-colors duration-300">
+                  Forgot password?
+                </Link>
               </div>
             </div>
 
