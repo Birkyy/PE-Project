@@ -22,11 +22,13 @@ namespace PE_Group_Project.API.Controllers
                 tasksDTO.Add(new ProjectTaskDTO
                 {
                     ProjectTaskId = task.ProjectTaskId,
+                    ProjectId = task.ProjectId,
                     TaskName = task.TaskName,
                     PIC = task.PIC,
                     Deadline = task.Deadline,
                     Description = task.Description,
-                    Status = task.Status
+                    Status = task.Status,
+                    Priority = task.Priority
                 });
             }
 
@@ -47,11 +49,13 @@ namespace PE_Group_Project.API.Controllers
             var taskDTO = new ProjectTaskDTO
             {
                 ProjectTaskId = task.ProjectTaskId,
+                ProjectId = task.ProjectId,
                 TaskName = task.TaskName,
                 PIC = task.PIC,
                 Deadline = task.Deadline,
                 Description = task.Description,
-                Status = task.Status
+                Status = task.Status,
+                Priority = task.Priority
             };
 
             return Ok(taskDTO);
@@ -68,11 +72,13 @@ namespace PE_Group_Project.API.Controllers
             var task = new ProjectTask
             {
                 ProjectTaskId = createProjectTaskRequestDTO.ProjectTaskId != Guid.Empty ? createProjectTaskRequestDTO.ProjectTaskId : Guid.NewGuid(),
+                ProjectId = createProjectTaskRequestDTO.ProjectId,
                 TaskName = createProjectTaskRequestDTO.TaskName,
                 PIC = createProjectTaskRequestDTO.PIC,
                 Deadline = createProjectTaskRequestDTO.Deadline,
                 Description = createProjectTaskRequestDTO.Description,
-                Status = createProjectTaskRequestDTO.Status
+                Status = createProjectTaskRequestDTO.Status,
+                Priority = createProjectTaskRequestDTO.Priority
             };
 
             _context.ProjectTasks.Add(task);
@@ -99,11 +105,13 @@ namespace PE_Group_Project.API.Controllers
             }
 
             // Update properties
+            task.ProjectId = updateProjectTaskRequestDTO.ProjectId;
             task.TaskName = updateProjectTaskRequestDTO.TaskName;
             task.PIC = updateProjectTaskRequestDTO.PIC;
             task.Deadline = updateProjectTaskRequestDTO.Deadline;
             task.Description = updateProjectTaskRequestDTO.Description;
             task.Status = updateProjectTaskRequestDTO.Status;
+            task.Priority = updateProjectTaskRequestDTO.Priority;
             _context.SaveChanges();
 
             return Ok(task);
