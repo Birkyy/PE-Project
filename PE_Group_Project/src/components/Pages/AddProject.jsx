@@ -195,6 +195,128 @@ const AddProject = () => {
                 />
               </div>
 
+              {/* Team Members */}
+              <div className="relative" ref={dropdownRef}>
+                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  <Users className="w-4 h-4 inline mr-2" />
+                  Team Members
+                </label>
+                
+                {/* Selected Users Display */}
+                {formData.teamMembers.length > 0 && (
+                  <div className="mb-3">
+                    <div className="flex flex-wrap gap-2">
+                      {formData.teamMembers.map(member => (
+                        <div 
+                          key={member.id}
+                          className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
+                            darkMode 
+                              ? 'bg-purple-900/50 text-purple-300 border border-purple-700' 
+                              : 'bg-purple-100 text-purple-700 border border-purple-300'
+                          }`}
+                        >
+                          <UserCheck className="w-3 h-3" />
+                          <span>{member.name}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleUserRemove(member.id)}
+                            className={`hover:bg-red-500 hover:text-white rounded-full p-0.5 transition-colors ${
+                              darkMode ? 'text-purple-400 hover:bg-red-600' : 'text-purple-600 hover:bg-red-500'
+                            }`}
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Dropdown Trigger */}
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 flex items-center justify-between ${
+                      darkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white focus:border-purple-400' 
+                        : 'bg-white border-gray-300 text-gray-900 focus:border-purple-500'
+                    }`}
+                  >
+                    <span className={formData.teamMembers.length === 0 ? (darkMode ? 'text-gray-400' : 'text-gray-500') : ''}>
+                      {formData.teamMembers.length === 0 
+                        ? 'Select team members...' 
+                        : `${formData.teamMembers.length} member${formData.teamMembers.length > 1 ? 's' : ''} selected`
+                      }
+                    </span>
+                    <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* Dropdown Content */}
+                  {isDropdownOpen && (
+                    <div className={`absolute z-50 w-full mt-1 border rounded-lg shadow-lg max-h-96 overflow-hidden ${
+                      darkMode 
+                        ? 'bg-gray-700 border-gray-600' 
+                        : 'bg-white border-gray-300'
+                    }`}>
+                      {/* Search Input */}
+                      <div className="p-3 border-b border-gray-200 dark:border-gray-600">
+                        <div className="relative">
+                          <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
+                            darkMode ? 'text-gray-400' : 'text-gray-500'
+                          }`} />
+                          <input
+                            type="text"
+                            placeholder="Search users..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className={`w-full pl-10 pr-3 py-2.5 border rounded focus:outline-none focus:ring-1 focus:ring-purple-400 ${
+                              darkMode 
+                                ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                            }`}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Users List */}
+                      <div className="max-h-72 overflow-y-auto">
+                        {filteredUsers.length === 0 ? (
+                          <div className={`px-4 py-4 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                            No users found
+                          </div>
+                        ) : (
+                          filteredUsers.map(user => {
+                            const isSelected = formData.teamMembers.find(member => member.id === user.id);
+                            return (
+                              <button
+                                key={user.id}
+                                type="button"
+                                onClick={() => handleUserSelect(user)}
+                                disabled={isSelected}
+                                className={`w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors flex items-center justify-between ${
+                                  isSelected 
+                                    ? (darkMode ? 'bg-purple-900/30 text-purple-300' : 'bg-purple-50 text-purple-600')
+                                    : (darkMode ? 'text-white' : 'text-gray-900')
+                                }`}
+                              >
+                                <div>
+                                  <div className="font-medium">{user.name}</div>
+                                  <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                    {user.email} • {user.role}
+                                  </div>
+                                </div>
+                                {isSelected && <UserCheck className="w-4 h-4 text-green-500" />}
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* Project Leader */}
               <div className="relative">
                 <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -370,13 +492,13 @@ const AddProject = () => {
 
                   {/* Dropdown Content */}
                   {isDropdownOpen && (
-                    <div className={`absolute z-50 w-full mt-1 border rounded-lg shadow-lg max-h-64 overflow-hidden ${
+                    <div className={`absolute z-50 w-full mt-1 border rounded-lg shadow-lg max-h-96 overflow-hidden ${
                       darkMode 
                         ? 'bg-gray-700 border-gray-600' 
                         : 'bg-white border-gray-300'
                     }`}>
                       {/* Search Input */}
-                      <div className="p-2 border-b border-gray-200 dark:border-gray-600">
+                      <div className="p-3 border-b border-gray-200 dark:border-gray-600">
                         <div className="relative">
                           <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
                             darkMode ? 'text-gray-400' : 'text-gray-500'
@@ -386,7 +508,7 @@ const AddProject = () => {
                             placeholder="Search users..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className={`w-full pl-10 pr-3 py-2 border rounded focus:outline-none focus:ring-1 focus:ring-purple-400 ${
+                            className={`w-full pl-10 pr-3 py-2.5 border rounded focus:outline-none focus:ring-1 focus:ring-purple-400 ${
                               darkMode 
                                 ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
                                 : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
@@ -396,9 +518,9 @@ const AddProject = () => {
                       </div>
 
                       {/* Users List */}
-                      <div className="max-h-48 overflow-y-auto">
+                      <div className="max-h-72 overflow-y-auto">
                         {filteredUsers.length === 0 ? (
-                          <div className={`px-3 py-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          <div className={`px-4 py-4 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                             No users found
                           </div>
                         ) : (
@@ -410,7 +532,7 @@ const AddProject = () => {
                                 type="button"
                                 onClick={() => handleUserSelect(user)}
                                 disabled={isSelected}
-                                className={`w-full px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors flex items-center justify-between ${
+                                className={`w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors flex items-center justify-between ${
                                   isSelected 
                                     ? (darkMode ? 'bg-purple-900/30 text-purple-300' : 'bg-purple-50 text-purple-600')
                                     : (darkMode ? 'text-white' : 'text-gray-900')
