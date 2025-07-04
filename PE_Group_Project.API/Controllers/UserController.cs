@@ -25,22 +25,30 @@ namespace PE_Group_Project.API.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetUsers()
+        [Route("{userId:guid}")]
+        public IActionResult GetUserById(Guid userId)
         {
-            var users = _context.Users.ToList();
-            var usersDTO = new List<UserDTO>();
-            foreach (var user in users)
+            var user = _context.Users.FirstOrDefault(u => u.UserId == userId);
+            if (user == null)
             {
-                usersDTO.Add(
-                    new UserDTO
-                    {
-                        Username = user.Username,
-                        Email = user.Email,
-                        Role = user.Role,
-                    }
-                );
+                return NotFound($"User with ID {userId} not found.");
             }
-            return Ok(usersDTO);
+            var userDTO = new UserDTO
+            {
+                UserId = user.UserId,
+                Username = user.Username,
+                Email = user.Email,
+                Name = user.Name,
+                Age = user.Age,
+
+                Gender = user.Gender,
+                PhoneNumber = user.PhoneNumber,
+                Nationality = user.Nationality,
+                AccountCreatedAt = user.AccountCreatedAt,
+                LastLoginAt = user.LastLoginAt,
+                Role = user.Role,
+            };
+            return Ok(userDTO);
         }
 
         [HttpGet]
@@ -95,7 +103,7 @@ namespace PE_Group_Project.API.Controllers
             }
 
             var existingUsername = _context.Users.FirstOrDefault(u =>
-                u.Username == registerRequestDTO.Username
+                u.Name == registerRequestDTO.Username
             );
             if (existingUsername != null)
             {

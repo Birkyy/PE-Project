@@ -1,6 +1,6 @@
 namespace PE_Group_Project.API.Models.DTO
 {
-    public class AddUserToProjectDto
+    public class AddUserToProjectDTO
     {
         public Guid UserId { get; set; }
         public Guid ProjectId { get; set; }
