@@ -128,6 +128,8 @@ namespace PE_Group_Project.API.Controllers
                 Username = user.Username,
                 Email = user.Email,
                 Role = user.Role,
+                AccountCreatedDate = DateTime.UtcNow,
+                LastLoginTime = DateTime.UtcNow,
             };
 
             return CreatedAtAction(nameof(GetUserByEmail), new { email = user.Email }, userDTO);
@@ -167,6 +169,7 @@ namespace PE_Group_Project.API.Controllers
                 Gender = user.Gender,
                 Nationality = user.Nationality,
                 PhoneNumber = user.PhoneNumber,
+                LastLoginTime = DateTime.UtcNow,
             };
 
             return Ok(userDTO);

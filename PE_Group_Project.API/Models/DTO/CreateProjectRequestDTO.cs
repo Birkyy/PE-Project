@@ -9,4 +9,4 @@ namespace PE_Group_Project.API.Models.DTO
         public required Guid ProjectManagerInCharge { get; set; }
         public required List<Guid> Contributors { get; set; }
     }
-} 
+}
