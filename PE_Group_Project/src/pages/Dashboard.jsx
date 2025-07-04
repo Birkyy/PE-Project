@@ -9,7 +9,8 @@ import {
   Users, 
   Target,
   BarChart3,
-  PieChart
+  PieChart,
+  Bell
 } from 'lucide-react';
 import {
   XAxis,
@@ -70,30 +71,32 @@ const Dashboard = () => {
     { id: 6, title: 'Update Documentation', project: 'API Service', due: '2024-12-17', priority: 'medium' }
   ];
 
-  const dailyTimeline = [
-    { id: 1, time: '09:00', title: 'Team Standup Meeting', type: 'meeting', status: 'completed', duration: '30 min' },
-    { id: 2, time: '10:30', title: 'Code Review - Authentication Module', type: 'task', status: 'completed', duration: '1 hour' },
-    { id: 3, time: '12:00', title: 'Lunch Break', type: 'break', status: 'completed', duration: '1 hour' },
-    { id: 4, time: '14:00', title: 'API Integration Testing', type: 'task', status: 'in-progress', duration: '2 hours' },
-    { id: 5, time: '16:30', title: 'Client Presentation Prep', type: 'task', status: 'upcoming', duration: '1 hour' },
-    { id: 6, time: '17:30', title: 'Sprint Planning Session', type: 'meeting', status: 'upcoming', duration: '1.5 hours' }
+  const notifications = [
+    { id: 1, message: 'New task assigned: Complete API Integration', type: 'task', time: '2 hours ago', status: 'unread' },
+    { id: 2, message: 'John commented on your pull request', type: 'comment', time: '3 hours ago', status: 'read' },
+    { id: 3, message: 'Meeting reminder: Sprint Planning at 5:30 PM', type: 'meeting', time: '4 hours ago', status: 'read' },
+    { id: 4, message: 'Database migration completed successfully', type: 'system', time: '5 hours ago', status: 'read' },
+    { id: 5, message: 'Your task "Fix Login Bug" is overdue', type: 'alert', time: '1 day ago', status: 'unread' },
+    { id: 6, message: 'New team member added to E-commerce project', type: 'team', time: '2 days ago', status: 'read' }
   ];
 
-  const getTimelineStatusColor = (status) => {
+  const getNotificationStatusColor = (status) => {
     switch (status) {
-      case 'completed': return 'bg-green-500';
-      case 'in-progress': return 'bg-yellow-500';
-      case 'upcoming': return 'bg-gray-400';
+      case 'unread': return 'bg-blue-500';
+      case 'read': return 'bg-gray-400';
       default: return 'bg-gray-400';
     }
   };
 
-  const getTimelineTypeIcon = (type) => {
+  const getNotificationTypeIcon = (type) => {
     switch (type) {
-      case 'meeting': return '👥';
       case 'task': return '📋';
-      case 'break': return '☕';
-      default: return '📅';
+      case 'comment': return '💬';
+      case 'meeting': return '👥';
+      case 'system': return '⚙️';
+      case 'alert': return '⚠️';
+      case 'team': return '👤';
+      default: return '🔔';
     }
   };
 
@@ -308,53 +311,51 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Right Sidebar - Daily Timeline */}
+          {/* Right Sidebar - Notifications */}
           <div className="lg:col-span-1">
             <div className="sticky top-24">
               <div className="flex items-center justify-between mb-6">
                 <h3 className={`text-lg font-semibold flex items-center ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  <Clock className="w-5 h-5 mr-2 text-indigo-400" />
-                  Today's Timeline
+                  <Bell className="w-5 h-5 mr-2 text-indigo-400" />
+                  Notifications
                 </h3>
               </div>
               <div className={`text-xs mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                {notifications.filter(n => n.status === 'unread').length} unread notifications
               </div>
               
               <div className="relative">
-                {/* Timeline line */}
+                {/* Notification line */}
                 <div className={`absolute left-6 top-0 bottom-0 w-0.5 ${darkMode ? 'bg-gray-600' : 'bg-gray-300'}`}></div>
                 
-                {/* Timeline items */}
+                {/* Notification items */}
                 <div className="space-y-6">
-                  {dailyTimeline.map((item, index) => (
+                  {notifications.map((item, index) => (
                     <div key={item.id} className="relative flex items-start">
-                      {/* Timeline dot */}
-                      <div className={`relative z-10 w-3 h-3 rounded-full border-2 ${getTimelineStatusColor(item.status)} ${darkMode ? 'border-gray-900' : 'border-gray-50'} shadow-sm`}></div>
+                      {/* Notification dot */}
+                      <div className={`relative z-10 w-3 h-3 rounded-full border-2 ${getNotificationStatusColor(item.status)} ${darkMode ? 'border-gray-900' : 'border-gray-50'} shadow-sm`}></div>
                       
-                      {/* Timeline content */}
+                      {/* Notification content */}
                       <div className="ml-6 flex-1">
                         <div className="flex items-center space-x-2 mb-1">
-                          <span className="text-sm">{getTimelineTypeIcon(item.type)}</span>
+                          <span className="text-sm">{getNotificationTypeIcon(item.type)}</span>
                           <span className={`text-xs font-medium ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
                             {item.time}
                           </span>
                         </div>
                         <p className={`text-sm font-medium mb-1 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                          {item.title}
+                          {item.message}
                         </p>
                         <div className="flex items-center justify-between">
                           <span className={`px-2 py-1 text-xs rounded-full ${
-                            item.status === 'completed' 
-                              ? 'bg-green-100 text-green-800' 
-                              : item.status === 'in-progress'
-                              ? 'bg-yellow-100 text-yellow-800'
+                            item.status === 'unread' 
+                              ? 'bg-blue-100 text-blue-800' 
                               : 'bg-gray-100 text-gray-800'
                           }`}>
-                            {item.status.replace('-', ' ')}
+                            {item.status}
                           </span>
                           <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                            {item.duration}
+                            {item.type}
                           </span>
                         </div>
                       </div>
