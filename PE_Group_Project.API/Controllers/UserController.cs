@@ -40,7 +40,7 @@ namespace PE_Group_Project.API.Controllers
                         Age = user.Age,
                         Gender = user.Gender,
                         Nationality = user.Nationality,
-                        PhoneNumber = user.PhoneNumber
+                        PhoneNumber = user.PhoneNumber,
                     }
                 );
             }
@@ -166,49 +166,18 @@ namespace PE_Group_Project.API.Controllers
                 Age = user.Age,
                 Gender = user.Gender,
                 Nationality = user.Nationality,
-                PhoneNumber = user.PhoneNumber
+                PhoneNumber = user.PhoneNumber,
             };
 
             return Ok(userDTO);
         }
 
-        [HttpPost]
-        public IActionResult CreateUser([FromBody] CreateUserRequestDTO createUserRequestDTO)
-        {
-            if (createUserRequestDTO == null)
-            {
-                return BadRequest("Invalid user data.");
-            }
-
-            // Check if email already exists
-            var existingUser = _context.Users.FirstOrDefault(u => u.Email == createUserRequestDTO.Email);
-            if (existingUser != null)
-            {
-                return BadRequest("A user with this email already exists.");
-            }
-
-            var user = new User
-            {
-                Id = Guid.NewGuid(),
-                Username = createUserRequestDTO.Username,
-                Email = createUserRequestDTO.Email,
-                Password = createUserRequestDTO.Password,
-                Role = createUserRequestDTO.Role,
-                Age = createUserRequestDTO.Age,
-                Gender = createUserRequestDTO.Gender,
-                Nationality = createUserRequestDTO.Nationality,
-                PhoneNumber = createUserRequestDTO.PhoneNumber
-            };
-
-            _context.Users.Add(user);
-            _context.SaveChanges();
-
-            return CreatedAtAction(nameof(GetUserByEmail), new { email = user.Email }, user);
-        }
-
         [HttpPut]
         [Route("{email}")]
-        public IActionResult UpdateUser([FromRoute] string email, [FromBody] UpdateUserRequestDTO updateUserRequestDTO)
+        public IActionResult UpdateUser(
+            [FromRoute] string email,
+            [FromBody] UpdateUserRequestDTO updateUserRequestDTO
+        )
         {
             if (updateUserRequestDTO == null)
             {
@@ -224,7 +193,9 @@ namespace PE_Group_Project.API.Controllers
             // Check if the new email already exists (only if email is being changed)
             if (updateUserRequestDTO.Email != email)
             {
-                var existingUser = _context.Users.FirstOrDefault(u => u.Email == updateUserRequestDTO.Email);
+                var existingUser = _context.Users.FirstOrDefault(u =>
+                    u.Email == updateUserRequestDTO.Email
+                );
                 if (existingUser != null)
                 {
                     return BadRequest("A user with this email already exists.");
@@ -255,7 +226,7 @@ namespace PE_Group_Project.API.Controllers
                     Age = user.Age,
                     Gender = user.Gender,
                     Nationality = user.Nationality,
-                    PhoneNumber = user.PhoneNumber
+                    PhoneNumber = user.PhoneNumber,
                 };
 
                 return Ok(userDTO);

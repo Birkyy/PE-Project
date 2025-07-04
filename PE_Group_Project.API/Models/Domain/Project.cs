@@ -2,7 +2,6 @@ namespace PE_Group_Project.API.Models.Domain
 {
     public class Project
     {
-
         public Guid Id { get; set; }
         public required string ProjectName { get; set; }
         public required DateTime Date { get; set; }
@@ -10,4 +9,4 @@ namespace PE_Group_Project.API.Models.Domain
         public required Guid ProjectManagerInCharge { get; set; }
         public required List<Guid> Contributors { get; set; }
     }
-} 
+}

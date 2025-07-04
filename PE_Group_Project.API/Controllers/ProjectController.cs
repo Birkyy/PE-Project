@@ -19,15 +19,17 @@ namespace PE_Group_Project.API.Controllers
 
             foreach (var project in projects)
             {
-                projectsDTO.Add(new ProjectDTO
-                {
-                    Id = project.Id,
-                    ProjectName = project.ProjectName,
-                    Date = project.Date,
-                    Status = project.Status,
-                    ProjectManagerInCharge = project.ProjectManagerInCharge,
-                    Contributors = project.Contributors
-                });
+                projectsDTO.Add(
+                    new ProjectDTO
+                    {
+                        Id = project.Id,
+                        ProjectName = project.ProjectName,
+                        Date = project.Date,
+                        Status = project.Status,
+                        ProjectManagerInCharge = project.ProjectManagerInCharge,
+                        Contributors = project.Contributors,
+                    }
+                );
             }
 
             return Ok(projectsDTO);
@@ -51,7 +53,7 @@ namespace PE_Group_Project.API.Controllers
                 Date = project.Date,
                 Status = project.Status,
                 ProjectManagerInCharge = project.ProjectManagerInCharge,
-                Contributors = project.Contributors
+                Contributors = project.Contributors,
             };
 
             return Ok(projectDTO);
@@ -67,12 +69,15 @@ namespace PE_Group_Project.API.Controllers
 
             var project = new Project
             {
-                Id = createProjectRequestDTO.Id != Guid.Empty ? createProjectRequestDTO.Id : Guid.NewGuid(),
+                Id =
+                    createProjectRequestDTO.Id != Guid.Empty
+                        ? createProjectRequestDTO.Id
+                        : Guid.NewGuid(),
                 ProjectName = createProjectRequestDTO.ProjectName,
                 Date = createProjectRequestDTO.Date,
                 Status = createProjectRequestDTO.Status,
                 ProjectManagerInCharge = createProjectRequestDTO.ProjectManagerInCharge,
-                Contributors = createProjectRequestDTO.Contributors
+                Contributors = createProjectRequestDTO.Contributors,
             };
 
             _context.Projects.Add(project);
@@ -83,7 +88,10 @@ namespace PE_Group_Project.API.Controllers
 
         [HttpPut]
         [Route("{id:guid}")]
-        public IActionResult UpdateProjectById([FromRoute] Guid id, [FromBody] UpdateProjectRequestDTO updateProjectRequestDTO)
+        public IActionResult UpdateProjectById(
+            [FromRoute] Guid id,
+            [FromBody] UpdateProjectRequestDTO updateProjectRequestDTO
+        )
         {
             var project = _context.Projects.FirstOrDefault(p => p.Id == id);
 
