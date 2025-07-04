@@ -4,6 +4,7 @@ import Layout from '../Layout';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { getNames } from 'country-list';
+import { Shield } from 'lucide-react';
 
 const Profile = () => {
   const { darkMode } = useTheme();
@@ -17,7 +18,12 @@ const Profile = () => {
     gender: '',
     phoneNumber: '',
     email: '',
-    nationality: ''
+    nationality: '',
+    role: 'user',
+    firstName: '',
+    lastName: '',
+    department: '',
+    position: ''
   });
 
   // Get all countries from the library
@@ -33,7 +39,12 @@ const Profile = () => {
         gender: user.gender || '',
         phoneNumber: user.phone || '',
         email: user.email || 'demo@taskio.com',
-        nationality: user.nationality || ''
+        nationality: user.nationality || '',
+        role: user.role || 'user',
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        department: user.department || '',
+        position: user.position || ''
       });
     }
   }, []);
@@ -88,11 +99,22 @@ const Profile = () => {
         gender: user.gender || '',
         phoneNumber: user.phone || '',
         email: user.email || 'demo@taskio.com',
-        nationality: user.nationality || ''
+        nationality: user.nationality || '',
+        role: user.role || 'user',
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        department: user.department || '',
+        position: user.position || ''
       });
     }
     setIsEditing(false);
     setError('');
+  };
+
+  const getRoleBadgeColor = (role) => {
+    return role === 'admin' 
+      ? darkMode ? 'bg-purple-500/20 text-purple-300' : 'bg-purple-100 text-purple-800'
+      : darkMode ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-800';
   };
 
   return (
@@ -109,7 +131,6 @@ const Profile = () => {
             }`}>
               User Profile
             </h2>
-
           </div>
 
           {/* Profile Card */}
@@ -138,6 +159,31 @@ const Profile = () => {
 
               {/* Profile Form - Single Column Layout */}
               <div className="space-y-6">
+                {/* Role Display */}
+                <div className={`p-4 rounded-lg ${
+                  darkMode ? 'bg-gray-700/50' : 'bg-gray-50'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    <Shield className={`w-5 h-5 ${
+                      darkMode ? 'text-blue-400' : 'text-blue-500'
+                    }`} />
+                    <div>
+                      <div className={`text-sm font-medium ${
+                        darkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
+                        Account Role
+                      </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className={`px-2.5 py-0.5 rounded-full text-sm font-medium ${
+                          getRoleBadgeColor(profileData.role)
+                        }`}>
+                          {profileData.role === 'admin' ? 'Administrator' : 'User'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* User Name */}
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -278,6 +324,104 @@ const Profile = () => {
                       </option>
                     ))}
                   </select>
+                </div>
+
+                {/* Personal Information */}
+                <div>
+                  <h2 className={`text-lg font-semibold mb-4 ${
+                    darkMode ? 'text-white' : 'text-gray-900'
+                  }`}>
+                    Personal Information
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className={`block text-sm font-medium mb-1 ${
+                        darkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
+                        First Name
+                      </label>
+                      <input
+                        type="text"
+                        name="firstName"
+                        value={profileData.firstName}
+                        onChange={handleChange}
+                        disabled={!isEditing}
+                        className={`w-full rounded-lg border ${
+                          darkMode
+                            ? 'bg-gray-700 border-gray-600 text-white disabled:bg-gray-800'
+                            : 'bg-white border-gray-300 text-gray-900 disabled:bg-gray-50'
+                        } p-2.5 disabled:cursor-not-allowed`}
+                      />
+                    </div>
+                    <div>
+                      <label className={`block text-sm font-medium mb-1 ${
+                        darkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
+                        Last Name
+                      </label>
+                      <input
+                        type="text"
+                        name="lastName"
+                        value={profileData.lastName}
+                        onChange={handleChange}
+                        disabled={!isEditing}
+                        className={`w-full rounded-lg border ${
+                          darkMode
+                            ? 'bg-gray-700 border-gray-600 text-white disabled:bg-gray-800'
+                            : 'bg-white border-gray-300 text-gray-900 disabled:bg-gray-50'
+                        } p-2.5 disabled:cursor-not-allowed`}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Work Information */}
+                <div>
+                  <h2 className={`text-lg font-semibold mb-4 ${
+                    darkMode ? 'text-white' : 'text-gray-900'
+                  }`}>
+                    Work Information
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className={`block text-sm font-medium mb-1 ${
+                        darkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
+                        Department
+                      </label>
+                      <input
+                        type="text"
+                        name="department"
+                        value={profileData.department}
+                        onChange={handleChange}
+                        disabled={!isEditing}
+                        className={`w-full rounded-lg border ${
+                          darkMode
+                            ? 'bg-gray-700 border-gray-600 text-white disabled:bg-gray-800'
+                            : 'bg-white border-gray-300 text-gray-900 disabled:bg-gray-50'
+                        } p-2.5 disabled:cursor-not-allowed`}
+                      />
+                    </div>
+                    <div>
+                      <label className={`block text-sm font-medium mb-1 ${
+                        darkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
+                        Position
+                      </label>
+                      <input
+                        type="text"
+                        name="position"
+                        value={profileData.position}
+                        onChange={handleChange}
+                        disabled={!isEditing}
+                        className={`w-full rounded-lg border ${
+                          darkMode
+                            ? 'bg-gray-700 border-gray-600 text-white disabled:bg-gray-800'
+                            : 'bg-white border-gray-300 text-gray-900 disabled:bg-gray-50'
+                        } p-2.5 disabled:cursor-not-allowed`}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 

@@ -160,6 +160,10 @@ const MyProjects = () => {
     }));
   };
 
+  const handleProjectClick = (projectName) => {
+    navigate(`/my-tasks/${encodeURIComponent(projectName)}`);
+  };
+
   return (
     <Layout>
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
@@ -194,7 +198,11 @@ const MyProjects = () => {
           {/* Projects Grid */}
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {projects.map((project) => (
-              <div key={project.name} className={`${darkMode ? `bg-gray-800 border-${project.color}-500/30` : `bg-white border-${project.color}-300`} border overflow-hidden shadow-xl rounded-lg hover:shadow-lg ${darkMode ? `hover:shadow-${project.color}-500/20` : `hover:shadow-${project.color}-300/30`} transition-all duration-300`}>
+              <div
+                key={project.name}
+                className={`${darkMode ? `bg-gray-800 border-${project.color}-500/30` : `bg-white border-${project.color}-300`} border overflow-hidden shadow-xl rounded-lg hover:shadow-lg ${darkMode ? `hover:shadow-${project.color}-500/20` : `hover:shadow-${project.color}-300/30`} transition-all duration-300 cursor-pointer`}
+                onClick={() => handleProjectClick(project.name)}
+              >
                 <div className="px-6 py-4">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className={`text-lg font-semibold ${darkMode ? `text-${project.color}-300` : `text-${project.color}-700`}`}>{project.name}</h3>
@@ -209,7 +217,7 @@ const MyProjects = () => {
                     </div>
                   </div>
                   {/* Action Icons */}
-                  <div className="flex justify-end space-x-2">
+                  <div className="flex justify-end space-x-2" onClick={e => e.stopPropagation()}>
                     <button 
                       onClick={() => handleView(project.name)}
                       className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-purple-300' : 'hover:bg-gray-100 text-gray-600 hover:text-purple-600'}`}
