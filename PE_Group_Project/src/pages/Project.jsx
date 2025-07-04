@@ -26,14 +26,17 @@ function Project() {
     const { id } = useParams();
     const navigate = useNavigate();
     const [project, setProject] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-    const [isEditProjectModalOpen, setIsEditProjectModalOpen] = useState(false);
-    const [selectedTask, setSelectedTask] = useState(null);
     const [tasks, setTasks] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    
+    // Separate states for view and edit modals
+    const [viewTask, setViewTask] = useState(null);
+    const [editTask, setEditTask] = useState(null);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
+    const [isEditProjectModalOpen, setIsEditProjectModalOpen] = useState(false);
 
     // Mock project data - replace with actual API call
     useEffect(() => {
@@ -97,7 +100,7 @@ function Project() {
             )
         );
         setIsEditModalOpen(false);
-        setSelectedTask(null);
+        setEditTask(null);
     };
 
     const handleDeleteTask = (taskId) => {
@@ -246,7 +249,7 @@ function Project() {
                 <div className="mt-3 flex justify-end gap-2">
                     <button
                         onClick={() => {
-                            setSelectedTask(task);
+                            setViewTask(task);
                             setIsViewModalOpen(true);
                         }}
                         className={`p-1.5 rounded-lg ${
@@ -257,7 +260,7 @@ function Project() {
                     </button>
                     <button
                         onClick={() => {
-                            setSelectedTask(task);
+                            setEditTask(task);
                             setIsEditModalOpen(true);
                         }}
                         className={`p-1.5 rounded-lg ${
@@ -540,27 +543,23 @@ function Project() {
                 onClose={() => setIsAddTaskModalOpen(false)}
                 onSubmit={handleCreateTask}
             />
-            {selectedTask && (
-                <>
-                    <EditTaskModal
-                        isOpen={isEditModalOpen}
-                        onClose={() => {
-                            setIsEditModalOpen(false);
-                            setSelectedTask(null);
-                        }}
-                        onSubmit={handleEditTask}
-                        task={selectedTask}
-                    />
-                    <ViewTaskModal
-                        task={selectedTask}
-                        onClose={() => {
-                            setIsViewModalOpen(false);
-                            setSelectedTask(null);
-                        }}
-                        isOpen={isViewModalOpen}
-                    />
-                </>
-            )}
+            <EditTaskModal
+                isOpen={isEditModalOpen}
+                onClose={() => {
+                    setIsEditModalOpen(false);
+                    setEditTask(null);
+                }}
+                onSubmit={handleEditTask}
+                task={editTask}
+            />
+            <ViewTaskModal
+                isOpen={isViewModalOpen}
+                task={viewTask}
+                onClose={() => {
+                    setIsViewModalOpen(false);
+                    setViewTask(null);
+                }}
+            />
             <EditProjectModal
                 isOpen={isEditProjectModalOpen}
                 onClose={() => setIsEditProjectModalOpen(false)}
