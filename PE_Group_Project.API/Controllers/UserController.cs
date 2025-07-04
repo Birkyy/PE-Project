@@ -171,8 +171,6 @@ namespace PE_Group_Project.API.Controllers
 
             return Ok(userDTO);
         }
-<<<<<<< HEAD
-=======
 
         [HttpPost]
         public IActionResult CreateUser([FromBody] CreateUserRequestDTO createUserRequestDTO)
@@ -267,6 +265,5 @@ namespace PE_Group_Project.API.Controllers
                 return BadRequest($"Failed to update user: {ex.Message}");
             }
         }
->>>>>>> ProjectBackend
     }
 }
