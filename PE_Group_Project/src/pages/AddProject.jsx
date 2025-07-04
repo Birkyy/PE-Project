@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Users, Save, X, Search, ChevronDown, UserCheck } from 'lucide-react';
+import { Calendar, Users, Save, X, Search, ChevronDown, UserCheck, Upload, File, Trash2 } from 'lucide-react';
 import Layout from '../components/Layout';
 
 const AddProject = () => {
   const { darkMode } = useTheme();
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
   
   // Mock users data - in real app, this would come from an API
   const mockUsers = [
@@ -27,7 +28,8 @@ const AddProject = () => {
     priority: 'medium',
     status: 'to-do',
     teamMembers: [],
-    projectLeader: null
+    projectLeader: null,
+    attachments: []
   });
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -36,6 +38,7 @@ const AddProject = () => {
   const [leaderSearchTerm, setLeaderSearchTerm] = useState('');
   const dropdownRef = useRef(null);
   const leaderDropdownRef = useRef(null);
+  const [dragActive, setDragActive] = useState(false);
   
   // Filter users based on search term
   const filteredUsers = mockUsers.filter(user =>
@@ -125,13 +128,71 @@ const AddProject = () => {
       priority: 'medium',
       status: 'to-do',
       teamMembers: [],
-      projectLeader: null
+      projectLeader: null,
+      attachments: []
     });
     setSearchTerm('');
     setLeaderSearchTerm('');
     setIsDropdownOpen(false);
     setIsLeaderDropdownOpen(false);
     navigate('/my-projects');
+  };
+
+  // File handling functions
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFiles(e.dataTransfer.files);
+    }
+  };
+
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      handleFiles(e.target.files);
+    }
+  };
+
+  const handleFiles = (files) => {
+    const newFiles = Array.from(files).map(file => ({
+      id: Math.random().toString(36).substr(2, 9),
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      file: file
+    }));
+
+    setFormData(prev => ({
+      ...prev,
+      attachments: [...prev.attachments, ...newFiles]
+    }));
+  };
+
+  const removeFile = (fileId) => {
+    setFormData(prev => ({
+      ...prev,
+      attachments: prev.attachments.filter(file => file.id !== fileId)
+    }));
+  };
+
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   return (
@@ -619,6 +680,93 @@ const AddProject = () => {
                 </select>
               </div>
 
+              {/* File Attachments */}
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Attachments
+                </label>
+                
+                {/* Drag and Drop Zone */}
+                <div
+                  onDragEnter={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDragOver={handleDrag}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current.click()}
+                  className={`
+                    border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
+                    transition-all duration-200 ease-in-out
+                    ${darkMode 
+                      ? 'border-gray-600 hover:border-purple-500' 
+                      : 'border-gray-300 hover:border-purple-500'
+                    }
+                    ${dragActive 
+                      ? darkMode 
+                        ? 'border-purple-500 bg-purple-500/10' 
+                        : 'border-purple-500 bg-purple-50'
+                      : ''
+                    }
+                  `}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                  <Upload className={`w-12 h-12 mx-auto mb-4 ${
+                    darkMode ? 'text-gray-400' : 'text-gray-500'
+                  }`} />
+                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Drag and drop files here, or click to select files
+                  </p>
+                </div>
+
+                {/* File List */}
+                {formData.attachments.length > 0 && (
+                  <div className="mt-4 space-y-2">
+                    {formData.attachments.map(file => (
+                      <div
+                        key={file.id}
+                        className={`flex items-center justify-between p-3 rounded-lg ${
+                          darkMode 
+                            ? 'bg-gray-700 border border-gray-600' 
+                            : 'bg-gray-50 border border-gray-200'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <File className={darkMode ? 'text-purple-400' : 'text-purple-600'} />
+                          <div>
+                            <p className={`text-sm font-medium ${
+                              darkMode ? 'text-gray-200' : 'text-gray-900'
+                            }`}>
+                              {file.name}
+                            </p>
+                            <p className={`text-xs ${
+                              darkMode ? 'text-gray-400' : 'text-gray-500'
+                            }`}>
+                              {formatFileSize(file.size)}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeFile(file.id)}
+                          className={`p-1 rounded-full hover:bg-red-500 hover:text-white transition-colors ${
+                            darkMode 
+                              ? 'text-gray-400 hover:text-white' 
+                              : 'text-gray-500 hover:text-white'
+                          }`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <button
@@ -644,8 +792,6 @@ const AddProject = () => {
               </div>
             </form>
           </div>
-
-
         </div>
       </div>
     </Layout>

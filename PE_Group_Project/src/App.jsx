@@ -6,6 +6,7 @@ import Dashboard from './Pages/Dashboard';
 import Profile from './Pages/Profile';
 import MyProjects from './Pages/MyProjects';
 import AddProject from './pages/AddProject';
+import Project from './pages/Project';
 import UsersManagement from './pages/UsersManagement';
 import ProtectedRoute from './components/ProtectedRoute';
 import MyTask from './pages/MyTask';
@@ -31,6 +32,11 @@ function App() {
             <Route path="/my-projects" element={
               <ProtectedRoute>
                 <MyProjects />
+              </ProtectedRoute>
+            } />
+            <Route path="/project/:id" element={
+              <ProtectedRoute>
+                <Project />
               </ProtectedRoute>
             } />
             <Route path="/add-project" element={

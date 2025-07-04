@@ -1,5 +1,5 @@
 import { useTheme } from '../context/ThemeContext';
-import { X, Clock, User, Calendar, AlertCircle, Send, MessageSquare } from 'lucide-react';
+import { X, Clock, User, Calendar, AlertCircle, Send, MessageSquare, File, Download, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
 
 const ViewTaskModal = ({ task, onClose, onAddComment }) => {
@@ -10,6 +10,8 @@ const ViewTaskModal = ({ task, onClose, onAddComment }) => {
 
   // Initialize comments array if it doesn't exist
   const comments = task.comments || [];
+  // Initialize attachments array if it doesn't exist
+  const attachments = task.attachments || [];
 
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -18,6 +20,14 @@ const ViewTaskModal = ({ task, onClose, onAddComment }) => {
 
   const formatCommentDate = (date) => {
     return new Date(date).toLocaleString();
+  };
+
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   const handleAddComment = () => {
@@ -42,6 +52,20 @@ const ViewTaskModal = ({ task, onClose, onAddComment }) => {
       'Completed': darkMode ? 'bg-green-500/20 text-green-300' : 'bg-green-100 text-green-800'
     };
     return colors[status] || colors['Todo'];
+  };
+
+  // Function to handle file download
+  const handleDownload = (file) => {
+    // In a real implementation, this would download from your backend
+    // For now, we'll create a download link for the file object
+    const url = URL.createObjectURL(file);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -163,6 +187,74 @@ const ViewTaskModal = ({ task, onClose, onAddComment }) => {
                 </div>
               )}
             </div>
+
+            {/* Attachments Section */}
+            {attachments.length > 0 && (
+              <div>
+                <h4 className={`text-sm font-medium mb-3 flex items-center gap-2 ${
+                  darkMode ? 'text-gray-300' : 'text-gray-700'
+                }`}>
+                  <File className="w-4 h-4" />
+                  Attachments ({attachments.length})
+                </h4>
+                <div className="grid grid-cols-1 gap-2">
+                  {attachments.map((file) => (
+                    <div
+                      key={file.id}
+                      className={`flex items-center justify-between p-3 rounded-lg ${
+                        darkMode 
+                          ? 'bg-gray-700/50 hover:bg-gray-700' 
+                          : 'bg-gray-50 hover:bg-gray-100'
+                      } transition-colors`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <File className={darkMode ? 'text-blue-400' : 'text-blue-600'} />
+                        <div>
+                          <p className={`text-sm font-medium ${
+                            darkMode ? 'text-gray-200' : 'text-gray-900'
+                          }`}>
+                            {file.name}
+                          </p>
+                          <p className={`text-xs ${
+                            darkMode ? 'text-gray-400' : 'text-gray-500'
+                          }`}>
+                            {formatFileSize(file.size)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleDownload(file)}
+                          className={`p-2 rounded-lg transition-colors ${
+                            darkMode
+                              ? 'hover:bg-gray-600 text-gray-400 hover:text-gray-200'
+                              : 'hover:bg-gray-200 text-gray-600 hover:text-gray-900'
+                          }`}
+                          title="Download file"
+                        >
+                          <Download className="w-4 h-4" />
+                        </button>
+                        {file.url && (
+                          <a
+                            href={file.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`p-2 rounded-lg transition-colors ${
+                              darkMode
+                                ? 'hover:bg-gray-600 text-gray-400 hover:text-gray-200'
+                                : 'hover:bg-gray-200 text-gray-600 hover:text-gray-900'
+                            }`}
+                            title="Open in new tab"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Comments Section */}
             <div className="mt-8">

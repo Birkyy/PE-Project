@@ -30,6 +30,7 @@ const MyProjects = () => {
   // Example project data (replace with real data as needed)
   const projects = [
     {
+      id: 1,
       name: 'Project Alpha',
       description: 'Web application development with modern React framework',
       due: 'Dec 25, 2024',
@@ -37,6 +38,7 @@ const MyProjects = () => {
       color: 'purple'
     },
     {
+      id: 2,
       name: 'Project Beta',
       description: 'Mobile application with cross-platform compatibility',
       due: 'Jan 15, 2025',
@@ -44,6 +46,7 @@ const MyProjects = () => {
       color: 'cyan'
     },
     {
+      id: 3,
       name: 'Project Gamma',
       description: 'AI-powered analytics dashboard for business intelligence',
       due: 'Feb 28, 2025',
@@ -160,8 +163,8 @@ const MyProjects = () => {
     }));
   };
 
-  const handleProjectClick = (projectName) => {
-    navigate(`/my-tasks/${encodeURIComponent(projectName)}`);
+  const handleProjectClick = (projectId) => {
+    navigate(`/project/${projectId}`);
   };
 
   return (
@@ -201,7 +204,7 @@ const MyProjects = () => {
               <div
                 key={project.name}
                 className={`${darkMode ? `bg-gray-800 border-${project.color}-500/30` : `bg-white border-${project.color}-300`} border overflow-hidden shadow-xl rounded-lg hover:shadow-lg ${darkMode ? `hover:shadow-${project.color}-500/20` : `hover:shadow-${project.color}-300/30`} transition-all duration-300 cursor-pointer`}
-                onClick={() => handleProjectClick(project.name)}
+                onClick={() => handleProjectClick(project.id)}
               >
                 <div className="px-6 py-4">
                   <div className="flex items-center justify-between mb-2">
