@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = "http://localhost:5018/api/ProjectTask";
+const API_URL = "http://localhost:5022/api/ProjectTask";
 
 export const fetchProjectTasks = async () => {
     try {
