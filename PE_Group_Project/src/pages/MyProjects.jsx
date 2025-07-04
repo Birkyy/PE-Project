@@ -1,7 +1,7 @@
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme } from '../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Edit, Trash2, Search, Calendar, Users, Save, X, ChevronDown, UserCheck } from 'lucide-react';
-import Layout from '../Layout';
+import Layout from '../components/Layout';
 import { useState, useRef, useEffect } from 'react';
 
 const MyProjects = () => {

@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\User\\Documents\\GitHub\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj": {}
+    "D:\\PE II (2)\\PE-Project\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj": {}
   },
   "projects": {
-    "C:\\Users\\User\\Documents\\GitHub\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj": {
+    "D:\\PE II (2)\\PE-Project\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\User\\Documents\\GitHub\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj",
+        "projectUniqueName": "D:\\PE II (2)\\PE-Project\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj",
         "projectName": "PE_Group_Project.API",
-        "projectPath": "C:\\Users\\User\\Documents\\GitHub\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj",
-        "packagesPath": "C:\\Users\\User\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\User\\Documents\\GitHub\\PE-Project\\PE_Group_Project.API\\obj\\",
+        "projectPath": "D:\\PE II (2)\\PE-Project\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj",
+        "packagesPath": "C:\\Users\\Asus\\.nuget\\packages\\",
+        "outputPath": "D:\\PE II (2)\\PE-Project\\PE-Project\\PE_Group_Project.API\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\User\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\Asus\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net9.0"

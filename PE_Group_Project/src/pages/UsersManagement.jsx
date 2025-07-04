@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useTheme } from '../../context/ThemeContext';
-import Layout from '../Layout';
-import api from '../../utils/api';
+import { useTheme } from '../context/ThemeContext';
+import Layout from '../components/Layout';
+import api from '../API/api';
 import { Shield, Search, Edit2, Trash2, X, Eye, EyeOff } from 'lucide-react';
 
 const UsersManagement = () => {

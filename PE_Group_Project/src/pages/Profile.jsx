@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useTheme } from '../../context/ThemeContext';
-import Layout from '../Layout';
+import { useTheme } from '../context/ThemeContext';
+import Layout from '../components/Layout';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { getNames } from 'country-list';
 import { Shield } from 'lucide-react';
-import api from '../../utils/api';
+import api from '../API/api';
 
 const Profile = () => {
   const { darkMode } = useTheme();

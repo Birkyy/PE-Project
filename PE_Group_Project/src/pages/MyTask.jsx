@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
-import Layout from '../Layout';
-import { useTheme } from '../../context/ThemeContext';
+import Layout from '../components/Layout';
+import { useTheme } from '../context/ThemeContext';
 import { Plus, Edit, Trash2, Search, MoveRight, Clock, Edit2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import AddTaskModal from './AddTaskModal';
