@@ -6,7 +6,6 @@ import {
   Moon, 
   Settings, 
   LogOut, 
-  Palette,
   Shield,
   HelpCircle
 } from 'lucide-react';
@@ -22,15 +21,15 @@ const Sidebar = ({ isOpen, onClose, darkMode, toggleDarkMode }) => {
     navigate('/login');
   };
 
-
-
   const handleSettingsClick = () => {
     setShowSettings(!showSettings);
   };
 
   const settingsItems = [
-    { icon: Shield, label: 'Privacy', action: () => console.log('Privacy') },
-    { icon: Palette, label: 'Appearance', action: () => console.log('Appearance') },
+    { icon: Shield, label: 'Privacy', action: () => {
+      onClose();
+      navigate('/privacy');
+    }},
     { icon: HelpCircle, label: 'Help & Support', action: () => console.log('Help') }
   ];
 
@@ -119,10 +118,6 @@ const Sidebar = ({ isOpen, onClose, darkMode, toggleDarkMode }) => {
                   </div>
                 )}
               </div>
-
-
-
-
 
               {/* Logout */}
               <button

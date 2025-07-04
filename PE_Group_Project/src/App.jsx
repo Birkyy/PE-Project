@@ -9,6 +9,7 @@ import AddProject from './pages/AddProject';
 import UsersManagement from './pages/UsersManagement';
 import ProtectedRoute from './components/ProtectedRoute';
 import MyTask from './pages/MyTask';
+import Privacy from './pages/Privacy';
 
 function App() {
   return (
@@ -49,6 +50,11 @@ function App() {
             <Route path="/my-tasks/:projectName" element={
               <ProtectedRoute>
                 <MyTask />
+              </ProtectedRoute>
+            } />
+            <Route path="/privacy" element={
+              <ProtectedRoute>
+                <Privacy />
               </ProtectedRoute>
             } />
           </Routes>

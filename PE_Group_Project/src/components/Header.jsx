@@ -1,5 +1,6 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, Bell } from 'lucide-react';
+import { Menu } from 'lucide-react';
+import NotificationsDropdown from './NotificationsDropdown';
 
 const Header = ({ onToggleSidebar, darkMode }) => {
   const navigate = useNavigate();
@@ -62,27 +63,8 @@ const Header = ({ onToggleSidebar, darkMode }) => {
           
           {/* Right side buttons */}
           <div className="flex items-center space-x-4">
-            {/* Notification Icon */}
-            <button
-              className={`relative p-2 rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-400/50 group ${
-                darkMode
-                  ? 'text-gray-300 hover:text-purple-400 hover:bg-purple-900/20 hover:shadow-lg hover:shadow-purple-500/25'
-                  : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50 hover:shadow-lg hover:shadow-purple-300/25'
-              }`}
-              aria-label="View notifications"
-            >
-              <Bell className={`w-6 h-6 transition-all duration-300 ${
-                darkMode 
-                  ? 'group-hover:drop-shadow-[0_0_8px_rgba(168,85,247,0.6)]' 
-                  : 'group-hover:drop-shadow-[0_0_8px_rgba(147,51,234,0.4)]'
-              }`} />
-              {/* Notification badge */}
-              <span className={`absolute -top-0.5 -right-0.5 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold transition-transform duration-200 group-hover:scale-110 ${
-                darkMode ? 'shadow-lg shadow-red-500/50' : 'shadow-md shadow-red-500/30'
-              }`}>
-                3
-              </span>
-            </button>
+            {/* Notifications Dropdown */}
+            <NotificationsDropdown darkMode={darkMode} />
 
             {/* Cyberpunk Logout Button */}
             <button
