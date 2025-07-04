@@ -1,14 +1,29 @@
 import { useTheme } from '../context/ThemeContext';
-import { X, Clock, User, Calendar, AlertCircle } from 'lucide-react';
+import { X, Clock, User, Calendar, AlertCircle, Send, MessageSquare } from 'lucide-react';
+import { useState } from 'react';
 
-const ViewTaskModal = ({ task, onClose }) => {
+const ViewTaskModal = ({ task, onClose, onAddComment }) => {
   const { darkMode } = useTheme();
+  const [newComment, setNewComment] = useState('');
 
   if (!task) return null;
+
+  // Initialize comments array if it doesn't exist
+  const comments = task.comments || [];
 
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+
+  const formatCommentDate = (date) => {
+    return new Date(date).toLocaleString();
+  };
+
+  const handleAddComment = () => {
+    if (!newComment.trim()) return;
+    onAddComment(newComment.trim());
+    setNewComment('');
   };
 
   const getPriorityColor = (priority) => {
@@ -147,6 +162,79 @@ const ViewTaskModal = ({ task, onClose }) => {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Comments Section */}
+            <div className="mt-8">
+              <h4 className={`text-sm font-medium mb-4 flex items-center gap-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                <MessageSquare className="w-4 h-4" />
+                Comments
+              </h4>
+
+              {/* Comment Input */}
+              <div className={`flex gap-2 mb-4`}>
+                <input
+                  type="text"
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="Add a comment..."
+                  className={`flex-1 px-4 py-2 rounded-lg text-sm ${
+                    darkMode
+                      ? 'bg-gray-700/50 text-white placeholder-gray-400 border-gray-600'
+                      : 'bg-gray-50 text-gray-900 placeholder-gray-500 border-gray-300'
+                  } border focus:outline-none focus:ring-2 ${
+                    darkMode ? 'focus:ring-blue-500/50' : 'focus:ring-blue-500/50'
+                  }`}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleAddComment();
+                    }
+                  }}
+                />
+                <button
+                  onClick={handleAddComment}
+                  className={`p-2 rounded-lg ${
+                    darkMode
+                      ? 'bg-blue-500/20 text-blue-300 hover:bg-blue-500/30'
+                      : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                  }`}
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Comments List */}
+              <div className="space-y-4">
+                {comments.map((comment) => (
+                  <div
+                    key={comment.id}
+                    className={`p-3 rounded-lg ${
+                      darkMode ? 'bg-gray-700/50' : 'bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <span className={`font-medium text-sm ${
+                        darkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
+                        {comment.author}
+                      </span>
+                      <span className={`text-xs ${
+                        darkMode ? 'text-gray-500' : 'text-gray-500'
+                      }`}>
+                        {formatCommentDate(comment.timestamp)}
+                      </span>
+                    </div>
+                    <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                      {comment.text}
+                    </p>
+                  </div>
+                ))}
+                {comments.length === 0 && (
+                  <p className={`text-sm ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                    No comments yet
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 

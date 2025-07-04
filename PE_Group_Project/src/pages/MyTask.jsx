@@ -53,7 +53,8 @@ const initialTasks = [
     description: 'Design the user interface.',
     deadline: '2024-03-25', // Example date
     priority: 'high',
-    assignedTo: 'John Doe'
+    assignedTo: 'John Doe',
+    comments: [] // Initialize empty comments array
   },
   { 
     id: 2, 
@@ -62,7 +63,8 @@ const initialTasks = [
     description: 'Setup backend API.',
     deadline: '2024-03-30',
     priority: 'medium',
-    assignedTo: 'Jane Smith'
+    assignedTo: 'Jane Smith',
+    comments: [] // Initialize empty comments array
   },
   { 
     id: 3, 
@@ -71,7 +73,8 @@ const initialTasks = [
     description: 'Write unit tests.',
     deadline: '2024-03-20',
     priority: 'low',
-    assignedTo: 'Mike Johnson'
+    assignedTo: 'Mike Johnson',
+    comments: [] // Initialize empty comments array
   }
 ];
 
@@ -186,6 +189,27 @@ const MyTask = () => {
   const openViewModal = (task) => {
     setSelectedTask(task);
     setIsViewModalOpen(true);
+  };
+
+  // Add new function to handle comments
+  const handleAddComment = (taskId, commentText) => {
+    const comment = {
+      id: Date.now(),
+      text: commentText,
+      author: currentUser ? currentUser.username || currentUser.email : 'Anonymous',
+      timestamp: new Date().toISOString(),
+    };
+
+    setTasks(prevTasks =>
+      prevTasks.map(task =>
+        task.id === taskId
+          ? {
+              ...task,
+              comments: [comment, ...(task.comments || [])]
+            }
+          : task
+      )
+    );
   };
 
   const renderTaskCard = (task) => {
@@ -392,6 +416,7 @@ const MyTask = () => {
             setIsViewModalOpen(false);
             setSelectedTask(null);
           }}
+          onAddComment={(commentText) => handleAddComment(selectedTask.id, commentText)}
         />
       )}
       
