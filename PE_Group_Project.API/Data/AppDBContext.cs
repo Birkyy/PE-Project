@@ -8,5 +8,6 @@ namespace PE_Group_Project.API.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Project> Projects { get; set; }
         public DbSet<ProjectTask> ProjectTasks { get; set; }
+        public DbSet<UserProject> UserProjects { get; set; }
     }
 }

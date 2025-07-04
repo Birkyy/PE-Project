@@ -19,17 +19,19 @@ namespace PE_Group_Project.API.Controllers
 
             foreach (var task in tasks)
             {
-                tasksDTO.Add(new ProjectTaskDTO
-                {
-                    ProjectTaskId = task.ProjectTaskId,
-                    ProjectId = task.ProjectId,
-                    TaskName = task.TaskName,
-                    PIC = task.PIC,
-                    Deadline = task.Deadline,
-                    Description = task.Description,
-                    Status = task.Status,
-                    Priority = task.Priority
-                });
+                tasksDTO.Add(
+                    new ProjectTaskDTO
+                    {
+                        ProjectTaskId = task.ProjectTaskId,
+                        ProjectId = task.ProjectId,
+                        TaskName = task.TaskName,
+                        PIC = task.PIC,
+                        Deadline = task.Deadline,
+                        Description = task.Description,
+                        Status = task.Status,
+                        Priority = task.Priority,
+                    }
+                );
             }
 
             return Ok(tasksDTO);
@@ -55,14 +57,16 @@ namespace PE_Group_Project.API.Controllers
                 Deadline = task.Deadline,
                 Description = task.Description,
                 Status = task.Status,
-                Priority = task.Priority
+                Priority = task.Priority,
             };
 
             return Ok(taskDTO);
         }
 
         [HttpPost]
-        public IActionResult AddProjectTask([FromBody] CreateProjectTaskRequestDTO createProjectTaskRequestDTO)
+        public IActionResult AddProjectTask(
+            [FromBody] CreateProjectTaskRequestDTO createProjectTaskRequestDTO
+        )
         {
             if (createProjectTaskRequestDTO == null)
             {
@@ -71,25 +75,35 @@ namespace PE_Group_Project.API.Controllers
 
             var task = new ProjectTask
             {
-                ProjectTaskId = createProjectTaskRequestDTO.ProjectTaskId != Guid.Empty ? createProjectTaskRequestDTO.ProjectTaskId : Guid.NewGuid(),
+                ProjectTaskId =
+                    createProjectTaskRequestDTO.ProjectTaskId != Guid.Empty
+                        ? createProjectTaskRequestDTO.ProjectTaskId
+                        : Guid.NewGuid(),
                 ProjectId = createProjectTaskRequestDTO.ProjectId,
                 TaskName = createProjectTaskRequestDTO.TaskName,
                 PIC = createProjectTaskRequestDTO.PIC,
                 Deadline = createProjectTaskRequestDTO.Deadline,
                 Description = createProjectTaskRequestDTO.Description,
                 Status = createProjectTaskRequestDTO.Status,
-                Priority = createProjectTaskRequestDTO.Priority
+                Priority = createProjectTaskRequestDTO.Priority,
             };
 
             _context.ProjectTasks.Add(task);
             _context.SaveChanges();
 
-            return CreatedAtAction(nameof(GetProjectTaskById), new { id = task.ProjectTaskId }, task);
+            return CreatedAtAction(
+                nameof(GetProjectTaskById),
+                new { id = task.ProjectTaskId },
+                task
+            );
         }
 
         [HttpPut]
         [Route("{id:guid}")]
-        public IActionResult UpdateProjectTaskById([FromRoute] Guid id, [FromBody] UpdateProjectTaskRequestDTO updateProjectTaskRequestDTO)
+        public IActionResult UpdateProjectTaskById(
+            [FromRoute] Guid id,
+            [FromBody] UpdateProjectTaskRequestDTO updateProjectTaskRequestDTO
+        )
         {
             var task = _context.ProjectTasks.FirstOrDefault(t => t.ProjectTaskId == id);
 
@@ -99,7 +113,10 @@ namespace PE_Group_Project.API.Controllers
             }
 
             // Optionally, ensure the DTO ProjectTaskId matches the route Id
-            if (updateProjectTaskRequestDTO.ProjectTaskId != Guid.Empty && updateProjectTaskRequestDTO.ProjectTaskId != id)
+            if (
+                updateProjectTaskRequestDTO.ProjectTaskId != Guid.Empty
+                && updateProjectTaskRequestDTO.ProjectTaskId != id
+            )
             {
                 return BadRequest("ProjectTaskId in body does not match ProjectTaskId in route.");
             }
@@ -146,4 +163,4 @@ namespace PE_Group_Project.API.Controllers
             return Ok(isOverdue);
         }
     }
-} 
+}
