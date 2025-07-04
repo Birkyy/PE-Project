@@ -1,5 +1,5 @@
 import { X, AlertCircle, Search, ChevronDown, UserCheck } from 'lucide-react';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme } from '../context/ThemeContext';
 import { useState, useEffect, useRef } from 'react';
 
 // Mock users data (replace with API call later)
@@ -12,14 +12,15 @@ const mockUsers = [
   { id: 6, name: 'Lisa Davis', email: 'lisa.davis@company.com', role: 'QA Engineer' }
 ];
 
-const AddTaskModal = ({ isOpen, onClose, onSubmit, projectDeadline }) => {
+const EditTaskModal = ({ isOpen, onClose, onSubmit, projectDeadline, task }) => {
   const { darkMode } = useTheme();
   const [taskData, setTaskData] = useState({
     title: '',
     description: '',
     deadline: '',
     priority: 'medium',
-    assignedTo: null
+    assignedTo: null,
+    status: 'todo'
   });
   const [error, setError] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -38,21 +39,25 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, projectDeadline }) => {
     user.role.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Reset form when modal is opened/closed
+  // Initialize form with task data when modal is opened
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && task) {
+      // Find the assigned user from mockUsers
+      const assignedUser = mockUsers.find(user => user.name === task.assignedTo);
+      
       setTaskData({
-        title: '',
-        description: '',
-        deadline: '',
-        priority: 'medium',
-        assignedTo: null
+        title: task.title,
+        description: task.description,
+        deadline: task.deadline,
+        priority: task.priority,
+        assignedTo: assignedUser || null,
+        status: task.status
       });
       setError('');
       setSearchTerm('');
       setIsDropdownOpen(false);
     }
-  }, [isOpen]);
+  }, [isOpen, task]);
 
   // Handle click outside dropdown
   useEffect(() => {
@@ -79,16 +84,9 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, projectDeadline }) => {
 
     onSubmit({
       ...taskData,
+      id: task.id, // Preserve the task ID
       assignedTo: taskData.assignedTo ? taskData.assignedTo.name : ''
     });
-    setTaskData({
-      title: '',
-      description: '',
-      deadline: '',
-      priority: 'medium',
-      assignedTo: null
-    });
-    setError('');
     onClose();
   };
 
@@ -136,7 +134,7 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, projectDeadline }) => {
           <h2 className={`text-2xl font-bold mb-6 ${
             darkMode ? 'text-white' : 'text-gray-900'
           }`}>
-            Create New Task
+            Edit Task
           </h2>
 
           {/* Error Message */}
@@ -249,6 +247,30 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, projectDeadline }) => {
               </select>
             </div>
 
+            {/* Status Select */}
+            <div>
+              <label htmlFor="status" className={`block text-sm font-medium mb-1 ${
+                darkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                Status *
+              </label>
+              <select
+                id="status"
+                required
+                value={taskData.status}
+                onChange={(e) => setTaskData({ ...taskData, status: e.target.value })}
+                className={`w-full rounded-lg border ${
+                  darkMode
+                    ? 'bg-gray-700 border-gray-600 text-white'
+                    : 'bg-white border-gray-300 text-gray-900'
+                } p-2.5 focus:ring-2 focus:ring-blue-500`}
+              >
+                <option value="todo">Todo</option>
+                <option value="in-progress">In Progress</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+
             {/* Assigned To Dropdown */}
             <div>
               <label className={`block text-sm font-medium mb-1 ${
@@ -357,7 +379,7 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, projectDeadline }) => {
                 type="submit"
                 className={`px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white`}
               >
-                Create Task
+                Save Changes
               </button>
             </div>
           </form>
@@ -367,4 +389,4 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, projectDeadline }) => {
   );
 };
 
-export default AddTaskModal; 
+export default EditTaskModal; 

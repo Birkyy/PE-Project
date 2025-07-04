@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useTheme } from '../../context/ThemeContext';
-import Layout from '../Layout';
+import { useTheme } from '../context/ThemeContext';
+import Layout from '../components/Layout';
 import { 
   Calendar, 
   Clock, 

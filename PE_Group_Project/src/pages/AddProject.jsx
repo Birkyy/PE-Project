@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme } from '../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Users, Save, X, Search, ChevronDown, UserCheck } from 'lucide-react';
-import Layout from '../Layout';
+import Layout from '../components/Layout';
 
 const AddProject = () => {
   const { darkMode } = useTheme();
