@@ -29,7 +29,9 @@ namespace PE_Group_Project.API.Controllers
                         PriorityLevel = project.PriorityLevel,
                         ProjectManagerInCharge = project.ProjectManagerInCharge,
                         Contributors = _context
-                            .UserProjects.Where(up => up.ProjectId == project.ProjectId)
+                            .UserProjects.Where(up =>
+                                up.ProjectId == project.ProjectId && up.ProjectRole == "Contributor"
+                            )
                             .Select(up => up.UserId)
                             .ToList(),
                     }
@@ -59,7 +61,9 @@ namespace PE_Group_Project.API.Controllers
                 PriorityLevel = project.PriorityLevel,
                 ProjectManagerInCharge = project.ProjectManagerInCharge,
                 Contributors = _context
-                    .UserProjects.Where(up => up.ProjectId == project.ProjectId)
+                    .UserProjects.Where(up =>
+                        up.ProjectId == project.ProjectId && up.ProjectRole == "Contributor"
+                    )
                     .Select(up => up.UserId)
                     .ToList(),
             };
@@ -86,7 +90,9 @@ namespace PE_Group_Project.API.Controllers
                     PriorityLevel = project.PriorityLevel,
                     ProjectManagerInCharge = project.ProjectManagerInCharge,
                     Contributors = _context
-                        .UserProjects.Where(up => up.ProjectId == project.ProjectId)
+                        .UserProjects.Where(up =>
+                            up.ProjectId == project.ProjectId && up.ProjectRole == "Contributor"
+                        )
                         .Select(up => up.UserId)
                         .ToList(),
                 })
@@ -118,21 +124,38 @@ namespace PE_Group_Project.API.Controllers
 
             _context.Projects.Add(project);
 
-            // Add UserProject entries
+            // Create a list to track all user-project relationships
+            var userProjects = new List<UserProject>();
+
+            // Add UserProject entries for contributors (excluding manager)
             foreach (var contributorId in createProjectRequestDTO.Contributors)
             {
-                _context.UserProjects.Add(
-                    new UserProject
-                    {
-                        ProjectId = project.ProjectId,
-                        UserId = contributorId,
-                        ProjectRole = "Contributor",
-                    }
-                );
+                // Skip if this contributor is the manager
+                if (contributorId == createProjectRequestDTO.ProjectManagerInCharge)
+                {
+                    continue;
+                }
+
+                // Check if this user is already added (avoid duplicate entries)
+                if (
+                    !userProjects.Any(up =>
+                        up.UserId == contributorId && up.ProjectId == project.ProjectId
+                    )
+                )
+                {
+                    userProjects.Add(
+                        new UserProject
+                        {
+                            ProjectId = project.ProjectId,
+                            UserId = contributorId,
+                            ProjectRole = "Contributor",
+                        }
+                    );
+                }
             }
 
-            // Add project manager too (optional)
-            _context.UserProjects.Add(
+            // Always add project manager as Manager
+            userProjects.Add(
                 new UserProject
                 {
                     ProjectId = project.ProjectId,
@@ -141,9 +164,38 @@ namespace PE_Group_Project.API.Controllers
                 }
             );
 
-            _context.SaveChanges();
+            // Add all user projects to context
+            _context.UserProjects.AddRange(userProjects);
 
-            return CreatedAtAction(nameof(GetProjectById), new { id = project.ProjectId }, project);
+            try
+            {
+                _context.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error saving project: {ex.Message}");
+            }
+
+            // Return only the project data (not the full entity with navigation properties)
+            var projectDTO = new ProjectDTO
+            {
+                ProjectId = project.ProjectId,
+                ProjectName = project.ProjectName,
+                Date = project.Date,
+                Status = project.Status,
+                PriorityLevel = project.PriorityLevel,
+                ProjectManagerInCharge = project.ProjectManagerInCharge,
+                Contributors = userProjects
+                    .Where(up => up.ProjectRole == "Contributor")
+                    .Select(up => up.UserId)
+                    .ToList(),
+            };
+
+            return CreatedAtAction(
+                nameof(GetProjectById),
+                new { id = project.ProjectId },
+                projectDTO
+            );
         }
 
         [HttpPut]
@@ -175,24 +227,38 @@ namespace PE_Group_Project.API.Controllers
             project.Status = updateProjectRequestDTO.Status;
             project.PriorityLevel = updateProjectRequestDTO.PriorityLevel;
             project.ProjectManagerInCharge = updateProjectRequestDTO.ProjectManagerInCharge;
+
+            // Remove old user projects
             var oldUserProjects = _context.UserProjects.Where(up => up.ProjectId == id).ToList();
             _context.UserProjects.RemoveRange(oldUserProjects);
 
-            // Add updated contributors
+            // Create new user projects list
+            var newUserProjects = new List<UserProject>();
+
+            // Add updated contributors (excluding manager)
             foreach (var contributorId in updateProjectRequestDTO.Contributors)
             {
-                _context.UserProjects.Add(
-                    new UserProject
-                    {
-                        ProjectId = id,
-                        UserId = contributorId,
-                        ProjectRole = "Contributor",
-                    }
-                );
+                // Skip if this contributor is the manager
+                if (contributorId == updateProjectRequestDTO.ProjectManagerInCharge)
+                {
+                    continue;
+                }
+
+                if (!newUserProjects.Any(up => up.UserId == contributorId && up.ProjectId == id))
+                {
+                    newUserProjects.Add(
+                        new UserProject
+                        {
+                            ProjectId = id,
+                            UserId = contributorId,
+                            ProjectRole = "Contributor",
+                        }
+                    );
+                }
             }
 
-            // Add project manager
-            _context.UserProjects.Add(
+            // Always add project manager as Manager
+            newUserProjects.Add(
                 new UserProject
                 {
                     ProjectId = id,
@@ -200,9 +266,34 @@ namespace PE_Group_Project.API.Controllers
                     ProjectRole = "Manager",
                 }
             );
-            _context.SaveChanges();
 
-            return Ok(project);
+            _context.UserProjects.AddRange(newUserProjects);
+
+            try
+            {
+                _context.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error updating project: {ex.Message}");
+            }
+
+            // Return DTO instead of entity to avoid circular reference
+            var projectDTO = new ProjectDTO
+            {
+                ProjectId = project.ProjectId,
+                ProjectName = project.ProjectName,
+                Date = project.Date,
+                Status = project.Status,
+                PriorityLevel = project.PriorityLevel,
+                ProjectManagerInCharge = project.ProjectManagerInCharge,
+                Contributors = newUserProjects
+                    .Where(up => up.ProjectRole == "Contributor")
+                    .Select(up => up.UserId)
+                    .ToList(),
+            };
+
+            return Ok(projectDTO);
         }
 
         [HttpDelete]
@@ -215,6 +306,11 @@ namespace PE_Group_Project.API.Controllers
             {
                 return NotFound();
             }
+
+            // Remove associated UserProjects first (if not handled by cascade delete)
+            var userProjects = _context.UserProjects.Where(up => up.ProjectId == id).ToList();
+            _context.UserProjects.RemoveRange(userProjects);
+
             _context.Projects.Remove(project);
             _context.SaveChanges();
             return NoContent();
