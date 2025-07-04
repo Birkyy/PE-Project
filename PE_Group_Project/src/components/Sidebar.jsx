@@ -30,7 +30,10 @@ const Sidebar = ({ isOpen, onClose, darkMode, toggleDarkMode }) => {
       onClose();
       navigate('/privacy');
     }},
-    { icon: HelpCircle, label: 'Help & Support', action: () => console.log('Help') }
+    { icon: HelpCircle, label: 'Help & Support', action: () => {
+      onClose();
+      navigate('/help-support');
+    }}
   ];
 
   if (!isOpen) return null;

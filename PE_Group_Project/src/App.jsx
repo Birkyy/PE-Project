@@ -10,6 +10,7 @@ import UsersManagement from './pages/UsersManagement';
 import ProtectedRoute from './components/ProtectedRoute';
 import MyTask from './pages/MyTask';
 import Privacy from './pages/Privacy';
+import HelpSupport from './pages/HelpSupport';
 
 function App() {
   return (
@@ -55,6 +56,11 @@ function App() {
             <Route path="/privacy" element={
               <ProtectedRoute>
                 <Privacy />
+              </ProtectedRoute>
+            } />
+            <Route path="/help-support" element={
+              <ProtectedRoute>
+                <HelpSupport />
               </ProtectedRoute>
             } />
           </Routes>
