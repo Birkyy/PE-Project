@@ -127,5 +127,19 @@ namespace PE_Group_Project.API.Controllers
             _context.SaveChanges();
             return NoContent();
         }
+
+        [HttpGet]
+        [Route("{id:guid}/is-overdue")]
+        public IActionResult GetIfProjectOverdue([FromRoute] Guid id)
+        {
+            var project = _context.Projects.FirstOrDefault(p => p.ProjectId == id);
+            if (project == null)
+            {
+                return NotFound();
+            }
+            // If the project's date is before now, it's overdue
+            bool isOverdue = project.Date < DateTime.UtcNow;
+            return Ok(isOverdue);
+        }
     }
 }
