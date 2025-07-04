@@ -9,6 +9,7 @@ namespace PE_Group_Project.API.Data
         public DbSet<Project> Projects { get; set; }
         public DbSet<ProjectTask> ProjectTasks { get; set; }
         public DbSet<UserProject> UserProjects { get; set; }
+        public DbSet<TaskComment> TaskComments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -30,7 +31,5 @@ namespace PE_Group_Project.API.Data
                 .WithMany(p => p.Contributors)
                 .HasForeignKey(up => up.ProjectId);
         }
-
-        public DbSet<TaskComment> TaskComments { get; set; }
     }
 }
