@@ -10,6 +10,7 @@ namespace PE_Group_Project.API.Data
         public DbSet<ProjectTask> ProjectTasks { get; set; }
         public DbSet<UserProject> UserProjects { get; set; }
         public DbSet<TaskComment> TaskComments { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -30,6 +31,13 @@ namespace PE_Group_Project.API.Data
                 .HasOne(up => up.Project)
                 .WithMany(p => p.Contributors)
                 .HasForeignKey(up => up.ProjectId);
+
+            modelBuilder
+                .Entity<Notification>()
+                .HasOne(n => n.User)
+                .WithMany(u => u.Notifications)
+                .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
