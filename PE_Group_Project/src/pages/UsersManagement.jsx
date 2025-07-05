@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import Layout from '../components/Layout';
 import api from '../API/api';
-import { Shield, Search, Edit2, Trash2, X, Eye, EyeOff, Unlock, Lock } from 'lucide-react';
+import { Shield, Search, Edit2, Trash2, X, Eye, EyeOff, Unlock, Lock, Download } from 'lucide-react';
 
 const UsersManagement = () => {
   const { darkMode } = useTheme();
@@ -472,6 +472,82 @@ const UsersManagement = () => {
     }
   };
 
+  // CSV Export Function
+  const exportUsersToCSV = () => {
+    try {
+      // Define CSV headers
+      const headers = [
+        'ID',
+        'Name',
+        'Username', 
+        'Email',
+        'Age',
+        'Gender',
+        'Nationality',
+        'Phone Number',
+        'Role',
+        'Status',
+        'Department',
+        'Position'
+      ];
+
+      // Convert users data to CSV format
+      const csvData = filteredUsers.map(user => [
+        user.id || '',
+        user.name || '',
+        user.username || user.name || '',
+        user.email || '',
+        user.age || '',
+        user.gender || '',
+        user.nationality || '',
+        user.phoneNumber || '',
+        user.role || '',
+        user.status || '',
+        user.department || '',
+        user.position || ''
+      ]);
+
+      // Combine headers and data
+      const csvContent = [headers, ...csvData]
+        .map(row => row.map(field => {
+          // Escape quotes and wrap fields containing commas, quotes, or newlines
+          const fieldStr = String(field);
+          if (fieldStr.includes(',') || fieldStr.includes('"') || fieldStr.includes('\n')) {
+            return `"${fieldStr.replace(/"/g, '""')}"`;
+          }
+          return fieldStr;
+        }).join(','))
+        .join('\n');
+
+      // Create and download the file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      
+      if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        
+        // Generate filename with current date
+        const currentDate = new Date().toISOString().split('T')[0];
+        const filename = `users_export_${currentDate}.csv`;
+        link.setAttribute('download', filename);
+        
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Show success message
+        setSuccess(`Users exported successfully! Downloaded as ${filename}`);
+        setTimeout(() => setSuccess(''), 3000);
+      }
+    } catch (error) {
+      console.error('Error exporting users to CSV:', error);
+      setError('Failed to export users. Please try again.');
+      setTimeout(() => setError(''), 3000);
+    }
+  };
+
   return (
     <Layout>
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
@@ -508,11 +584,15 @@ const UsersManagement = () => {
               >
                 + Add User
               </button>
-              <button className={`px-4 py-2 rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 ${
-                darkMode
-                  ? 'text-gray-400 border border-gray-600 hover:text-white hover:bg-gray-700/50 focus:ring-gray-400/50'
-                  : 'text-gray-600 border border-gray-300 hover:text-gray-900 hover:bg-gray-100 focus:ring-gray-400/50'
-              }`}>
+              <button 
+                onClick={exportUsersToCSV}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 ${
+                  darkMode
+                    ? 'text-gray-400 border border-gray-600 hover:text-white hover:bg-gray-700/50 focus:ring-gray-400/50'
+                    : 'text-gray-600 border border-gray-300 hover:text-gray-900 hover:bg-gray-100 focus:ring-gray-400/50'
+                }`}
+              >
+                <Download className="w-4 h-4" />
                 Export Users
               </button>
             </div>
