@@ -12,6 +12,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [accountLocked, setAccountLocked] = useState(false);
   const [remainingAttempts, setRemainingAttempts] = useState(5);
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
 
   // Login attempt management functions
   const getFailedAttempts = (email) => {
@@ -132,6 +133,15 @@ const Login = () => {
     navigate('/home');
   };
 
+  const handleForgotPassword = (e) => {
+    e.preventDefault();
+    setShowForgotPasswordModal(true);
+  };
+
+  const closeForgotPasswordModal = () => {
+    setShowForgotPasswordModal(false);
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
@@ -210,9 +220,13 @@ const Login = () => {
 
             <div className="flex items-center justify-between">
               <div className="text-sm">
-                <Link to="/forgot-password" className="font-medium text-purple-400 hover:text-purple-300 transition-colors duration-300">
+                <button 
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="font-medium text-purple-400 hover:text-purple-300 transition-colors duration-300 underline"
+                >
                   Forgot password?
-                </Link>
+                </button>
               </div>
             </div>
 
@@ -253,6 +267,67 @@ const Login = () => {
           </form>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotPasswordModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 border border-purple-500/30 rounded-lg p-6 max-w-md w-full shadow-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-white">Password Reset</h3>
+              <button
+                onClick={closeForgotPasswordModal}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <span className="text-2xl">&times;</span>
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="bg-blue-900/30 border border-blue-500/50 rounded-lg p-4">
+                <div className="flex items-center mb-2">
+                  <span className="text-blue-400 mr-2">ℹ️</span>
+                  <h4 className="text-blue-300 font-semibold">Contact Administrator</h4>
+                </div>
+                <p className="text-gray-300 text-sm mb-3">
+                  To reset your password, please contact our system administrator:
+                </p>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center text-sm">
+                    <span className="text-purple-400 mr-2">📞</span>
+                    <span className="text-gray-300">Phone: </span>
+                    <span className="text-white font-mono ml-1">+1 (555) 123-4567</span>
+                  </div>
+                  <div className="flex items-center text-sm">
+                    <span className="text-purple-400 mr-2">📧</span>
+                    <span className="text-gray-300">Email: </span>
+                    <span className="text-white font-mono ml-1">admin@taskio.com</span>
+                  </div>
+                  <div className="flex items-center text-sm">
+                    <span className="text-purple-400 mr-2">🕒</span>
+                    <span className="text-gray-300">Hours: Mon-Fri 9AM-5PM EST</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-yellow-900/30 border border-yellow-500/50 rounded-lg p-3">
+                <p className="text-yellow-300 text-xs">
+                  💡 <strong>Tip:</strong> Have your username and registered email ready when you contact support.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end mt-6">
+              <button
+                onClick={closeForgotPasswordModal}
+                className="px-4 py-2 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700 text-white rounded-md transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/25"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
