@@ -177,22 +177,53 @@ const MyTask = () => {
     setIsViewModalOpen(true);
   };
 
-  // Add new function to handle comments
-  const handleAddComment = (taskId, commentText) => {
-    const comment = {
-      id: Date.now(),
-      text: commentText,
-      author: currentUser ? currentUser.username || currentUser.email : 'Anonymous',
-      timestamp: new Date().toISOString(),
-    };
+  // Comment handling functions
+  const handleAddComment = async (comment) => {
+    try {
+      // In a real app, you would save this to your backend
+      setTasks(prevTasks =>
+        prevTasks.map(task =>
+          task.id === comment.taskId
+            ? { ...task, comments: [...(task.comments || []), comment] }
+            : task
+        )
+      );
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      throw error;
+    }
+  };
 
-    setTasks(prevTasks =>
-      prevTasks.map(task =>
-        task.id === taskId
-          ? { ...task, comments: [...(task.comments || []), comment] }
-          : task
-      )
-    );
+  const handleEditComment = async (commentId, updatedComment) => {
+    try {
+      // In a real app, you would save this to your backend
+      setTasks(prevTasks =>
+        prevTasks.map(task => ({
+          ...task,
+          comments: (task.comments || []).map(comment =>
+            comment.id === commentId ? updatedComment : comment
+          )
+        }))
+      );
+    } catch (error) {
+      console.error('Error editing comment:', error);
+      throw error;
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    try {
+      // In a real app, you would delete this from your backend
+      setTasks(prevTasks =>
+        prevTasks.map(task => ({
+          ...task,
+          comments: (task.comments || []).filter(comment => comment.id !== commentId)
+        }))
+      );
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      throw error;
+    }
   };
 
   const handleFileUpload = (taskId, files) => {
@@ -492,14 +523,15 @@ const MyTask = () => {
 
         {isViewModalOpen && selectedTask && (
           <ViewTaskModal
-            isOpen={isViewModalOpen}
+            task={selectedTask}
             onClose={() => {
               setIsViewModalOpen(false);
               setSelectedTask(null);
             }}
-            task={selectedTask}
             onAddComment={handleAddComment}
-            darkMode={darkMode}
+            onEditComment={handleEditComment}
+            onDeleteComment={handleDeleteComment}
+            currentUser={currentUser}
           />
         )}
       </div>

@@ -108,6 +108,15 @@ function Project() {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
     const [isEditProjectModalOpen, setIsEditProjectModalOpen] = useState(false);
+    const [currentUser, setCurrentUser] = useState(null);
+
+    // Load current user data
+    useEffect(() => {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+            setCurrentUser(JSON.parse(userStr));
+        }
+    }, []);
 
     // Mock project data - replace with actual API call
     useEffect(() => {
@@ -262,6 +271,55 @@ function Project() {
     // Add navigation handler
     const handleBack = () => {
         navigate('/my-projects');
+    };
+
+    // Comment handling functions
+    const handleAddComment = async (comment) => {
+        try {
+            // In a real app, you would save this to your backend
+            setTasks(prevTasks =>
+                prevTasks.map(task =>
+                    task.id === comment.taskId
+                        ? { ...task, comments: [...(task.comments || []), comment] }
+                        : task
+                )
+            );
+        } catch (error) {
+            console.error('Error adding comment:', error);
+            throw error;
+        }
+    };
+
+    const handleEditComment = async (commentId, updatedComment) => {
+        try {
+            // In a real app, you would save this to your backend
+            setTasks(prevTasks =>
+                prevTasks.map(task => ({
+                    ...task,
+                    comments: (task.comments || []).map(comment =>
+                        comment.id === commentId ? updatedComment : comment
+                    )
+                }))
+            );
+        } catch (error) {
+            console.error('Error editing comment:', error);
+            throw error;
+        }
+    };
+
+    const handleDeleteComment = async (commentId) => {
+        try {
+            // In a real app, you would delete this from your backend
+            setTasks(prevTasks =>
+                prevTasks.map(task => ({
+                    ...task,
+                    comments: (task.comments || []).filter(comment => comment.id !== commentId)
+                }))
+            );
+        } catch (error) {
+            console.error('Error deleting comment:', error);
+            throw error;
+        }
     };
 
     const renderTaskCard = (task) => {
@@ -626,16 +684,15 @@ function Project() {
                 task={editTask}
             />
             <ViewTaskModal
-                isOpen={isViewModalOpen}
                 task={viewTask}
                 onClose={() => {
                     setIsViewModalOpen(false);
                     setViewTask(null);
                 }}
-                onAddComment={(commentText) => {
-                    // Add comment handler - you can implement this based on your needs
-                    console.log('Adding comment:', commentText);
-                }}
+                onAddComment={handleAddComment}
+                onEditComment={handleEditComment}
+                onDeleteComment={handleDeleteComment}
+                currentUser={currentUser}
             />
             <EditProjectModal
                 isOpen={isEditProjectModalOpen}
