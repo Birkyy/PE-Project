@@ -25,6 +25,25 @@ namespace PE_Group_Project.API.Controllers
         }
 
         [HttpGet]
+        public IActionResult GetAllUsers()
+        {
+            var userDTO = _context
+                .Users.Select(user => new UserDTO
+                {
+                    UserId = user.UserId,
+                    Username = user.Username,
+                    Email = user.Email,
+                    Role = user.Role,
+                    Age = user.Age,
+                    Gender = user.Gender,
+                    Nationality = user.Nationality,
+                    PhoneNumber = user.PhoneNumber,
+                })
+                .ToList();
+            return Ok(userDTO);
+        }
+
+        [HttpGet]
         [Route("{id:guid}")]
         public IActionResult GetUserById([FromRoute] Guid id)
         {
