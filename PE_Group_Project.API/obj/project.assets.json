@@ -4777,19 +4777,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\User\\.nuget\\packages\\": {}
+    "C:\\Users\\user\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\User\\Documents\\GitHub\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj",
+      "projectUniqueName": "C:\\Users\\user\\Documents\\GitHub\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj",
       "projectName": "PE_Group_Project.API",
-      "projectPath": "C:\\Users\\User\\Documents\\GitHub\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj",
-      "packagesPath": "C:\\Users\\User\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\User\\Documents\\GitHub\\PE-Project\\PE_Group_Project.API\\obj\\",
+      "projectPath": "C:\\Users\\user\\Documents\\GitHub\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj",
+      "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\user\\Documents\\GitHub\\PE-Project\\PE_Group_Project.API\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\User\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net9.0"
@@ -4851,16 +4851,8 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.202/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
       }
     }
-  },
-  "logs": [
-    {
-      "code": "Undefined",
-      "level": "Warning",
-      "warningLevel": 1,
-      "message": "Problem reading the cache file C:\\Users\\User\\Documents\\GitHub\\PE-Project\\PE_Group_Project.API\\obj\\project.nuget.cache : Invalid property identifier character: <. Path 'version', line 3, position 0."
-    }
-  ]
+  }
 }

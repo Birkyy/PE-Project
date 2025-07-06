@@ -166,12 +166,12 @@ const Dashboard = () => {
           <div className="lg:col-span-3 space-y-8">
             {/* Tasks Section - Side by Side */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Upcoming Tasks */}
-            <div className={`${darkMode ? 'bg-gray-800 border-purple-500/30' : 'bg-white border-purple-300'} border rounded-lg p-6`}>
+            {/* In Progress */}
+            <div className={`${darkMode ? 'bg-gray-800 border-yellow-500/30' : 'bg-white border-yellow-300'} border rounded-lg p-6`}>
               <div className="flex items-center justify-between mb-4">
                 <h3 className={`text-lg font-semibold flex items-center ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  <Calendar className="w-5 h-5 mr-2 text-purple-400" />
-                  Upcoming Tasks
+                  <Clock className="w-5 h-5 mr-2 text-yellow-400" />
+                  In Progress
                 </h3>
                 <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{upcomingTasks.length} tasks</span>
               </div>
