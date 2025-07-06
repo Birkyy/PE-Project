@@ -1,16 +1,6 @@
-import { X, AlertCircle, Search, ChevronDown, UserCheck } from 'lucide-react';
+import { X, AlertCircle } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
-import { useState, useEffect, useRef } from 'react';
-
-// Mock users data (replace with API call later)
-const mockUsers = [
-  { id: 1, name: 'John Doe', email: 'john.doe@company.com', role: 'Frontend Developer' },
-  { id: 2, name: 'Jane Smith', email: 'jane.smith@company.com', role: 'Backend Developer' },
-  { id: 3, name: 'Mike Johnson', email: 'mike.johnson@company.com', role: 'UI/UX Designer' },
-  { id: 4, name: 'Sarah Wilson', email: 'sarah.wilson@company.com', role: 'Project Manager' },
-  { id: 5, name: 'David Brown', email: 'david.brown@company.com', role: 'Full Stack Developer' },
-  { id: 6, name: 'Lisa Davis', email: 'lisa.davis@company.com', role: 'QA Engineer' }
-];
+import { useState, useEffect } from 'react';
 
 const EditTaskModal = ({ task, onClose, onSave }) => {
   const { darkMode } = useTheme();
@@ -19,59 +9,37 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
     description: '',
     deadline: '',
     priority: 'medium',
-    assignedTo: null,
+    assignedTo: '',
     status: 'todo'
   });
   const [error, setError] = useState('');
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const dropdownRef = useRef(null);
-
-  // Get tomorrow's date as the minimum date for the deadline
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const minDate = tomorrow.toISOString().split('T')[0];
-
-  // Filter users based on search term
-  const filteredUsers = mockUsers.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.role.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const [loading, setLoading] = useState(false);
 
   // Initialize form with task data when modal is opened
   useEffect(() => {
     if (task) {
-      // Find the assigned user from mockUsers
-      const assignedUser = mockUsers.find(user => user.name === task.assignedTo);
-      
-      setTaskData({
-        title: task.title,
-        description: task.description,
-        deadline: task.deadline,
-        priority: task.priority,
-        assignedTo: assignedUser || null,
-        status: task.status
-      });
-      setError('');
-      setSearchTerm('');
-      setIsDropdownOpen(false);
+      setLoading(true);
+      try {
+        // Format the deadline date for the input field (YYYY-MM-DD format)
+        const deadlineDate = task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : '';
+        
+        setTaskData({
+          title: task.title,
+          description: task.description,
+          deadline: deadlineDate,
+          priority: task.priority,
+          assignedTo: task.pic || '', // Just use the PIC field directly
+          status: task.status
+        });
+        setError('');
+      } catch (error) {
+        console.error('Error initializing task data:', error);
+        setError('Failed to load task data. Please try again.');
+      } finally {
+        setLoading(false);
+      }
     }
   }, [task]);
-
-  // Handle click outside dropdown
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -79,24 +47,9 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
     onSave({
       ...taskData,
       id: task.id, // Preserve the task ID
-      assignedTo: taskData.assignedTo ? taskData.assignedTo.name : ''
+      assignedTo: taskData.assignedTo || '',
+      pic: taskData.assignedTo || '00000000-0000-0000-0000-000000000000' // Use the updated PIC value
     });
-  };
-
-  const handleUserSelect = (user) => {
-    setTaskData(prev => ({
-      ...prev,
-      assignedTo: user
-    }));
-    setSearchTerm('');
-    setIsDropdownOpen(false);
-  };
-
-  const handleUserRemove = () => {
-    setTaskData(prev => ({
-      ...prev,
-      assignedTo: null
-    }));
   };
 
   if (!task) return null;
@@ -142,6 +95,16 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Loading State */}
+            {loading && (
+              <div className="flex items-center justify-center py-4">
+                <div className={`text-center ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
+                  <p className="text-sm">Loading task data...</p>
+                </div>
+              </div>
+            )}
+
             {/* Title Input */}
             <div>
               <label htmlFor="title" className={`block text-sm font-medium mb-1 ${
@@ -153,13 +116,14 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
                 type="text"
                 id="title"
                 required
+                disabled={loading}
                 value={taskData.title}
                 onChange={(e) => setTaskData({ ...taskData, title: e.target.value })}
                 className={`w-full rounded-lg border ${
                   darkMode
                     ? 'bg-gray-700 border-gray-600 text-white'
                     : 'bg-white border-gray-300 text-gray-900'
-                } p-2.5 focus:ring-2 focus:ring-blue-500`}
+                } p-2.5 focus:ring-2 focus:ring-blue-500 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 placeholder="Enter task title"
               />
             </div>
@@ -174,6 +138,7 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
               <textarea
                 id="description"
                 required
+                disabled={loading}
                 value={taskData.description}
                 onChange={(e) => setTaskData({ ...taskData, description: e.target.value })}
                 rows="3"
@@ -181,7 +146,7 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
                   darkMode
                     ? 'bg-gray-700 border-gray-600 text-white'
                     : 'bg-white border-gray-300 text-gray-900'
-                } p-2.5 focus:ring-2 focus:ring-blue-500`}
+                } p-2.5 focus:ring-2 focus:ring-blue-500 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 placeholder="Enter task description"
               />
             </div>
@@ -197,6 +162,7 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
                 type="date"
                 id="deadline"
                 required
+                disabled={loading}
                 value={taskData.deadline}
                 onChange={(e) => {
                   setTaskData({ ...taskData, deadline: e.target.value });
@@ -206,7 +172,7 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
                   darkMode
                     ? 'bg-gray-700 border-gray-600 text-white'
                     : 'bg-white border-gray-300 text-gray-900'
-                } p-2.5 focus:ring-2 focus:ring-blue-500`}
+                } p-2.5 focus:ring-2 focus:ring-blue-500 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
               />
             </div>
 
@@ -220,13 +186,14 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
               <select
                 id="priority"
                 required
+                disabled={loading}
                 value={taskData.priority}
                 onChange={(e) => setTaskData({ ...taskData, priority: e.target.value })}
                 className={`w-full rounded-lg border ${
                   darkMode
                     ? 'bg-gray-700 border-gray-600 text-white'
                     : 'bg-white border-gray-300 text-gray-900'
-                } p-2.5 focus:ring-2 focus:ring-blue-500`}
+                } p-2.5 focus:ring-2 focus:ring-blue-500 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -244,13 +211,14 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
               <select
                 id="status"
                 required
+                disabled={loading}
                 value={taskData.status}
                 onChange={(e) => setTaskData({ ...taskData, status: e.target.value })}
                 className={`w-full rounded-lg border ${
                   darkMode
                     ? 'bg-gray-700 border-gray-600 text-white'
                     : 'bg-white border-gray-300 text-gray-900'
-                } p-2.5 focus:ring-2 focus:ring-blue-500`}
+                } p-2.5 focus:ring-2 focus:ring-blue-500 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <option value="Todo">Todo</option>
                 <option value="In Progress">In Progress</option>
@@ -258,106 +226,26 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
               </select>
             </div>
 
-            {/* Assigned To */}
-            <div className="relative" ref={dropdownRef}>
-              <label className={`block text-sm font-medium mb-1 ${
+            {/* PIC */}
+            <div>
+              <label htmlFor="assignedTo" className={`block text-sm font-medium mb-1 ${
                 darkMode ? 'text-gray-300' : 'text-gray-700'
               }`}>
-                Assigned To
+                PIC
               </label>
-              
-              {taskData.assignedTo ? (
-                <div className={`flex items-center justify-between p-2.5 rounded-lg border ${
+              <input
+                type="text"
+                id="assignedTo"
+                disabled={loading}
+                value={taskData.assignedTo}
+                onChange={(e) => setTaskData({ ...taskData, assignedTo: e.target.value })}
+                className={`w-full rounded-lg border ${
                   darkMode
                     ? 'bg-gray-700 border-gray-600 text-white'
                     : 'bg-white border-gray-300 text-gray-900'
-                }`}>
-                  <div className="flex items-center gap-2">
-                    <UserCheck className="w-5 h-5" />
-                    <div>
-                      <p className="font-medium">{taskData.assignedTo.name}</p>
-                      <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                        {taskData.assignedTo.role}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleUserRemove}
-                    className={`p-1 rounded-full hover:bg-opacity-80 ${
-                      darkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-100'
-                    }`}
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-              ) : (
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className={`w-full flex items-center justify-between p-2.5 rounded-lg border ${
-                      darkMode
-                        ? 'bg-gray-700 border-gray-600 text-white'
-                        : 'bg-white border-gray-300 text-gray-900'
-                    }`}
-                  >
-                    <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
-                      Select team member
-                    </span>
-                    <ChevronDown className="w-5 h-5" />
-                  </button>
-
-                  {isDropdownOpen && (
-                    <div className={`absolute z-10 w-full mt-1 rounded-lg border shadow-lg ${
-                      darkMode
-                        ? 'bg-gray-700 border-gray-600'
-                        : 'bg-white border-gray-200'
-                    }`}>
-                      <div className="p-2">
-                        <div className="relative">
-                          <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
-                            darkMode ? 'text-gray-400' : 'text-gray-500'
-                          }`} />
-                          <input
-                            type="text"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Search team members..."
-                            className={`w-full pl-9 pr-3 py-2 rounded-md border ${
-                              darkMode
-                                ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400'
-                                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                            }`}
-                          />
-                        </div>
-                      </div>
-                      <div className="max-h-60 overflow-y-auto">
-                        {filteredUsers.map(user => (
-                          <button
-                            key={user.id}
-                            type="button"
-                            onClick={() => handleUserSelect(user)}
-                            className={`w-full flex items-center gap-2 px-4 py-2 text-left hover:bg-opacity-80 ${
-                              darkMode
-                                ? 'hover:bg-gray-600 text-white'
-                                : 'hover:bg-gray-100 text-gray-900'
-                            }`}
-                          >
-                            <UserCheck className="w-5 h-5" />
-                            <div>
-                              <p className="font-medium">{user.name}</p>
-                              <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                {user.role}
-                              </p>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
+                } p-2.5 focus:ring-2 focus:ring-blue-500 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                placeholder="Enter UserID"
+              />
             </div>
 
             {/* Submit Button */}
@@ -365,21 +253,23 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
               <button
                 type="button"
                 onClick={onClose}
+                disabled={loading}
                 className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
                   darkMode
                     ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
                     : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                }`}
+                } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 Cancel
               </button>
               <button
                 type="submit"
+                disabled={loading}
                 className={`px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors ${
                   darkMode
                     ? 'bg-blue-600 hover:bg-blue-700'
                     : 'bg-blue-500 hover:bg-blue-600'
-                }`}
+                } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 Save Changes
               </button>
@@ -391,4 +281,4 @@ const EditTaskModal = ({ task, onClose, onSave }) => {
   );
 };
 
-export default EditTaskModal; 
+export default EditTaskModal;

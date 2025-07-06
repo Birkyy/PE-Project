@@ -1,114 +1,94 @@
-import { X, AlertCircle, Search, ChevronDown, UserCheck } from 'lucide-react';
+import { X, AlertCircle } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 
-// Mock users data (replace with API call later)
-const mockUsers = [
-  { id: 1, name: 'John Doe', email: 'john.doe@company.com', role: 'Frontend Developer' },
-  { id: 2, name: 'Jane Smith', email: 'jane.smith@company.com', role: 'Backend Developer' },
-  { id: 3, name: 'Mike Johnson', email: 'mike.johnson@company.com', role: 'UI/UX Designer' },
-  { id: 4, name: 'Sarah Wilson', email: 'sarah.wilson@company.com', role: 'Project Manager' },
-  { id: 5, name: 'David Brown', email: 'david.brown@company.com', role: 'Full Stack Developer' },
-  { id: 6, name: 'Lisa Davis', email: 'lisa.davis@company.com', role: 'QA Engineer' }
-];
-
-const AddTaskModal = ({ isOpen, onClose, onSubmit, projectDeadline }) => {
+const AddTaskModal = ({ onClose, onSave }) => {
   const { darkMode } = useTheme();
   const [taskData, setTaskData] = useState({
     title: '',
     description: '',
     deadline: '',
     priority: 'medium',
-    assignedTo: null
+    assignedTo: ''
   });
   const [error, setError] = useState('');
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const dropdownRef = useRef(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Get tomorrow's date as the minimum date for the deadline
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const minDate = tomorrow.toISOString().split('T')[0];
 
-  // Filter users based on search term
-  const filteredUsers = mockUsers.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.role.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Reset form when modal is opened/closed
+  // Reset form when modal is opened
   useEffect(() => {
-    if (isOpen) {
-      setTaskData({
-        title: '',
-        description: '',
-        deadline: '',
-        priority: 'medium',
-        assignedTo: null
-      });
-      setError('');
-      setSearchTerm('');
-      setIsDropdownOpen(false);
-    }
-  }, [isOpen]);
-
-  // Handle click outside dropdown
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    // Validate deadline against project deadline
-    if (projectDeadline && new Date(taskData.deadline) > new Date(projectDeadline)) {
-      setError('Task deadline cannot be later than the project deadline');
-      return;
-    }
-
-    onSubmit({
-      ...taskData,
-      assignedTo: taskData.assignedTo ? taskData.assignedTo.name : ''
-    });
     setTaskData({
       title: '',
       description: '',
       deadline: '',
       priority: 'medium',
-      assignedTo: null
+      assignedTo: ''
     });
     setError('');
-    onClose();
-  };
+    setIsSubmitting(false);
+  }, []);
 
-  const handleUserSelect = (user) => {
-    setTaskData(prev => ({
-      ...prev,
-      assignedTo: user
-    }));
-    setSearchTerm('');
-    setIsDropdownOpen(false);
-  };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError('');
 
-  const handleUserRemove = () => {
-    setTaskData(prev => ({
-      ...prev,
-      assignedTo: null
-    }));
-  };
+    try {
+      // Basic validation
+      if (!taskData.title.trim()) {
+        setError('Task title is required.');
+        return;
+      }
 
-  if (!isOpen) return null;
+      if (!taskData.description.trim()) {
+        setError('Task description is required.');
+        return;
+      }
+
+      if (!taskData.deadline) {
+        setError('Task deadline is required.');
+        return;
+      }
+
+      // Validate GUID format for assignedTo if provided
+      if (taskData.assignedTo && taskData.assignedTo.trim()) {
+        const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!guidRegex.test(taskData.assignedTo.trim())) {
+          setError('Please enter a valid user ID (GUID format).');
+          return;
+        }
+      }
+
+      // Call the onSave function with the task data
+      await onSave({
+        title: taskData.title,
+        description: taskData.description,
+        deadline: taskData.deadline,
+        priority: taskData.priority,
+        assignedTo: taskData.assignedTo.trim() || '00000000-0000-0000-0000-000000000000'
+      });
+
+      // Reset form and close modal
+      setTaskData({
+        title: '',
+        description: '',
+        deadline: '',
+        priority: 'medium',
+        assignedTo: ''
+      });
+      setError('');
+      onClose();
+    } catch (err) {
+      console.error('Error creating task:', err);
+      setError('Failed to create task. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -200,18 +180,13 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, projectDeadline }) => {
               <label htmlFor="deadline" className={`block text-sm font-medium mb-1 ${
                 darkMode ? 'text-gray-300' : 'text-gray-700'
               }`}>
-                Deadline * {projectDeadline && (
-                  <span className="text-xs ml-1">
-                    (Project deadline: {new Date(projectDeadline).toLocaleDateString()})
-                  </span>
-                )}
+                Deadline *
               </label>
               <input
                 type="date"
                 id="deadline"
                 required
                 min={minDate}
-                max={projectDeadline}
                 value={taskData.deadline}
                 onChange={(e) => {
                   setTaskData({ ...taskData, deadline: e.target.value });
@@ -249,95 +224,28 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, projectDeadline }) => {
               </select>
             </div>
 
-            {/* Assigned To Dropdown */}
+            {/* Assigned To Input */}
             <div>
-              <label className={`block text-sm font-medium mb-1 ${
+              <label htmlFor="assignedTo" className={`block text-sm font-medium mb-1 ${
                 darkMode ? 'text-gray-300' : 'text-gray-700'
               }`}>
-                Assigned To
+                Assigned To (User ID)
               </label>
-              <div className="relative" ref={dropdownRef}>
-                {/* Selected User Display */}
-                {taskData.assignedTo ? (
-                  <div className="flex items-center justify-between p-2.5 border rounded-lg mb-2">
-                    <div className="flex items-center gap-2">
-                      <UserCheck className="w-5 h-5" />
-                      <div>
-                        <div className={darkMode ? 'text-white' : 'text-gray-900'}>{taskData.assignedTo.name}</div>
-                        <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{taskData.assignedTo.role}</div>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleUserRemove}
-                      className={`p-1 rounded-full hover:bg-gray-100 ${darkMode ? 'hover:bg-gray-700' : ''}`}
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className={`w-full flex items-center justify-between p-2.5 border rounded-lg ${
-                      darkMode
-                        ? 'bg-gray-700 border-gray-600 text-white'
-                        : 'bg-white border-gray-300 text-gray-900'
-                    }`}
-                  >
-                    <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>Select team member</span>
-                    <ChevronDown className="w-5 h-5" />
-                  </button>
-                )}
-
-                {/* Dropdown Menu */}
-                {isDropdownOpen && (
-                  <div className={`absolute z-10 mt-1 w-full rounded-lg border shadow-lg ${
-                    darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'
-                  }`}>
-                    <div className="p-2">
-                      <div className="relative">
-                        <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
-                          darkMode ? 'text-gray-400' : 'text-gray-500'
-                        }`} />
-                        <input
-                          type="text"
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          placeholder="Search team members..."
-                          className={`w-full pl-9 pr-3 py-2 border rounded-md ${
-                            darkMode
-                              ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400'
-                              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                          }`}
-                        />
-                      </div>
-                    </div>
-                    <div className="max-h-60 overflow-y-auto">
-                      {filteredUsers.map(user => (
-                        <button
-                          key={user.id}
-                          type="button"
-                          onClick={() => handleUserSelect(user)}
-                          className={`w-full text-left px-4 py-2 hover:bg-gray-100 ${
-                            darkMode ? 'hover:bg-gray-600 text-white' : 'text-gray-900'
-                          }`}
-                        >
-                          <div className="font-medium">{user.name}</div>
-                          <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                            {user.role}
-                          </div>
-                        </button>
-                      ))}
-                      {filteredUsers.length === 0 && (
-                        <div className={`px-4 py-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                          No team members found
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
+              <input
+                type="text"
+                id="assignedTo"
+                value={taskData.assignedTo}
+                onChange={(e) => setTaskData({ ...taskData, assignedTo: e.target.value })}
+                className={`w-full rounded-lg border ${
+                  darkMode
+                    ? 'bg-gray-700 border-gray-600 text-white'
+                    : 'bg-white border-gray-300 text-gray-900'
+                } p-2.5 focus:ring-2 focus:ring-blue-500`}
+                placeholder="Enter user ID (GUID) or leave empty for default"
+              />
+              <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                Enter the user ID (GUID) of the person assigned to this task. Leave empty to use default.
+              </p>
             </div>
 
             {/* Submit Button */}
@@ -345,19 +253,23 @@ const AddTaskModal = ({ isOpen, onClose, onSubmit, projectDeadline }) => {
               <button
                 type="button"
                 onClick={onClose}
+                disabled={isSubmitting}
                 className={`px-4 py-2 rounded-lg ${
                   darkMode
                     ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
                     : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
-                }`}
+                } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className={`px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white`}
+                disabled={isSubmitting}
+                className={`px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white ${
+                  isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               >
-                Create Task
+                {isSubmitting ? 'Creating...' : 'Create Task'}
               </button>
             </div>
           </form>

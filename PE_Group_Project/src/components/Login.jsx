@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import api from '../API/api';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -24,23 +23,23 @@ const Login = () => {
     setError('');
 
     try {
-      const response = await api.post('/auth/login', formData);
-      console.log('Login successful:', response.data);
+      // Just log the login data for now
+      console.log('Login attempt:', formData);
       
-      // Store token if provided
-      if (response.data.token) {
-        localStorage.setItem('token', response.data.token);
-      }
+      // Set demo user data
+      const demoUser = {
+        username: 'Demo User',
+        email: formData.email,
+        role: 'project_member'
+      };
       
-      // Store user data
-      if (response.data.user) {
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-      }
+      localStorage.setItem('token', 'demo-token');
+      localStorage.setItem('user', JSON.stringify(demoUser));
       
       // Navigate to dashboard after successful login
       navigate('/home');
     } catch (error) {
-      setError(error.response?.data?.message || 'Login failed');
+      setError('Login failed');
     } finally {
       setLoading(false);
     }

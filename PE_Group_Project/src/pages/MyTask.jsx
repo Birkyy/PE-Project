@@ -1,11 +1,12 @@
 import { useParams } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { useTheme } from '../context/ThemeContext';
-import { Plus, Edit, Trash2, Search, MoveRight, Clock, Edit2, ChevronRight, ChevronLeft, User, Eye } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, MoveRight, Clock, Edit2, ChevronRight, ChevronLeft, User, Eye, Filter, MoreVertical, Calendar, MessageCircle, ArrowRight, ArrowLeft, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import AddTaskModal from './AddTaskModal';
 import EditTaskModal from './EditTaskModal';
 import ViewTaskModal from './ViewTaskModal';
+import { taskAPI, projectAPI, userAPI } from '../API/apiService';
 
 const statusList = [
   { key: 'Todo', color: 'blue' },
@@ -13,75 +14,30 @@ const statusList = [
   { key: 'Completed', color: 'green' },
 ];
 
+// Helper function to normalize status values
+const normalizeStatus = (status) => {
+  const statusLower = status.toLowerCase();
+  if (statusLower === 'todo' || statusLower === 'to do') return 'Todo';
+  if (statusLower === 'in progress' || statusLower === 'inprogress' || statusLower === 'progress') return 'In Progress';
+  if (statusLower === 'completed' || statusLower === 'complete' || statusLower === 'done') return 'Completed';
+  return status; // Return original if no match
+};
+
 // Helper function to check if a task is overdue
 const isTaskOverdue = (task) => {
-  if (task.status === 'Completed') return false;
+  if (task.status.toLowerCase() === 'completed') return false;
   if (!task.deadline) return false;
   return new Date(task.deadline) < new Date();
 };
 
-// Mock project data (replace with API call later)
-const mockProjects = [
-  {
-    name: 'Project Alpha',
-    description: 'Web application development with modern React framework',
-    dueDate: '2024-12-20',
-    progress: 75,
-    color: 'purple'
-  },
-  {
-    name: 'Project Beta',
-    description: 'Mobile application with cross-platform compatibility',
-    dueDate: '2025-01-15',
-    progress: 50,
-    color: 'cyan'
-  },
-  {
-    name: 'Project Gamma',
-    description: 'AI-powered analytics dashboard for business intelligence',
-    dueDate: '2025-02-28',
-    progress: 25,
-    color: 'pink'
-  }
-];
-
-const initialTasks = [
-  { 
-    id: 1, 
-    title: 'Design UI', 
-    status: 'Todo', 
-    description: 'Design the user interface.',
-    deadline: '2024-03-25', // Example date
-    priority: 'high',
-    assignedTo: 'John Doe',
-    comments: [] // Initialize empty comments array
-  },
-  { 
-    id: 2, 
-    title: 'Setup Backend', 
-    status: 'In Progress', 
-    description: 'Setup backend API.',
-    deadline: '2024-03-30',
-    priority: 'medium',
-    assignedTo: 'Jane Smith',
-    comments: [] // Initialize empty comments array
-  },
-  { 
-    id: 3, 
-    title: 'Write Tests', 
-    status: 'Completed', 
-    description: 'Write unit tests.',
-    deadline: '2024-03-20',
-    priority: 'low',
-    assignedTo: 'Mike Johnson',
-    comments: [] // Initialize empty comments array
-  }
-];
-
 const MyTask = () => {
   const { projectName } = useParams();
   const { darkMode } = useTheme();
-  const [tasks, setTasks] = useState(initialTasks);
+  const [todoTasks, setTodoTasks] = useState([]);
+  const [inProgressTasks, setInProgressTasks] = useState([]);
+  const [completedTasks, setCompletedTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -90,12 +46,77 @@ const MyTask = () => {
   const [currentProject, setCurrentProject] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
 
-  // Load project data
+  // Load project data and tasks
   useEffect(() => {
-    const project = mockProjects.find(p => p.name === decodeURIComponent(projectName));
-    if (project) {
-      setCurrentProject(project);
-    }
+    const fetchProjectAndTasks = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // First, get all projects to find the current project
+        const allProjects = await projectAPI.getAllProjects();
+        console.log('All projects:', allProjects);
+        console.log('Looking for project:', decodeURIComponent(projectName));
+        
+        const project = allProjects.find(p => p.projectName === decodeURIComponent(projectName));
+        console.log('Found project:', project);
+        
+        if (project) {
+          setCurrentProject({
+            name: project.projectName,
+            description: project.description || '',
+            dueDate: project.date,
+            progress: 0, // You can calculate this based on completed tasks
+            color: 'purple',
+            projectId: project.projectId // Add projectId to currentProject
+          });
+
+          console.log('Project ID for task fetching:', project.projectId);
+
+          // First, let's get all tasks to see what's available
+          const allTasks = await taskAPI.getAllTasks();
+          console.log('All tasks from backend:', allTasks);
+          console.log('Tasks for this project:', allTasks.filter(task => task.projectId === project.projectId));
+
+          // Fetch tasks for each status separately
+          const finalTodoTasks = allTasks.filter(task => 
+            task.projectId === project.projectId && 
+            task.status.toLowerCase() === 'todo'
+          );
+          const finalInProgressTasks = allTasks.filter(task => 
+            task.projectId === project.projectId && 
+            (task.status.toLowerCase() === 'in progress' || task.status.toLowerCase() === 'inprogress')
+          );
+          const finalCompletedTasks = allTasks.filter(task => 
+            task.projectId === project.projectId && 
+            task.status.toLowerCase() === 'completed'
+          );
+
+          // Transform tasks with user information
+          const transformedTodo = await transformTasksWithUserInfo(finalTodoTasks);
+          const transformedInProgress = await transformTasksWithUserInfo(finalInProgressTasks);
+          const transformedCompleted = await transformTasksWithUserInfo(finalCompletedTasks);
+
+          setTodoTasks(transformedTodo);
+          setInProgressTasks(transformedInProgress);
+          setCompletedTasks(transformedCompleted);
+
+          console.log('Transformed Todo tasks:', transformedTodo);
+          console.log('Transformed In Progress tasks:', transformedInProgress);
+          console.log('Transformed Completed tasks:', transformedCompleted);
+          console.log('Total tasks set:', transformedTodo.length + transformedInProgress.length + transformedCompleted.length);
+        } else {
+          setError('Project not found');
+        }
+      } catch (err) {
+        console.error('Error fetching project and tasks:', err);
+        setError('Failed to load project and tasks. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjectAndTasks();
   }, [projectName]);
 
   // Load current user data
@@ -106,52 +127,195 @@ const MyTask = () => {
     }
   }, []);
 
+  // Function to resolve user information from GUID
+  const resolveUserInfo = async (picGuid) => {
+    if (!picGuid || picGuid === '00000000-0000-0000-0000-000000000000') {
+      return 'Unassigned';
+    }
+    
+    try {
+      const user = await userAPI.getUserById(picGuid);
+      return user.username || user.email || 'Unknown User';
+    } catch (error) {
+      console.error('Error resolving user info:', error);
+      return 'Unknown User';
+    }
+  };
+
+  // Enhanced task transformation with user resolution
+  const transformTasksWithUserInfo = async (tasks) => {
+    const transformedTasks = [];
+    
+    for (const task of tasks) {
+      const assignedTo = await resolveUserInfo(task.pic);
+      transformedTasks.push({
+        id: task.projectTaskId,
+        title: task.taskName,
+        status: normalizeStatus(task.status),
+        description: task.description,
+        deadline: task.deadline,
+        priority: task.priority,
+        assignedTo: assignedTo,
+        pic: task.pic, // Keep the original GUID for API calls
+        projectId: task.projectId,
+        comments: []
+      });
+    }
+    
+    return transformedTasks;
+  };
+
   // Task handlers
-  const handleCreateTask = (taskData) => {
-    const newTask = {
-      id: tasks.length + 1,
-      ...taskData,
-      status: 'Todo', // Always start with Todo status
-    };
-    setTasks([...tasks, newTask]);
+  const handleCreateTask = async (taskData) => {
+    try {
+      if (!currentProject) {
+        throw new Error('No project selected');
+      }
+
+      // Find the project ID
+      const allProjects = await projectAPI.getAllProjects();
+      const project = allProjects.find(p => p.projectName === currentProject.name);
+      
+      if (!project) {
+        throw new Error('Project not found');
+      }
+
+      // Prepare task data for API
+      const newTaskData = {
+        projectId: project.projectId,
+        taskName: taskData.title,
+        pic: taskData.assignedTo || '00000000-0000-0000-0000-000000000000', // Default GUID if empty
+        deadline: taskData.deadline ? new Date(taskData.deadline).toISOString() : new Date().toISOString(),
+        description: taskData.description,
+        status: normalizeStatus('Todo'), // Always start with Todo status
+        priority: taskData.priority
+      };
+
+      // Create task using API
+      const createdTask = await taskAPI.createTask(newTaskData);
+      
+      // Resolve user information for the created task
+      const assignedTo = await resolveUserInfo(createdTask.pic);
+      
+      // Add to local state
+      const newTask = {
+        id: createdTask.projectTaskId,
+        title: createdTask.taskName,
+        status: normalizeStatus(createdTask.status),
+        description: createdTask.description,
+        deadline: createdTask.deadline,
+        priority: createdTask.priority,
+        assignedTo: assignedTo,
+        pic: createdTask.pic, // Keep the original GUID for API calls
+        projectId: project.projectId,
+        comments: []
+      };
+
+      setTodoTasks(prev => [...prev, newTask]);
+      setIsAddModalOpen(false);
+    } catch (err) {
+      console.error('Error creating task:', err);
+      alert('Failed to create task. Please try again.');
+    }
   };
 
-  const handleEditTask = (updatedTask) => {
-    setTasks(prevTasks =>
-      prevTasks.map(task =>
-        task.id === updatedTask.id ? updatedTask : task
-      )
-    );
-    setIsEditModalOpen(false);
-    setSelectedTask(null);
+  const handleEditTask = async (updatedTask) => {
+    try {
+      // Get the projectId from the task or currentProject
+      const projectId = updatedTask.projectId || currentProject?.projectId;
+      
+      if (!projectId) {
+        throw new Error('Project ID not found for task update');
+      }
+
+      // Prepare task data for API
+      const taskData = {
+        projectId: projectId,
+        taskName: updatedTask.title,
+        pic: updatedTask.pic || updatedTask.assignedTo || '00000000-0000-0000-0000-000000000000',
+        deadline: updatedTask.deadline ? new Date(updatedTask.deadline).toISOString() : new Date().toISOString(),
+        description: updatedTask.description,
+        status: normalizeStatus(updatedTask.status),
+        priority: updatedTask.priority
+      };
+
+      console.log('Updating task with data:', taskData);
+
+      // Update task using API
+      await taskAPI.updateTask(updatedTask.id, taskData);
+      
+      // Resolve user information for the updated task
+      const assignedTo = await resolveUserInfo(taskData.pic);
+      
+      // Remove task from all arrays first
+      setTodoTasks(prev => prev.filter(task => task.id !== updatedTask.id));
+      setInProgressTasks(prev => prev.filter(task => task.id !== updatedTask.id));
+      setCompletedTasks(prev => prev.filter(task => task.id !== updatedTask.id));
+
+      // Add task to the correct array based on its new status
+      const normalizedStatus = normalizeStatus(updatedTask.status);
+      const taskWithNormalizedStatus = { 
+        ...updatedTask, 
+        status: normalizedStatus,
+        projectId: projectId, // Ensure projectId is preserved
+        assignedTo: assignedTo, // Use resolved user information
+        pic: taskData.pic // Keep the original GUID for API calls
+      };
+
+      if (normalizedStatus === 'Todo') {
+        setTodoTasks(prev => [...prev, taskWithNormalizedStatus]);
+      } else if (normalizedStatus === 'In Progress') {
+        setInProgressTasks(prev => [...prev, taskWithNormalizedStatus]);
+      } else if (normalizedStatus === 'Completed') {
+        setCompletedTasks(prev => [...prev, taskWithNormalizedStatus]);
+      }
+
+      setIsEditModalOpen(false);
+      setSelectedTask(null);
+    } catch (err) {
+      console.error('Error updating task:', err);
+      alert('Failed to update task. Please try again.');
+    }
   };
 
-  const handleDeleteTask = (taskId) => {
-    setTasks(tasks.filter(t => t.id !== taskId));
+  const handleDeleteTask = async (taskId) => {
+    try {
+      await taskAPI.deleteTask(taskId);
+      setTodoTasks(prev => prev.filter(t => t.id !== taskId));
+      setInProgressTasks(prev => prev.filter(t => t.id !== taskId));
+      setCompletedTasks(prev => prev.filter(t => t.id !== taskId));
+    } catch (err) {
+      console.error('Error deleting task:', err);
+      alert('Failed to delete task. Please try again.');
+    }
   };
 
-  const handleChangeStatus = (task, newStatus) => {
-    setTasks(tasks.map(t => 
-      t.id === task.id ? { ...t, status: newStatus } : t
-    ));
+  const handleChangeStatus = async (task, newStatus) => {
+    try {
+      const updatedTask = { ...task, status: normalizeStatus(newStatus) };
+      await handleEditTask(updatedTask);
+    } catch (err) {
+      console.error('Error changing task status:', err);
+      alert('Failed to update task status. Please try again.');
+    }
   };
 
   // Get next status in the workflow
   const getNextStatus = (currentStatus) => {
-    const currentIndex = statusList.findIndex(s => s.key === currentStatus);
+    const currentIndex = statusList.findIndex(s => s.key.toLowerCase() === currentStatus.toLowerCase());
     return currentIndex < statusList.length - 1 ? statusList[currentIndex + 1].key : null;
   };
 
   // Get previous status in the workflow
   const getPreviousStatus = (currentStatus) => {
-    const currentIndex = statusList.findIndex(s => s.key === currentStatus);
+    const currentIndex = statusList.findIndex(s => s.key.toLowerCase() === currentStatus.toLowerCase());
     return currentIndex > 0 ? statusList[currentIndex - 1].key : null;
   };
 
   // Filter tasks based on search query
   const filterTasks = (taskList, status) => {
     return taskList
-      .filter(task => task.status === status)
+      .filter(task => task.status.toLowerCase() === status.toLowerCase())
       .filter(task => 
         searchQuery === '' ||
         task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -200,7 +364,27 @@ const MyTask = () => {
       timestamp: new Date().toISOString(),
     };
 
-    setTasks(prevTasks =>
+    setTodoTasks(prevTasks =>
+      prevTasks.map(task =>
+        task.id === taskId
+          ? {
+              ...task,
+              comments: [comment, ...(task.comments || [])]
+            }
+          : task
+      )
+    );
+    setInProgressTasks(prevTasks =>
+      prevTasks.map(task =>
+        task.id === taskId
+          ? {
+              ...task,
+              comments: [comment, ...(task.comments || [])]
+            }
+          : task
+      )
+    );
+    setCompletedTasks(prevTasks =>
       prevTasks.map(task =>
         task.id === taskId
           ? {
@@ -355,57 +539,116 @@ const MyTask = () => {
               </p>
             )}
           </div>
-          
-          <div className="flex justify-between items-center mb-6">
-            {/* Search Bar */}
-            <div className={`relative flex-1 max-w-md ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className={`h-5 w-5 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+
+          {/* Loading State */}
+          {loading && (
+            <div className="flex items-center justify-center py-12">
+              <div className={`text-center ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
+                <p>Loading tasks...</p>
               </div>
-              <input
-                type="text"
-                placeholder="Search tasks..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className={`block w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-                  darkMode
-                    ? 'bg-gray-800 border-gray-600 focus:ring-cyan-500 text-gray-200 placeholder-gray-400'
-                    : 'bg-white border-gray-300 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
-                }`}
-              />
             </div>
+          )}
 
-            {/* Add Task Button */}
-            <button
-              onClick={() => setIsAddModalOpen(true)}
-              className={`ml-4 px-4 py-2 rounded-lg flex items-center ${
-                darkMode
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                  : 'bg-blue-500 hover:bg-blue-600 text-white'
-              }`}
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              Add Task
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {statusList.map(({ key, color }) => (
-              <div key={key} className={`${darkMode ? 'bg-gray-800 border-' + color + '-500/30' : 'bg-white border-' + color + '-300'} border rounded-lg shadow-xl p-4 flex flex-col`}>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className={`text-lg font-semibold ${darkMode ? `text-${color}-300` : `text-${color}-700`}`}>{key}</h3>
-                </div>
-                <div className="flex-1 space-y-4">
-                  {filterTasks(tasks, key).length === 0 && (
-                    <div className={`text-center text-sm ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                      {searchQuery ? 'No matching tasks' : 'No tasks'}
-                    </div>
-                  )}
-                  {filterTasks(tasks, key).map(renderTaskCard)}
-                </div>
+          {/* Error State */}
+          {error && !loading && (
+            <div className="flex items-center justify-center py-12">
+              <div className={`text-center ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                <p className="text-red-500 mb-4">{error}</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                >
+                  Try Again
+                </button>
               </div>
-            ))}
-          </div>
+            </div>
+          )}
+          
+          {/* Main Content */}
+          {!loading && !error && (
+            <>
+              <div className="flex justify-between items-center mb-6">
+                {/* Search Bar */}
+                <div className={`relative flex-1 max-w-md ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className={`h-5 w-5 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search tasks..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className={`block w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                      darkMode
+                        ? 'bg-gray-800 border-gray-600 focus:ring-cyan-500 text-gray-200 placeholder-gray-400'
+                        : 'bg-white border-gray-300 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
+                    }`}
+                  />
+                </div>
+
+                {/* Add Task Button */}
+                <button
+                  onClick={() => setIsAddModalOpen(true)}
+                  className={`ml-4 px-4 py-2 rounded-lg flex items-center ${
+                    darkMode
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                      : 'bg-blue-500 hover:bg-blue-600 text-white'
+                  }`}
+                >
+                  <Plus className="w-5 h-5 mr-2" />
+                  Add Task
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {statusList.map(({ key, color }) => (
+                  <div key={key} className={`${darkMode ? 'bg-gray-800 border-' + color + '-500/30' : 'bg-white border-' + color + '-300'} border rounded-lg shadow-xl p-4 flex flex-col`}>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className={`text-lg font-semibold ${darkMode ? `text-${color}-300` : `text-${color}-700`}`}>{key}</h3>
+                      <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {filterTasks(key === 'Todo' ? todoTasks : key === 'In Progress' ? inProgressTasks : completedTasks, key).length} tasks
+                      </span>
+                    </div>
+                    <div className="flex-1 space-y-4">
+                      {filterTasks(key === 'Todo' ? todoTasks : key === 'In Progress' ? inProgressTasks : completedTasks, key).length === 0 && (
+                        <div className={`text-center text-sm ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                          {searchQuery ? 'No matching tasks' : 'No tasks'}
+                        </div>
+                      )}
+                      {filterTasks(key === 'Todo' ? todoTasks : key === 'In Progress' ? inProgressTasks : completedTasks, key).map(renderTaskCard)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Results Count */}
+              <div className="mt-8 text-center">
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Showing {[
+                    ...todoTasks.filter(task => 
+                      searchQuery === '' ||
+                      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      task.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      task.assignedTo.toLowerCase().includes(searchQuery.toLowerCase())
+                    ),
+                    ...inProgressTasks.filter(task => 
+                      searchQuery === '' ||
+                      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      task.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      task.assignedTo.toLowerCase().includes(searchQuery.toLowerCase())
+                    ),
+                    ...completedTasks.filter(task => 
+                      searchQuery === '' ||
+                      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      task.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      task.assignedTo.toLowerCase().includes(searchQuery.toLowerCase())
+                    )
+                  ].length} of {todoTasks.length + inProgressTasks.length + completedTasks.length} tasks
+                </p>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

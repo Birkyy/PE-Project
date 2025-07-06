@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, Edit, Trash2, Search, Calendar, Users, Save, X, ChevronDown, UserCheck } from 'lucide-react';
 import Layout from '../components/Layout';
 import { useState, useRef, useEffect } from 'react';
-import { fetchProjects, editProject, deleteProject } from '../API/ProjectAPI';
+import { projectAPI } from '../API/apiService';
 
 const MyProjects = () => {
   const { darkMode } = useTheme();
@@ -12,6 +12,8 @@ const MyProjects = () => {
   // State
   const [projects, setProjects] = useState([]);
   const [filteredProjects, setFilteredProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewProject, setViewProject] = useState(null);
   const [editProjectObj, setEditProjectObj] = useState(null);
@@ -29,9 +31,9 @@ const MyProjects = () => {
   const dropdownRef = useRef(null);
   const leaderDropdownRef = useRef(null);
 
-  // Fetch projects on mount
+  // Fetch all projects on component mount
   useEffect(() => {
-    fetchAllProjects();
+    fetchProjects();
   }, []);
 
   // Filter projects when searchTerm changes
@@ -47,13 +49,17 @@ const MyProjects = () => {
     }
   }, [searchTerm, projects]);
 
-  const fetchAllProjects = async () => {
+  const fetchProjects = async () => {
     try {
-      const data = await fetchProjects();
+      setLoading(true);
+      setError(null);
+      const data = await projectAPI.getAllProjects();
       setProjects(data);
-      setFilteredProjects(data);
     } catch (err) {
       console.error('Error fetching projects:', err);
+      setError('Failed to fetch projects. Please try again later.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -81,22 +87,41 @@ const MyProjects = () => {
   const handleEditSave = async () => {
     if (!editProjectObj) return;
     try {
-      await editProject(editProjectObj.projectId, editForm);
-      await fetchAllProjects();
+      // Update the project using API
+      await projectAPI.updateProject(editProjectObj.projectId, editForm);
+      
+      // Update the project in local state
+      setProjects(prev => prev.map(p => 
+        p.projectId === editProjectObj.projectId 
+          ? { ...p, ...editForm }
+          : p
+      ));
+      setFilteredProjects(prev => prev.map(p => 
+        p.projectId === editProjectObj.projectId 
+          ? { ...p, ...editForm }
+          : p
+      ));
       setEditProjectObj(null);
+      console.log('Project updated:', editForm);
     } catch (err) {
       console.error('Error editing project:', err);
+      alert('Failed to update project. Please try again.');
     }
   };
 
   const handleDelete = async (projectId) => {
     if (!window.confirm('Are you sure you want to delete this project?')) return;
     try {
-      await deleteProject(projectId);
+      // Delete the project using API
+      await projectAPI.deleteProject(projectId);
+      
+      // Remove from local state
       setProjects((prev) => prev.filter((p) => p.projectId !== projectId));
       setFilteredProjects((prev) => prev.filter((p) => p.projectId !== projectId));
+      console.log('Project deleted:', projectId);
     } catch (err) {
       console.error('Error deleting project:', err);
+      alert('Failed to delete project. Please try again.');
     }
   };
 
@@ -104,15 +129,6 @@ const MyProjects = () => {
     setViewProject(null);
     setEditProjectObj(null);
   };
-
-  const filteredUsers = projects.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  const filteredLeaderUsers = projects.filter(user =>
-    user.name.toLowerCase().includes(leaderSearchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(leaderSearchTerm.toLowerCase())
-  );
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -187,6 +203,8 @@ const MyProjects = () => {
                 </div>
                 <input
                   type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search projects..."
                   className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 ${
                     darkMode 
@@ -198,55 +216,99 @@ const MyProjects = () => {
             </div>
           </div>
           
-          {/* Projects Grid */}
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredProjects.map((project) => (
-              <div
-                key={project.projectId}
-                className={`${darkMode ? `bg-gray-800 border-purple-500/30` : `bg-white border-purple-300`} border overflow-hidden shadow-xl rounded-lg hover:shadow-lg ${darkMode ? `hover:shadow-purple-500/20` : `hover:shadow-purple-300/30`} transition-all duration-300 cursor-pointer`}
-                onClick={() => handleProjectClick(project.projectName)}
-              >
-                <div className="px-6 py-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className={`text-lg font-semibold ${darkMode ? `text-purple-300` : `text-purple-700`}`}>{project.projectName}</h3>
-                  </div>
-                  <p className={`text-sm mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{project.description || ''}</p>
-                  <div className="mb-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>Due: {project.date ? project.date.slice(0, 10) : ''}</span>
-                    </div>
-                    <div className={`w-full rounded-full h-2 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}> 
-                      <div className={`bg-purple-500 h-2 rounded-full`} style={{width: `${project.progress}%`}}></div>
-                    </div>
-                  </div>
-                  {/* Action Icons */}
-                  <div className="flex justify-end space-x-2" onClick={e => e.stopPropagation()}>
-                    <button 
-                      onClick={() => handleView(project)}
-                      className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-purple-300' : 'hover:bg-gray-100 text-gray-600 hover:text-purple-600'}`}
-                      title="View Project"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    <button 
-                      onClick={() => handleEdit(project)}
-                      className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-cyan-300' : 'hover:bg-gray-100 text-gray-600 hover:text-cyan-600'}`}
-                      title="Edit Project"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(project.projectId)}
-                      className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-red-300' : 'hover:bg-gray-100 text-gray-600 hover:text-red-600'}`}
-                      title="Delete Project"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
+          {/* Loading State */}
+          {loading && (
+            <div className="flex items-center justify-center py-12">
+              <div className={`text-center ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
+                <p>Loading projects...</p>
               </div>
-            ))}
-          </div>
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && !loading && (
+            <div className="flex items-center justify-center py-12">
+              <div className={`text-center ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                <p className="text-red-500 mb-4">{error}</p>
+                <button
+                  onClick={fetchProjects}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Projects Grid */}
+          {!loading && !error && (
+            <>
+              {filteredProjects.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className={`text-lg ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    {searchTerm ? 'No projects match your search.' : 'No projects found.'}
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {filteredProjects.map((project) => (
+                    <div
+                      key={project.projectId}
+                      className={`${darkMode ? `bg-gray-800 border-purple-500/30` : `bg-white border-purple-300`} border overflow-hidden shadow-xl rounded-lg hover:shadow-lg ${darkMode ? `hover:shadow-purple-500/20` : `hover:shadow-purple-300/30`} transition-all duration-300 cursor-pointer`}
+                      onClick={() => handleProjectClick(project.projectName)}
+                    >
+                      <div className="px-6 py-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className={`text-lg font-semibold ${darkMode ? `text-purple-300` : `text-purple-700`}`}>{project.projectName}</h3>
+                        </div>
+                        <p className={`text-sm mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{project.description || ''}</p>
+                        <div className="mb-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>Due: {project.date ? project.date.slice(0, 10) : ''}</span>
+                          </div>
+                          <div className={`w-full rounded-full h-2 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}> 
+                            <div className={`bg-purple-500 h-2 rounded-full`} style={{width: `${project.progress || 0}%`}}></div>
+                          </div>
+                        </div>
+                        {/* Action Icons */}
+                        <div className="flex justify-end space-x-2" onClick={e => e.stopPropagation()}>
+                          <button 
+                            onClick={() => handleView(project)}
+                            className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-purple-300' : 'hover:bg-gray-100 text-gray-600 hover:text-purple-600'}`}
+                            title="View Project"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleEdit(project)}
+                            className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-cyan-300' : 'hover:bg-gray-100 text-gray-600 hover:text-cyan-600'}`}
+                            title="Edit Project"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(project.projectId)}
+                            className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-red-300' : 'hover:bg-gray-100 text-gray-600 hover:text-red-600'}`}
+                            title="Delete Project"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Results Count */}
+              <div className="mt-8 text-center">
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Showing {filteredProjects.length} of {projects.length} projects
+                </p>
+              </div>
+            </>
+          )}
 
           {/* Create New Project Button */}
           <div className="mt-8 text-center">
@@ -366,4 +428,4 @@ const MyProjects = () => {
   );
 };
 
-export default MyProjects; 
+export default MyProjects;

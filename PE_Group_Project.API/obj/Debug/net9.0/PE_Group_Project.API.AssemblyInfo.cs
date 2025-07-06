@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PE_Group_Project.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7f2259f6b39f1c8ad9a400cb6b3f783e12223888")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+737d78677b1cd3add9e1a366d7ee55cf42e702b1")]
 [assembly: System.Reflection.AssemblyProductAttribute("PE_Group_Project.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PE_Group_Project.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

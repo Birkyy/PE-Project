@@ -5,6 +5,7 @@ using PE_Group_Project.API.Models.DTO;
 
 namespace PE_Group_Project.API.Controllers
 {
+
     [ApiController]
     [Route("api/[controller]")]
     public class ProjectController(AppDBContext dbContext) : ControllerBase
@@ -12,9 +13,39 @@ namespace PE_Group_Project.API.Controllers
         private readonly AppDBContext _context = dbContext;
 
         [HttpGet]
-        public IActionResult GetAllProjects()
+        public IActionResult GetAllProjects([FromQuery] Guid? userId = null)
         {
-            var projects = _context.Projects.ToList();
+            List<Project> projects;
+            
+            if (userId.HasValue)
+            {
+                // Get user to check their role
+                var user = _context.Users.FirstOrDefault(u => u.UserId == userId.Value);
+                if (user == null)
+                {
+                    return BadRequest("User not found.");
+                }
+
+                // If user is Admin, show all projects
+                if (user.Role?.Equals("Admin", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    projects = _context.Projects.ToList();
+                }
+                else
+                {
+                    // For non-Admin users, only show projects they're involved in
+                    projects = _context
+                        .UserProjects.Where(up => up.UserId == userId.Value)
+                        .Select(up => up.Project)
+                        .ToList();
+                }
+            }
+            else
+            {
+                // If no userId provided, return all projects (maintain backward compatibility)
+                projects = _context.Projects.ToList();
+            }
+
             var projectsDTO = new List<ProjectDTO>();
 
             foreach (var project in projects)
@@ -43,13 +74,35 @@ namespace PE_Group_Project.API.Controllers
 
         [HttpGet]
         [Route("{id:guid}")]
-        public IActionResult GetProjectById([FromRoute] Guid id)
+        public IActionResult GetProjectById([FromRoute] Guid id, [FromQuery] Guid? userId = null)
         {
             var project = _context.Projects.FirstOrDefault(p => p.ProjectId == id);
 
             if (project == null)
             {
                 return NotFound();
+            }
+
+            // If userId is provided, check access permissions
+            if (userId.HasValue)
+            {
+                var user = _context.Users.FirstOrDefault(u => u.UserId == userId.Value);
+                if (user == null)
+                {
+                    return BadRequest("User not found.");
+                }
+
+                // If user is not Admin, check if they're involved in this project
+                if (user.Role?.Equals("Admin", StringComparison.OrdinalIgnoreCase) != true)
+                {
+                    var userProject = _context.UserProjects.FirstOrDefault(up => 
+                        up.UserId == userId.Value && up.ProjectId == id);
+                    
+                    if (userProject == null)
+                    {
+                        return Forbid("You don't have access to this project.");
+                    }
+                }
             }
 
             var projectDTO = new ProjectDTO
@@ -72,7 +125,7 @@ namespace PE_Group_Project.API.Controllers
         }
 
         [HttpGet]
-        [Route("user/{id:guid}")]
+        [Route("by-user/{id:guid}")]
         public IActionResult GetProjectsByUserId([FromRoute] Guid id)
         {
             var userProjects = _context
@@ -102,11 +155,30 @@ namespace PE_Group_Project.API.Controllers
         }
 
         [HttpPost]
-        public IActionResult AddProject([FromBody] CreateProjectRequestDTO createProjectRequestDTO)
+        public IActionResult AddProject([FromBody] CreateProjectRequestDTO createProjectRequestDTO, [FromQuery] Guid? userId = null)
         {
             if (createProjectRequestDTO == null)
             {
                 return BadRequest("Project data is null.");
+            }
+
+            // If userId is provided, check access permissions
+            if (userId.HasValue)
+            {
+                var user = _context.Users.FirstOrDefault(u => u.UserId == userId.Value);
+                if (user == null)
+                {
+                    return BadRequest("User not found.");
+                }
+
+                // Check if user is Admin or if they're creating a project where they are the manager
+                if (user.Role?.Equals("Admin", StringComparison.OrdinalIgnoreCase) != true)
+                {
+                    if (createProjectRequestDTO.ProjectManagerInCharge != userId.Value)
+                    {
+                        return Forbid("Only Admin users can create projects for other users. You can only create projects where you are the manager.");
+                    }
+                }
             }
 
             var project = new Project
@@ -202,7 +274,8 @@ namespace PE_Group_Project.API.Controllers
         [Route("{id:guid}")]
         public IActionResult UpdateProjectById(
             [FromRoute] Guid id,
-            [FromBody] UpdateProjectRequestDTO updateProjectRequestDTO
+            [FromBody] UpdateProjectRequestDTO updateProjectRequestDTO,
+            [FromQuery] Guid? userId = null
         )
         {
             var project = _context.Projects.FirstOrDefault(p => p.ProjectId == id);
@@ -210,6 +283,28 @@ namespace PE_Group_Project.API.Controllers
             if (project == null)
             {
                 return NotFound();
+            }
+
+            // If userId is provided, check access permissions
+            if (userId.HasValue)
+            {
+                var user = _context.Users.FirstOrDefault(u => u.UserId == userId.Value);
+                if (user == null)
+                {
+                    return BadRequest("User not found.");
+                }
+
+                // Check if user is Admin or Project Manager
+                if (user.Role?.Equals("Admin", StringComparison.OrdinalIgnoreCase) != true)
+                {
+                    var userProject = _context.UserProjects.FirstOrDefault(up => 
+                        up.UserId == userId.Value && up.ProjectId == id && up.ProjectRole == "Manager");
+                    
+                    if (userProject == null)
+                    {
+                        return Forbid("Only Admin users or Project Managers can update projects.");
+                    }
+                }
             }
 
             // Optionally, ensure the DTO ProjectId matches the route Id
@@ -298,13 +393,35 @@ namespace PE_Group_Project.API.Controllers
 
         [HttpDelete]
         [Route("{id:guid}")]
-        public IActionResult DeleteProjectById([FromRoute] Guid id)
+        public IActionResult DeleteProjectById([FromRoute] Guid id, [FromQuery] Guid? userId = null)
         {
             var project = _context.Projects.FirstOrDefault(p => p.ProjectId == id);
 
             if (project == null)
             {
                 return NotFound();
+            }
+
+            // If userId is provided, check access permissions
+            if (userId.HasValue)
+            {
+                var user = _context.Users.FirstOrDefault(u => u.UserId == userId.Value);
+                if (user == null)
+                {
+                    return BadRequest("User not found.");
+                }
+
+                // Check if user is Admin or Project Manager
+                if (user.Role?.Equals("Admin", StringComparison.OrdinalIgnoreCase) != true)
+                {
+                    var userProject = _context.UserProjects.FirstOrDefault(up => 
+                        up.UserId == userId.Value && up.ProjectId == id && up.ProjectRole == "Manager");
+                    
+                    if (userProject == null)
+                    {
+                        return Forbid("Only Admin users or Project Managers can delete projects.");
+                    }
+                }
             }
 
             // Remove associated UserProjects first (if not handled by cascade delete)
@@ -318,13 +435,36 @@ namespace PE_Group_Project.API.Controllers
 
         [HttpGet]
         [Route("{id:guid}/is-overdue")]
-        public IActionResult GetIfProjectOverdue([FromRoute] Guid id)
+        public IActionResult GetIfProjectOverdue([FromRoute] Guid id, [FromQuery] Guid? userId = null)
         {
             var project = _context.Projects.FirstOrDefault(p => p.ProjectId == id);
             if (project == null)
             {
                 return NotFound();
             }
+
+            // If userId is provided, check access permissions
+            if (userId.HasValue)
+            {
+                var user = _context.Users.FirstOrDefault(u => u.UserId == userId.Value);
+                if (user == null)
+                {
+                    return BadRequest("User not found.");
+                }
+
+                // If user is not Admin, check if they're involved in this project
+                if (user.Role?.Equals("Admin", StringComparison.OrdinalIgnoreCase) != true)
+                {
+                    var userProject = _context.UserProjects.FirstOrDefault(up => 
+                        up.UserId == userId.Value && up.ProjectId == id);
+                    
+                    if (userProject == null)
+                    {
+                        return Forbid("You don't have access to this project.");
+                    }
+                }
+            }
+
             // If the project's date is before now, it's overdue
             bool isOverdue = project.Date < DateTime.UtcNow;
             return Ok(isOverdue);
