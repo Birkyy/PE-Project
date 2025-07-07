@@ -11,4 +11,4 @@ namespace PE_Group_Project.API.Models.DTO
         public required string Status { get; set; }
         public required string Priority { get; set; }
     }
-} 
+}

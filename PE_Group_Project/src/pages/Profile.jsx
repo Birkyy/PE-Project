@@ -5,7 +5,6 @@ import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { getNames } from 'country-list';
 import { Shield } from 'lucide-react';
-import api from '../API/api';
 
 const Profile = () => {
   const { darkMode } = useTheme();
@@ -27,35 +26,6 @@ const Profile = () => {
   // Get all countries from the library
   const countries = getNames();
 
-  useEffect(() => {
-    fetchUserProfile();
-  }, []);
-
-  const fetchUserProfile = async () => {
-    try {
-      const userData = localStorage.getItem('user');
-      if (userData) {
-        const user = JSON.parse(userData);
-        // Fetch user data from API using email
-        const response = await api.get(`/user/${user.email}`);
-        const userProfile = response.data;
-        
-        setProfileData({
-          username: userProfile.username || '',
-          gender: userProfile.gender || '',
-          phoneNumber: userProfile.phoneNumber || '',
-          email: userProfile.email || '',
-          nationality: userProfile.nationality || '',
-          role: userProfile.role || 'User',
-          age: userProfile.age || '',
-        });
-      }
-    } catch (err) {
-      console.error('Error fetching profile:', err);
-      setError('Failed to load profile data. Please try again.');
-    }
-  };
-
   const handleChange = (e) => {
     setProfileData({
       ...profileData,
@@ -76,20 +46,8 @@ const Profile = () => {
     setSuccess('');
 
     try {
-      const response = await api.put(`/user/${profileData.email}`, {
-        username: profileData.username,
-        email: profileData.email,
-        gender: profileData.gender,
-        phoneNumber: profileData.phoneNumber,
-        nationality: profileData.nationality,
-        role: profileData.role,
-        age: profileData.age ? parseInt(profileData.age) : null
-      });
-
-      // Update local storage with new data
-      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-      const updatedUser = { ...currentUser, ...response.data };
-      localStorage.setItem('user', JSON.stringify(updatedUser));
+      // Just log the data for now
+      console.log('Profile data to save:', profileData);
       
       setSuccess('Profile updated successfully!');
       setIsEditing(false);
@@ -98,7 +56,7 @@ const Profile = () => {
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       console.error('Update profile error:', err);
-      setError(err.response?.data || 'Failed to update profile. Please try again.');
+      setError('Failed to update profile. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -107,7 +65,6 @@ const Profile = () => {
   const handleCancel = () => {
     setIsEditing(false);
     setError('');
-    fetchUserProfile(); // Reset form data to last saved state
   };
 
   const getRoleBadgeColor = (role) => {

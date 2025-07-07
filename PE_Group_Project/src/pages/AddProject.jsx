@@ -1,28 +1,16 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Users, Save, X, Search, ChevronDown, UserCheck, Upload, File, Trash2 } from 'lucide-react';
 import Layout from '../components/Layout';
+import { projectAPI } from '../API/apiService';
 
 const AddProject = () => {
   const { darkMode } = useTheme();
   const navigate = useNavigate();
-  const fileInputRef = useRef(null);
-  
-  // Mock users data - in real app, this would come from an API
-  const mockUsers = [
-    { id: 1, name: 'John Doe', email: 'john.doe@company.com', role: 'Frontend Developer' },
-    { id: 2, name: 'Jane Smith', email: 'jane.smith@company.com', role: 'Backend Developer' },
-    { id: 3, name: 'Mike Johnson', email: 'mike.johnson@company.com', role: 'UI/UX Designer' },
-    { id: 4, name: 'Sarah Wilson', email: 'sarah.wilson@company.com', role: 'Project Manager' },
-    { id: 5, name: 'David Brown', email: 'david.brown@company.com', role: 'Full Stack Developer' },
-    { id: 6, name: 'Lisa Davis', email: 'lisa.davis@company.com', role: 'QA Engineer' },
-    { id: 7, name: 'Tom Anderson', email: 'tom.anderson@company.com', role: 'DevOps Engineer' },
-    { id: 8, name: 'Emily Taylor', email: 'emily.taylor@company.com', role: 'Product Owner' }
-  ];
 
   const [formData, setFormData] = useState({
-    name: '',
+    projectName: '',
     description: '',
     dueDate: '',
     priority: 'medium',
@@ -39,6 +27,8 @@ const AddProject = () => {
   const dropdownRef = useRef(null);
   const leaderDropdownRef = useRef(null);
   const [dragActive, setDragActive] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
   
   // Filter users based on search term
   const filteredUsers = mockUsers.filter(user =>
@@ -77,52 +67,75 @@ const AddProject = () => {
     }));
   };
 
-  const handleUserSelect = (user) => {
-    if (!formData.teamMembers.find(member => member.id === user.id)) {
-      setFormData(prev => ({
-        ...prev,
-        teamMembers: [...prev.teamMembers, user]
-      }));
-    }
-    setSearchTerm('');
-    setIsDropdownOpen(false);
-  };
-
-  const handleUserRemove = (userId) => {
-    setFormData(prev => ({
-      ...prev,
-      teamMembers: prev.teamMembers.filter(member => member.id !== userId)
-    }));
-  };
-
-  const handleLeaderSelect = (user) => {
-    setFormData(prev => ({
-      ...prev,
-      projectLeader: user
-    }));
-    setLeaderSearchTerm('');
-    setIsLeaderDropdownOpen(false);
-  };
-
-  const handleLeaderRemove = () => {
-    setFormData(prev => ({
-      ...prev,
-      projectLeader: null
-    }));
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Project data:', formData);
-    // Add project creation logic here
-    
-    // After successful project creation, navigate back to projects page
-    navigate('/my-projects');
+    setIsSubmitting(true);
+    setError(null);
+
+    // Basic validation
+    if (!formData.projectName.trim()) {
+      setError('Project name is required.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      // Helper function to convert string to GUID
+      const stringToGuid = (str) => {
+        if (!str || str.trim() === '') return null;
+        const trimmed = str.trim();
+        // Basic GUID validation
+        const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!guidRegex.test(trimmed)) {
+          console.error('Invalid GUID format:', trimmed);
+          return null;
+        }
+        return trimmed;
+      };
+
+      // Convert form data to match the API DTO structure
+      const projectData = {
+        projectName: formData.projectName,
+        date: formData.date ? new Date(formData.date).toISOString() : new Date().toISOString(),
+        status: formData.status,
+        priorityLevel: formData.priorityLevel,
+        projectManagerInCharge: stringToGuid(formData.projectManagerInCharge) || '00000000-0000-0000-0000-000000000000',
+        contributors: formData.contributors.map(id => stringToGuid(id)).filter(id => id !== null)
+      };
+
+      console.log('Sending project data:', projectData);
+      console.log('Project data JSON:', JSON.stringify(projectData, null, 2));
+
+      // Create project using API
+      const createdProject = await projectAPI.createProject(projectData);
+      
+      console.log('Project created successfully:', createdProject);
+      
+      // Navigate back to projects page
+      navigate('/my-projects');
+    } catch (err) {
+      console.error('Error creating project:', err);
+      console.error('Error response:', err.response);
+      console.error('Error data:', err.response?.data);
+      
+      // Show more specific error messages
+      if (err.response?.status === 400) {
+        setError(`Bad Request: ${err.response.data || 'Invalid data provided'}`);
+      } else if (err.response?.status === 500) {
+        setError('Server error. Please try again later.');
+      } else if (err.code === 'NETWORK_ERROR') {
+        setError('Network error. Please check your connection and try again.');
+      } else {
+        setError(err.response?.data || 'Failed to create project. Please try again.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleCancel = () => {
     setFormData({
-      name: '',
+      projectName: '',
       description: '',
       dueDate: '',
       priority: 'medium',
@@ -131,10 +144,6 @@ const AddProject = () => {
       projectLeader: null,
       attachments: []
     });
-    setSearchTerm('');
-    setLeaderSearchTerm('');
-    setIsDropdownOpen(false);
-    setIsLeaderDropdownOpen(false);
     navigate('/my-projects');
   };
 
@@ -217,6 +226,13 @@ const AddProject = () => {
           <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-lg shadow-xl overflow-hidden`}>
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
               
+              {/* Error Display */}
+              {error && (
+                <div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+                  {error}
+                </div>
+              )}
+              
               {/* Project Name */}
               <div>
                 <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -224,8 +240,8 @@ const AddProject = () => {
                 </label>
                 <input
                   type="text"
-                  name="name"
-                  value={formData.name}
+                  name="projectName"
+                  value={formData.projectName}
                   onChange={handleInputChange}
                   placeholder="Enter project name"
                   required
@@ -256,364 +272,64 @@ const AddProject = () => {
                 />
               </div>
 
-              {/* Team Members */}
-              <div className="relative" ref={dropdownRef}>
+              {/* Project Manager */}
+              <div>
                 <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                  <Users className="w-4 h-4 inline mr-2" />
-                  Team Members
+                  Project Manager (User ID)
                 </label>
-                
-                {/* Selected Users Display */}
-                {formData.teamMembers.length > 0 && (
-                  <div className="mb-3">
-                    <div className="flex flex-wrap gap-2">
-                      {formData.teamMembers.map(member => (
-                        <div 
-                          key={member.id}
-                          className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
-                            darkMode 
-                              ? 'bg-purple-900/50 text-purple-300 border border-purple-700' 
-                              : 'bg-purple-100 text-purple-700 border border-purple-300'
-                          }`}
-                        >
-                          <UserCheck className="w-3 h-3" />
-                          <span>{member.name}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleUserRemove(member.id)}
-                            className={`hover:bg-red-500 hover:text-white rounded-full p-0.5 transition-colors ${
-                              darkMode ? 'text-purple-400 hover:bg-red-600' : 'text-purple-600 hover:bg-red-500'
-                            }`}
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Dropdown Trigger */}
-                <div className="relative" ref={dropdownRef}>
-                  <button
-                    type="button"
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 flex items-center justify-between ${
-                      darkMode 
-                        ? 'bg-gray-700 border-gray-600 text-white focus:border-purple-400' 
-                        : 'bg-white border-gray-300 text-gray-900 focus:border-purple-500'
-                    }`}
-                  >
-                    <span className={formData.teamMembers.length === 0 ? (darkMode ? 'text-gray-400' : 'text-gray-500') : ''}>
-                      {formData.teamMembers.length === 0 
-                        ? 'Select team members...' 
-                        : `${formData.teamMembers.length} member${formData.teamMembers.length > 1 ? 's' : ''} selected`
-                      }
-                    </span>
-                    <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  {/* Dropdown Content */}
-                  {isDropdownOpen && (
-                    <div className={`absolute z-50 w-full mt-1 border rounded-lg shadow-lg max-h-96 overflow-hidden ${
-                      darkMode 
-                        ? 'bg-gray-700 border-gray-600' 
-                        : 'bg-white border-gray-300'
-                    }`}>
-                      {/* Search Input */}
-                      <div className="p-3 border-b border-gray-200 dark:border-gray-600">
-                        <div className="relative">
-                          <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
-                            darkMode ? 'text-gray-400' : 'text-gray-500'
-                          }`} />
-                          <input
-                            type="text"
-                            placeholder="Search users..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className={`w-full pl-10 pr-3 py-2.5 border rounded focus:outline-none focus:ring-1 focus:ring-purple-400 ${
-                              darkMode 
-                                ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
-                                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                            }`}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Users List */}
-                      <div className="max-h-72 overflow-y-auto">
-                        {filteredUsers.length === 0 ? (
-                          <div className={`px-4 py-4 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                            No users found
-                          </div>
-                        ) : (
-                          filteredUsers.map(user => {
-                            const isSelected = formData.teamMembers.find(member => member.id === user.id);
-                            return (
-                              <button
-                                key={user.id}
-                                type="button"
-                                onClick={() => handleUserSelect(user)}
-                                disabled={isSelected}
-                                className={`w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors flex items-center justify-between ${
-                                  isSelected 
-                                    ? (darkMode ? 'bg-purple-900/30 text-purple-300' : 'bg-purple-50 text-purple-600')
-                                    : (darkMode ? 'text-white' : 'text-gray-900')
-                                }`}
-                              >
-                                <div>
-                                  <div className="font-medium">{user.name}</div>
-                                  <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                    {user.email} • {user.role}
-                                  </div>
-                                </div>
-                                {isSelected && <UserCheck className="w-4 h-4 text-green-500" />}
-                              </button>
-                            );
-                          })
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <input
+                  type="text"
+                  name="projectManagerInCharge"
+                  value={formData.projectManagerInCharge}
+                  onChange={handleInputChange}
+                  placeholder="Enter project manager user ID (GUID)"
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 ${
+                    darkMode 
+                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-purple-400' 
+                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-purple-500'
+                  }`}
+                />
+                <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  Enter the user ID (GUID) of the project manager. Leave empty to use default.
+                </p>
               </div>
 
-              {/* Project Leader */}
-              <div className="relative">
-                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                  <UserCheck className="w-4 h-4 inline mr-2" />
-                  Project Leader
-                </label>
-                
-                {/* Selected Leader Display */}
-                {formData.projectLeader && (
-                  <div className="mb-3">
-                    <div 
-                      className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm w-fit ${
-                        darkMode 
-                          ? 'bg-cyan-900/50 text-cyan-300 border border-cyan-700' 
-                          : 'bg-cyan-100 text-cyan-700 border border-cyan-300'
-                      }`}
-                    >
-                      <UserCheck className="w-3 h-3" />
-                      <span>{formData.projectLeader.name}</span>
-                      <button
-                        type="button"
-                        onClick={handleLeaderRemove}
-                        className={`hover:bg-red-500 hover:text-white rounded-full p-0.5 transition-colors ${
-                          darkMode ? 'text-cyan-400 hover:bg-red-600' : 'text-cyan-600 hover:bg-red-500'
-                        }`}
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Leader Dropdown Trigger */}
-                <div className="relative" ref={leaderDropdownRef}>
-                  <button
-                    type="button"
-                    onClick={() => setIsLeaderDropdownOpen(!isLeaderDropdownOpen)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 flex items-center justify-between ${
-                      darkMode 
-                        ? 'bg-gray-700 border-gray-600 text-white focus:border-purple-400' 
-                        : 'bg-white border-gray-300 text-gray-900 focus:border-purple-500'
-                    }`}
-                  >
-                    <span className={!formData.projectLeader ? (darkMode ? 'text-gray-400' : 'text-gray-500') : ''}>
-                      {!formData.projectLeader 
-                        ? 'Select project leader...' 
-                        : formData.projectLeader.name
-                      }
-                    </span>
-                    <ChevronDown className={`w-4 h-4 transition-transform ${isLeaderDropdownOpen ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  {/* Leader Dropdown Content */}
-                  {isLeaderDropdownOpen && (
-                    <div className={`absolute z-50 w-full mt-1 border rounded-lg shadow-lg max-h-64 overflow-hidden ${
-                      darkMode 
-                        ? 'bg-gray-700 border-gray-600' 
-                        : 'bg-white border-gray-300'
-                    }`}>
-                      {/* Search Input */}
-                      <div className="p-2 border-b border-gray-200 dark:border-gray-600">
-                        <div className="relative">
-                          <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
-                            darkMode ? 'text-gray-400' : 'text-gray-500'
-                          }`} />
-                          <input
-                            type="text"
-                            placeholder="Search for project leader..."
-                            value={leaderSearchTerm}
-                            onChange={(e) => setLeaderSearchTerm(e.target.value)}
-                            className={`w-full pl-10 pr-3 py-2 border rounded focus:outline-none focus:ring-1 focus:ring-purple-400 ${
-                              darkMode 
-                                ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
-                                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                            }`}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Users List */}
-                      <div className="max-h-48 overflow-y-auto">
-                        {filteredLeaderUsers.length === 0 ? (
-                          <div className={`px-3 py-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                            No users found
-                          </div>
-                        ) : (
-                          filteredLeaderUsers.map(user => {
-                            const isSelected = formData.projectLeader && formData.projectLeader.id === user.id;
-                            return (
-                              <button
-                                key={user.id}
-                                type="button"
-                                onClick={() => handleLeaderSelect(user)}
-                                className={`w-full px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors flex items-center justify-between ${
-                                  isSelected 
-                                    ? (darkMode ? 'bg-cyan-900/30 text-cyan-300' : 'bg-cyan-50 text-cyan-600')
-                                    : (darkMode ? 'text-white' : 'text-gray-900')
-                                }`}
-                              >
-                                <div>
-                                  <div className="font-medium">{user.name}</div>
-                                  <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                    {user.email}
-                                  </div>
-                                </div>
-                                {isSelected && <UserCheck className="w-4 h-4 text-green-500" />}
-                              </button>
-                            );
-                          })
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Team Members */}
-              <div className="relative">
+              {/* Contributors */}
+              <div>
                 <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                   <Users className="w-4 h-4 inline mr-2" />
-                  Team Members
+                  Contributors (User IDs)
                 </label>
-                
-                {/* Selected Users Display */}
-                {formData.teamMembers.length > 0 && (
-                  <div className="mb-3">
-                    <div className="flex flex-wrap gap-2">
-                      {formData.teamMembers.map(member => (
-                        <div 
-                          key={member.id}
-                          className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
-                            darkMode 
-                              ? 'bg-purple-900/50 text-purple-300 border border-purple-700' 
-                              : 'bg-purple-100 text-purple-700 border border-purple-300'
-                          }`}
-                        >
-                          <UserCheck className="w-3 h-3" />
-                          <span>{member.name}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleUserRemove(member.id)}
-                            className={`hover:bg-red-500 hover:text-white rounded-full p-0.5 transition-colors ${
-                              darkMode ? 'text-purple-400 hover:bg-red-600' : 'text-purple-600 hover:bg-red-500'
-                            }`}
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
+                <input
+                  type="text"
+                  name="contributorsInput"
+                  value={formData.contributorsInput || ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    const contributors = value.split(',').map(id => id.trim()).filter(id => id.length > 0);
+                    setFormData(prev => ({
+                      ...prev,
+                      contributorsInput: value,
+                      contributors: contributors
+                    }));
+                  }}
+                  placeholder="Enter contributor user IDs separated by commas (e.g., 123e4567-e89b-12d3-a456-426614174000, 987fcdeb-51a2-43d1-9f12-345678901234)"
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 ${
+                    darkMode 
+                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-purple-400' 
+                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-purple-500'
+                  }`}
+                />
+                <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  Enter user IDs (GUIDs) of contributors separated by commas. Leave empty if no contributors.
+                </p>
+                {formData.contributors.length > 0 && (
+                  <div className="mt-2">
+                    <p className={`text-xs ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
+                      Contributors: {formData.contributors.length} user(s) added
+                    </p>
                   </div>
                 )}
-
-                {/* Dropdown Trigger */}
-                <div className="relative" ref={dropdownRef}>
-                  <button
-                    type="button"
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 flex items-center justify-between ${
-                      darkMode 
-                        ? 'bg-gray-700 border-gray-600 text-white focus:border-purple-400' 
-                        : 'bg-white border-gray-300 text-gray-900 focus:border-purple-500'
-                    }`}
-                  >
-                    <span className={formData.teamMembers.length === 0 ? (darkMode ? 'text-gray-400' : 'text-gray-500') : ''}>
-                      {formData.teamMembers.length === 0 
-                        ? 'Select team members...' 
-                        : `${formData.teamMembers.length} member${formData.teamMembers.length > 1 ? 's' : ''} selected`
-                      }
-                    </span>
-                    <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  {/* Dropdown Content */}
-                  {isDropdownOpen && (
-                    <div className={`absolute z-50 w-full mt-1 border rounded-lg shadow-lg max-h-96 overflow-hidden ${
-                      darkMode 
-                        ? 'bg-gray-700 border-gray-600' 
-                        : 'bg-white border-gray-300'
-                    }`}>
-                      {/* Search Input */}
-                      <div className="p-3 border-b border-gray-200 dark:border-gray-600">
-                        <div className="relative">
-                          <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
-                            darkMode ? 'text-gray-400' : 'text-gray-500'
-                          }`} />
-                          <input
-                            type="text"
-                            placeholder="Search users..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className={`w-full pl-10 pr-3 py-2.5 border rounded focus:outline-none focus:ring-1 focus:ring-purple-400 ${
-                              darkMode 
-                                ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
-                                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                            }`}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Users List */}
-                      <div className="max-h-72 overflow-y-auto">
-                        {filteredUsers.length === 0 ? (
-                          <div className={`px-4 py-4 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                            No users found
-                          </div>
-                        ) : (
-                          filteredUsers.map(user => {
-                            const isSelected = formData.teamMembers.find(member => member.id === user.id);
-                            return (
-                              <button
-                                key={user.id}
-                                type="button"
-                                onClick={() => handleUserSelect(user)}
-                                disabled={isSelected}
-                                className={`w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors flex items-center justify-between ${
-                                  isSelected 
-                                    ? (darkMode ? 'bg-purple-900/30 text-purple-300' : 'bg-purple-50 text-purple-600')
-                                    : (darkMode ? 'text-white' : 'text-gray-900')
-                                }`}
-                              >
-                                <div>
-                                  <div className="font-medium">{user.name}</div>
-                                  <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                    {user.email}
-                                  </div>
-                                </div>
-                                {isSelected && <UserCheck className="w-4 h-4 text-green-500" />}
-                              </button>
-                            );
-                          })
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
               </div>
 
               {/* Due Date and Priority Row */}
@@ -625,8 +341,8 @@ const AddProject = () => {
                   </label>
                   <input
                     type="date"
-                    name="dueDate"
-                    value={formData.dueDate}
+                    name="date"
+                    value={formData.date}
                     onChange={handleInputChange}
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 ${
                       darkMode 
@@ -641,8 +357,8 @@ const AddProject = () => {
                     Priority Level
                   </label>
                   <select
-                    name="priority"
-                    value={formData.priority}
+                    name="priorityLevel"
+                    value={formData.priorityLevel}
                     onChange={handleInputChange}
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 ${
                       darkMode 
@@ -673,10 +389,10 @@ const AddProject = () => {
                       : 'bg-white border-gray-300 text-gray-900 focus:border-purple-500'
                   }`}
                 >
-                  <option value="todo">Todo</option>
-                  <option value="in-progress">In Progress</option>
+                  <option value="pending">Pending</option>
+                  <option value="in progress">In Progress</option>
                   <option value="completed">Completed</option>
-                  <option value="overdue">Overdue</option>
+                  <option value="cancelled">Cancelled</option>
                 </select>
               </div>
 
@@ -771,20 +487,24 @@ const AddProject = () => {
               <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <button
                   type="submit"
-                  className="flex-1 flex items-center justify-center px-6 py-3 bg-gradient-to-r from-purple-600 to-cyan-600 text-white rounded-lg hover:from-purple-700 hover:to-cyan-700 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/25 focus:outline-none focus:ring-2 focus:ring-purple-400/50"
+                  disabled={isSubmitting}
+                  className={`flex-1 flex items-center justify-center px-6 py-3 bg-gradient-to-r from-purple-600 to-cyan-600 text-white rounded-lg hover:from-purple-700 hover:to-cyan-700 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/25 focus:outline-none focus:ring-2 focus:ring-purple-400/50 ${
+                    isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                 >
                   <Save className="w-5 h-5 mr-2" />
-                  Create Project
+                  {isSubmitting ? 'Creating Project...' : 'Create Project'}
                 </button>
                 
                 <button
                   type="button"
                   onClick={handleCancel}
+                  disabled={isSubmitting}
                   className={`flex-1 flex items-center justify-center px-6 py-3 border rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-gray-400/50 ${
                     darkMode 
                       ? 'border-gray-600 text-gray-300 hover:bg-gray-700 hover:border-gray-500' 
                       : 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
-                  }`}
+                  } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <X className="w-5 h-5 mr-2" />
                   Cancel

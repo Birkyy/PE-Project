@@ -25,6 +25,45 @@ namespace PE_Group_Project.API.Controllers
         }
 
         [HttpGet]
+        [Route("")]
+        public IActionResult GetAllUsers()
+        {
+            var users = _context.Users.ToList();
+            var userDTOs = users.Select(user => new UserDTO
+            {
+                UserId = user.UserId,
+                Username = user.Username,
+                Email = user.Email,
+                Role = user.Role,
+                Age = user.Age,
+                Gender = user.Gender,
+                Nationality = user.Nationality,
+                PhoneNumber = user.PhoneNumber,
+                LastLoginTime = user.LastLoginTime
+            }).ToList();
+
+            return Ok(userDTOs);
+        }
+
+        [HttpGet]
+        [Route("email/{email}")]
+        public IActionResult GetUserByEmail([FromRoute] string email)
+        {
+            var user = _context.Users.FirstOrDefault(u => u.Email == email);
+            if (user == null)
+            {
+                return NotFound();
+            }
+            var userDTO = new UserDTO
+            {
+                Username = user.Username,
+                Email = user.Email,
+                Role = user.Role,
+            };
+            return Ok(userDTO);
+        }
+
+        [HttpGet]
         [Route("{id:guid}")]
         public IActionResult GetUserById([FromRoute] Guid id)
         {
@@ -42,24 +81,6 @@ namespace PE_Group_Project.API.Controllers
                 Gender = user.Gender,
                 Nationality = user.Nationality,
                 PhoneNumber = user.PhoneNumber,
-            };
-            return Ok(userDTO);
-        }
-
-        [HttpGet]
-        [Route("{email}")]
-        public IActionResult GetUserByEmail([FromRoute] string email)
-        {
-            var user = _context.Users.FirstOrDefault(u => u.Email == email);
-            if (user == null)
-            {
-                return NotFound();
-            }
-            var userDTO = new UserDTO
-            {
-                Username = user.Username,
-                Email = user.Email,
-                Role = user.Role,
             };
             return Ok(userDTO);
         }

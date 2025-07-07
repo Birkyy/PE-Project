@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
-import { File, Download, ExternalLink, Calendar, Users, Clock, AlertCircle, Plus, ListTodo, Edit, Trash2, Search, MoveRight, ChevronRight, ChevronLeft, User, Eye, ArrowLeft } from 'lucide-react';
+import { File, Download, ExternalLink, Calendar, Users, Clock, AlertCircle, Plus, ListTodo, Edit, Trash2, Search, MoveRight, ChevronRight, ChevronLeft, User, Eye, ArrowLeft, Filter } from 'lucide-react';
 import Layout from '../components/Layout';
 import AddTaskModal from './AddTaskModal';
 import EditTaskModal from './EditTaskModal';
 import ViewTaskModal from './ViewTaskModal';
 import EditProjectModal from './EditProjectModal';
+import { projectAPI } from '../API/apiService';
 
 const statusList = [
   { key: 'Todo', color: 'blue' },
@@ -26,79 +27,9 @@ function Project() {
     const { id } = useParams();
     const navigate = useNavigate();
     const [project, setProject] = useState(null);
-    const [tasks, setTasks] = useState([
-        {
-            id: 1,
-            title: "Design UI Components",
-            description: "Create reusable UI components for the project dashboard",
-            status: "In Progress",
-            priority: "high",
-            assignedTo: "John Doe",
-            deadline: "2024-12-20",
-            comments: [
-                {
-                    id: 1,
-                    author: "John Doe",
-                    text: "Working on the component structure",
-                    timestamp: "2024-12-10T10:30:00Z"
-                }
-            ],
-            attachments: [
-                {
-                    id: 1,
-                    name: "Component_Designs.pdf",
-                    size: 2048576,
-                    type: "application/pdf",
-                    url: "#"
-                },
-                {
-                    id: 2,
-                    name: "Wireframes.png",
-                    size: 1024000,
-                    type: "image/png", 
-                    url: "#"
-                }
-            ]
-        },
-        {
-            id: 2,
-            title: "Database Schema",
-            description: "Design and implement the database schema for user management",
-            status: "Todo",
-            priority: "medium",
-            assignedTo: "Jane Smith",
-            deadline: "2024-12-25",
-            comments: [],
-            attachments: [
-                {
-                    id: 3,
-                    name: "Schema_Draft.sql",
-                    size: 15360,
-                    type: "text/sql",
-                    url: "#"
-                }
-            ]
-        },
-        {
-            id: 3,
-            title: "API Integration",
-            description: "Integrate third-party APIs for authentication and notifications",
-            status: "Completed",
-            priority: "low",
-            assignedTo: "John Doe", 
-            deadline: "2024-12-15",
-            comments: [
-                {
-                    id: 2,
-                    author: "Jane Smith",
-                    text: "API documentation looks good",
-                    timestamp: "2024-12-08T14:15:00Z"
-                }
-            ],
-            attachments: []
-        }
-    ]);
+    const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     
     // Separate states for view and edit modals
@@ -118,110 +49,110 @@ function Project() {
         }
     }, []);
 
-    // Mock project data - replace with actual API call
+    // Fetch project data
     useEffect(() => {
-        // Simulate API call
-        setTimeout(() => {
-            setProject({
-                id: 1,
-                name: "Project Management System",
-                description: "A comprehensive project management system with task tracking and team collaboration features.",
-                startDate: "2024-03-01",
-                dueDate: "2024-06-30",
-                status: "In Progress",
-                priority: "high",
-                teamMembers: [
-                    { id: 1, name: "John Doe", role: "Project Manager" },
-                    { id: 2, name: "Jane Smith", role: "Developer" }
-                ],
-                attachments: [
-                    { 
-                        id: 1, 
-                        name: "Project_Specs.pdf", 
-                        size: 1024576,
-                        type: "application/pdf",
-                        url: "#"
-                    },
-                    { 
-                        id: 2, 
-                        name: "Design_Mockups.zip", 
-                        size: 5242880,
-                        type: "application/zip",
-                        url: "#"
-                    }
-                ]
-            });
-            setLoading(false);
-        }, 1000);
+        if (id) {
+            fetchProject();
+            fetchTasks();
+        }
     }, [id]);
 
+    const fetchProject = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const projectData = await projectAPI.getProjectById(id);
+            setProject(projectData);
+        } catch (err) {
+            console.error('Error fetching project:', err);
+            setError('Failed to fetch project. Please try again later.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchTasks = async () => {
+        try {
+            const tasksData = await projectAPI.getTasksByProjectId(id);
+            setTasks(tasksData || []);
+        } catch (err) {
+            console.error('Error fetching tasks:', err);
+            // Don't set error here as project might still load
+        }
+    };
+
     // Task handlers
-    const handleCreateTask = (taskData) => {
-        const newTask = {
-            id: Date.now(),
-            ...taskData,
-            status: 'Todo',
-            comments: [],
-            attachments: taskData.attachments || []
-        };
-        setTasks([...tasks, newTask]);
-        setIsAddTaskModalOpen(false);
+    const handleCreateTask = async (taskData) => {
+        try {
+            const newTask = await projectAPI.createTask({
+                ...taskData,
+                projectId: id,
+                status: 'Todo'
+            });
+            setTasks([...tasks, newTask]);
+            setIsAddTaskModalOpen(false);
+        } catch (err) {
+            console.error('Error creating task:', err);
+            alert('Failed to create task. Please try again.');
+        }
     };
 
-    const handleEditTask = (updatedTask) => {
-        setTasks(prevTasks =>
-            prevTasks.map(task =>
-                task.id === updatedTask.id ? {
-                    ...task,
-                    ...updatedTask,
-                    status: updatedTask.status || task.status,
-                    priority: updatedTask.priority || task.priority,
-                    comments: task.comments || [], // Preserve comments
-                    attachments: updatedTask.attachments || task.attachments || [] // Preserve attachments
-                } : task
-            )
-        );
-        setIsEditModalOpen(false);
-        setEditTask(null);
+    const handleEditTask = async (updatedTask) => {
+        try {
+            const editedTask = await projectAPI.updateTask(updatedTask.id, updatedTask);
+            setTasks(prevTasks =>
+                prevTasks.map(task =>
+                    task.id === updatedTask.id ? editedTask : task
+                )
+            );
+            setIsEditModalOpen(false);
+            setEditTask(null);
+        } catch (err) {
+            console.error('Error updating task:', err);
+            alert('Failed to update task. Please try again.');
+        }
     };
 
-    const handleDeleteTask = (taskId) => {
-        setTasks(tasks.filter(t => t.id !== taskId));
+    const handleDeleteTask = async (taskId) => {
+        try {
+            await projectAPI.deleteTask(taskId);
+            setTasks(tasks.filter(t => t.id !== taskId));
+        } catch (err) {
+            console.error('Error deleting task:', err);
+            alert('Failed to delete task. Please try again.');
+        }
     };
 
-    const handleChangeStatus = (task, newStatus) => {
-        setTasks(tasks.map(t => 
-            t.id === task.id ? { ...t, status: newStatus } : t
-        ));
+    const handleChangeStatus = async (task, newStatus) => {
+        try {
+            const updatedTask = await projectAPI.updateTask(task.id, { ...task, status: newStatus });
+            setTasks(tasks.map(t => 
+                t.id === task.id ? updatedTask : t
+            ));
+        } catch (err) {
+            console.error('Error updating task status:', err);
+            alert('Failed to update task status. Please try again.');
+        }
     };
 
     // Get next status in the workflow
     const getNextStatus = (currentStatus) => {
-        const currentIndex = statusList.findIndex(s => s.key === currentStatus);
-        return currentIndex < statusList.length - 1 ? statusList[currentIndex + 1].key : null;
+        const statusIndex = statusList.findIndex(s => s.key === currentStatus);
+        return statusIndex < statusList.length - 1 ? statusList[statusIndex + 1].key : currentStatus;
     };
 
-    // Get previous status in the workflow
     const getPreviousStatus = (currentStatus) => {
-        const currentIndex = statusList.findIndex(s => s.key === currentStatus);
-        return currentIndex > 0 ? statusList[currentIndex - 1].key : null;
+        const statusIndex = statusList.findIndex(s => s.key === currentStatus);
+        return statusIndex > 0 ? statusList[statusIndex - 1].key : currentStatus;
     };
 
-    // Filter tasks based on search query
     const filterTasks = (taskList, status) => {
-        return taskList
-            .filter(task => task.status === status)
-            .filter(task => 
-                searchQuery === '' ||
-                task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                task.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                task.assignedTo.toLowerCase().includes(searchQuery.toLowerCase())
-            );
+        return taskList.filter(task => task.status === status);
     };
 
     const formatDate = (dateString) => {
-        const options = { year: 'numeric', month: 'long', day: 'numeric' };
-        return new Date(dateString).toLocaleDateString(undefined, options);
+        if (!dateString) return 'No date set';
+        return new Date(dateString).toLocaleDateString();
     };
 
     const formatFileSize = (bytes) => {
@@ -233,181 +164,209 @@ function Project() {
     };
 
     const getPriorityColor = (priority) => {
-        const colors = {
-            low: darkMode ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-800',
-            medium: darkMode ? 'bg-yellow-500/20 text-yellow-300' : 'bg-yellow-100 text-yellow-800',
-            high: darkMode ? 'bg-red-500/20 text-red-300' : 'bg-red-100 text-red-800'
-        };
-        return colors[priority] || colors.medium;
+        switch (priority?.toLowerCase()) {
+            case 'high':
+                return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
+            case 'medium':
+                return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
+            case 'low':
+                return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
+            default:
+                return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+        }
     };
 
     const getStatusColor = (status) => {
-        const colors = {
-            'Todo': darkMode ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-800',
-            'In Progress': darkMode ? 'bg-yellow-500/20 text-yellow-300' : 'bg-yellow-100 text-yellow-800',
-            'Completed': darkMode ? 'bg-green-500/20 text-green-300' : 'bg-green-100 text-green-800'
-        };
-        return colors[status] || colors['Todo'];
+        switch (status) {
+            case 'Todo':
+                return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
+            case 'In Progress':
+                return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
+            case 'Completed':
+                return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
+            default:
+                return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+        }
     };
 
     const handleDownload = (file) => {
-        window.open(file.url, '_blank');
+        // Implement file download logic
+        console.log('Downloading:', file.name);
     };
 
-    const handleEditProject = (updatedProject) => {
-        // Here you would typically make an API call to update the project
-        setProject(prev => ({
-            ...prev,
-            name: updatedProject.projectName,
-            description: updatedProject.description,
-            status: updatedProject.status,
-            priority: updatedProject.priorityLevel,
-            dueDate: updatedProject.date,
-            attachments: updatedProject.files
-        }));
-        setIsEditProjectModalOpen(false);
+    const handleEditProject = async (updatedProject) => {
+        try {
+            const editedProject = await projectAPI.updateProject(id, updatedProject);
+            setProject(editedProject);
+            setIsEditProjectModalOpen(false);
+        } catch (err) {
+            console.error('Error updating project:', err);
+            alert('Failed to update project. Please try again.');
+        }
     };
 
-    // Add navigation handler
     const handleBack = () => {
         navigate('/my-projects');
     };
 
-    // Comment handling functions
     const handleAddComment = async (comment) => {
         try {
-            // In a real app, you would save this to your backend
-            setTasks(prevTasks =>
-                prevTasks.map(task =>
-                    task.id === comment.taskId
-                        ? { ...task, comments: [...(task.comments || []), comment] }
-                        : task
-                )
-            );
-        } catch (error) {
-            console.error('Error adding comment:', error);
-            throw error;
+            // Implement comment addition logic with API
+            console.log('Adding comment:', comment);
+        } catch (err) {
+            console.error('Error adding comment:', err);
+            alert('Failed to add comment. Please try again.');
         }
     };
 
     const handleEditComment = async (commentId, updatedComment) => {
         try {
-            // In a real app, you would save this to your backend
-            setTasks(prevTasks =>
-                prevTasks.map(task => ({
-                    ...task,
-                    comments: (task.comments || []).map(comment =>
-                        comment.id === commentId ? updatedComment : comment
-                    )
-                }))
-            );
-        } catch (error) {
-            console.error('Error editing comment:', error);
-            throw error;
+            // Implement comment editing logic with API
+            console.log('Editing comment:', commentId, updatedComment);
+        } catch (err) {
+            console.error('Error editing comment:', err);
+            alert('Failed to edit comment. Please try again.');
         }
     };
 
     const handleDeleteComment = async (commentId) => {
         try {
-            // In a real app, you would delete this from your backend
-            setTasks(prevTasks =>
-                prevTasks.map(task => ({
-                    ...task,
-                    comments: (task.comments || []).filter(comment => comment.id !== commentId)
-                }))
-            );
-        } catch (error) {
-            console.error('Error deleting comment:', error);
-            throw error;
+            // Implement comment deletion logic with API
+            console.log('Deleting comment:', commentId);
+        } catch (err) {
+            console.error('Error deleting comment:', err);
+            alert('Failed to delete comment. Please try again.');
         }
     };
 
     const renderTaskCard = (task) => {
         const isOverdue = isTaskOverdue(task);
-        const nextStatus = getNextStatus(task.status);
-        const previousStatus = getPreviousStatus(task.status);
-
+        
         return (
             <div
                 key={task.id}
-                className={`p-4 rounded-lg mb-3 ${
-                    darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
-                } shadow-sm`}
+                className={`p-4 rounded-lg border ${
+                    darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'
+                } hover:shadow-md transition-all duration-200 cursor-pointer`}
+                onClick={() => {
+                    setViewTask(task);
+                    setIsViewModalOpen(true);
+                }}
             >
-                <div className="flex justify-between items-start mb-2">
-                    <h3 className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                <div className="flex items-start justify-between mb-3">
+                    <h4 className={`font-medium ${
+                        darkMode ? 'text-white' : 'text-gray-900'
+                    }`}>
                         {task.title}
-                    </h3>
-                    <div className="flex items-center gap-2">
-                        {previousStatus && (
-                            <button
-                                onClick={() => handleChangeStatus(task, previousStatus)}
-                                className={`p-1 rounded-full ${
-                                    darkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-600'
-                                }`}
-                                title={`Move to ${previousStatus}`}
-                            >
-                                <ChevronLeft className="w-4 h-4" />
-                            </button>
-                        )}
-                        {nextStatus && (
-                            <button
-                                onClick={() => handleChangeStatus(task, nextStatus)}
-                                className={`p-1 rounded-full ${
-                                    darkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-600'
-                                }`}
-                                title={`Move to ${nextStatus}`}
-                            >
-                                <ChevronRight className="w-4 h-4" />
-                            </button>
-                        )}
+                    </h4>
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setEditTask(task);
+                                setIsEditModalOpen(true);
+                            }}
+                            className={`p-1 rounded ${
+                                darkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-100'
+                            }`}
+                        >
+                            <Edit className="w-4 h-4 text-blue-500" />
+                        </button>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteTask(task.id);
+                            }}
+                            className={`p-1 rounded ${
+                                darkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-100'
+                            }`}
+                        >
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                        </button>
                     </div>
                 </div>
-                <p className={`text-sm mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                
+                <p className={`text-sm mb-3 ${
+                    darkMode ? 'text-gray-300' : 'text-gray-600'
+                }`}>
                     {task.description}
                 </p>
-                <div className="flex items-center justify-between text-sm">
-                    <div className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
-                        {task.assignedTo}
+                
+                <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(task.priority)}`}>
+                            {task.priority?.charAt(0).toUpperCase() + task.priority?.slice(1) || 'Not Set'}
+                        </span>
+                        {isOverdue && (
+                            <span className="text-xs text-red-500 font-medium">
+                                Overdue
+                            </span>
+                        )}
                     </div>
-                    <div className={`flex items-center gap-2 ${
-                        isOverdue ? (darkMode ? 'text-red-400' : 'text-red-600') : (darkMode ? 'text-gray-400' : 'text-gray-500')
-                    }`}>
-                        <Clock className="w-4 h-4" />
-                        {formatDate(task.deadline)}
+                    
+                    <div className="flex items-center gap-2 text-xs">
+                        <User className="w-3 h-3" />
+                        <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
+                            {task.assignedTo || 'Unassigned'}
+                        </span>
                     </div>
+                    
+                    <div className="flex items-center gap-2 text-xs">
+                        <Calendar className="w-3 h-3" />
+                        <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
+                            Due: {formatDate(task.deadline)}
+                        </span>
+                    </div>
+                    
+                    {task.attachments && task.attachments.length > 0 && (
+                        <div className="flex items-center gap-2 text-xs">
+                            <File className="w-3 h-3" />
+                            <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
+                                {task.attachments.length} attachment{task.attachments.length !== 1 ? 's' : ''}
+                            </span>
+                        </div>
+                    )}
                 </div>
-                <div className="mt-3 flex justify-end gap-2">
-                    <button
-                        onClick={() => {
-                            setViewTask(task);
-                            setIsViewModalOpen(true);
-                        }}
-                        className={`p-1.5 rounded-lg ${
-                            darkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-600'
-                        }`}
-                    >
-                        <Eye className="w-4 h-4" />
-                    </button>
-                    <button
-                        onClick={() => {
-                            setEditTask(task);
-                            setIsEditModalOpen(true);
-                        }}
-                        className={`p-1.5 rounded-lg ${
-                            darkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-600'
-                        }`}
-                    >
-                        <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                        onClick={() => handleDeleteTask(task.id)}
-                        className={`p-1.5 rounded-lg ${
-                            darkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-600'
-                        }`}
-                    >
-                        <Trash2 className="w-4 h-4" />
-                    </button>
+                
+                <div className="mt-3 flex items-center justify-between">
+                    <div className="flex gap-1">
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                const prevStatus = getPreviousStatus(task.status);
+                                if (prevStatus !== task.status) {
+                                    handleChangeStatus(task, prevStatus);
+                                }
+                            }}
+                            disabled={task.status === statusList[0].key}
+                            className={`p-1 rounded ${
+                                task.status === statusList[0].key
+                                    ? 'opacity-50 cursor-not-allowed'
+                                    : darkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-100'
+                            }`}
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                const nextStatus = getNextStatus(task.status);
+                                if (nextStatus !== task.status) {
+                                    handleChangeStatus(task, nextStatus);
+                                }
+                            }}
+                            disabled={task.status === statusList[statusList.length - 1].key}
+                            className={`p-1 rounded ${
+                                task.status === statusList[statusList.length - 1].key
+                                    ? 'opacity-50 cursor-not-allowed'
+                                    : darkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-100'
+                            }`}
+                        >
+                            <ChevronRight className="w-4 h-4" />
+                        </button>
+                    </div>
+                    
+                    <MoveRight className="w-4 h-4 text-gray-400" />
                 </div>
             </div>
         );
@@ -417,8 +376,27 @@ function Project() {
         return (
             <Layout>
                 <div className="flex items-center justify-center min-h-screen">
-                    <div className={`text-lg ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                        Loading project...
+                    <div className={`text-center ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
+                        <p>Loading project...</p>
+                    </div>
+                </div>
+            </Layout>
+        );
+    }
+
+    if (error) {
+        return (
+            <Layout>
+                <div className="flex items-center justify-center min-h-screen">
+                    <div className={`text-center ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                        <p className="text-red-500 mb-4">{error}</p>
+                        <button
+                            onClick={fetchProject}
+                            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                        >
+                            Try Again
+                        </button>
                     </div>
                 </div>
             </Layout>
@@ -460,7 +438,7 @@ function Project() {
                                     ? 'bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent' 
                                     : 'text-gray-900'
                             }`}>
-                                {project.name}
+                                {project.projectName || project.name}
                             </h1>
                         </div>
                     </div>
@@ -473,7 +451,7 @@ function Project() {
                                     <h1 className={`text-3xl font-bold ${
                                         darkMode ? 'text-white' : 'text-gray-900'
                                     }`}>
-                                        {project.name}
+                                        {project.projectName || project.name}
                                     </h1>
                                     <button
                                         onClick={() => setIsEditProjectModalOpen(true)}
@@ -488,11 +466,11 @@ function Project() {
                                 </div>
                                 <div className="flex flex-wrap gap-3">
                                     <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(project.status)}`}>
-                                        {project.status}
+                                        {project.status || 'Not Set'}
                                     </span>
-                                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(project.priority)}`}>
+                                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(project.priorityLevel || project.priority)}`}>
                                         <AlertCircle className="w-4 h-4" />
-                                        {project.priority.charAt(0).toUpperCase() + project.priority.slice(1)} Priority
+                                        {(project.priorityLevel || project.priority || 'Not Set').charAt(0).toUpperCase() + (project.priorityLevel || project.priority || 'Not Set').slice(1)} Priority
                                     </span>
                                 </div>
                             </div>
@@ -550,7 +528,7 @@ function Project() {
                                     <p className={`text-sm ${
                                         darkMode ? 'text-gray-400' : 'text-gray-600'
                                     }`}>
-                                        {project.description}
+                                        {project.description || 'No description available'}
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -558,7 +536,7 @@ function Project() {
                                         darkMode ? 'text-gray-400' : 'text-gray-500'
                                     }`} />
                                     <span className={darkMode ? 'text-gray-300' : 'text-gray-700'}>
-                                        Due: {formatDate(project.dueDate)}
+                                        Due: {formatDate(project.date || project.dueDate)}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -566,7 +544,7 @@ function Project() {
                                         darkMode ? 'text-gray-400' : 'text-gray-500'
                                     }`} />
                                     <span className={darkMode ? 'text-gray-300' : 'text-gray-700'}>
-                                        {project.teamMembers.length} Team Members
+                                        {project.contributors?.length || project.teamMembers?.length || 0} Team Members
                                     </span>
                                 </div>
                             </div>

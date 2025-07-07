@@ -15,5 +15,6 @@ namespace PE_Group_Project.API.Models.Domain
         public string? PhoneNumber { get; set; }
         public DateTime LastLoginTime { get; set; }
         public ICollection<UserProject> UserProjects { get; set; } = new List<UserProject>();
+        public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
     }
 }

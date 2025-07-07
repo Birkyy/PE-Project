@@ -1,12 +1,12 @@
 import { useParams } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { useTheme } from '../context/ThemeContext';
-import { Plus, Edit, Trash2, Search, MoveRight, Clock, Edit2, ChevronRight, ChevronLeft, User, Eye, Upload, File, X, Download } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, MoveRight, Clock, Edit2, ChevronRight, ChevronLeft, User, Eye, Upload, File, X, Download, Filter, MoreVertical, Calendar, MessageCircle, ArrowRight, ArrowLeft, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import AddTaskModal from './AddTaskModal';
 import EditTaskModal from './EditTaskModal';
 import ViewTaskModal from './ViewTaskModal';
-import { fetchProjectTasks, addProjectTask, editProjectTask, deleteProjectTask } from '../API/ProjectTaskAPI';
+import { taskAPI, projectAPI, userAPI } from '../API/apiService';
 
 const statusList = [
   { key: 'Todo', color: 'blue' },
@@ -14,9 +14,18 @@ const statusList = [
   { key: 'Completed', color: 'green' },
 ];
 
+// Helper function to normalize status values
+const normalizeStatus = (status) => {
+  const statusLower = status.toLowerCase();
+  if (statusLower === 'todo' || statusLower === 'to do') return 'Todo';
+  if (statusLower === 'in progress' || statusLower === 'inprogress' || statusLower === 'progress') return 'In Progress';
+  if (statusLower === 'completed' || statusLower === 'complete' || statusLower === 'done') return 'Completed';
+  return status; // Return original if no match
+};
+
 // Helper function to check if a task is overdue
 const isTaskOverdue = (task) => {
-  if (task.status === 'Completed') return false;
+  if (task.status.toLowerCase() === 'completed') return false;
   if (!task.deadline) return false;
   return new Date(task.deadline) < new Date();
 };
@@ -24,7 +33,9 @@ const isTaskOverdue = (task) => {
 const MyTask = () => {
   const { projectName } = useParams();
   const { darkMode } = useTheme();
-  const [tasks, setTasks] = useState([]);
+  const [todoTasks, setTodoTasks] = useState([]);
+  const [inProgressTasks, setInProgressTasks] = useState([]);
+  const [completedTasks, setCompletedTasks] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -38,23 +49,77 @@ const MyTask = () => {
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
 
-  // Load tasks data
+  // Load project data and tasks
   useEffect(() => {
-    const loadTasks = async () => {
+    const fetchProjectAndTasks = async () => {
       try {
         setLoading(true);
-        const fetchedTasks = await fetchProjectTasks();
-        setTasks(fetchedTasks);
         setError(null);
+
+        // First, get all projects to find the current project
+        const allProjects = await projectAPI.getAllProjects();
+        console.log('All projects:', allProjects);
+        console.log('Looking for project:', decodeURIComponent(projectName));
+        
+        const project = allProjects.find(p => p.projectName === decodeURIComponent(projectName));
+        console.log('Found project:', project);
+        
+        if (project) {
+          setCurrentProject({
+            name: project.projectName,
+            description: project.description || '',
+            dueDate: project.date,
+            progress: 0, // You can calculate this based on completed tasks
+            color: 'purple',
+            projectId: project.projectId // Add projectId to currentProject
+          });
+
+          console.log('Project ID for task fetching:', project.projectId);
+
+          // First, let's get all tasks to see what's available
+          const allTasks = await taskAPI.getAllTasks();
+          console.log('All tasks from backend:', allTasks);
+          console.log('Tasks for this project:', allTasks.filter(task => task.projectId === project.projectId));
+
+          // Fetch tasks for each status separately
+          const finalTodoTasks = allTasks.filter(task => 
+            task.projectId === project.projectId && 
+            task.status.toLowerCase() === 'todo'
+          );
+          const finalInProgressTasks = allTasks.filter(task => 
+            task.projectId === project.projectId && 
+            (task.status.toLowerCase() === 'in progress' || task.status.toLowerCase() === 'inprogress')
+          );
+          const finalCompletedTasks = allTasks.filter(task => 
+            task.projectId === project.projectId && 
+            task.status.toLowerCase() === 'completed'
+          );
+
+          // Transform tasks with user information
+          const transformedTodo = await transformTasksWithUserInfo(finalTodoTasks);
+          const transformedInProgress = await transformTasksWithUserInfo(finalInProgressTasks);
+          const transformedCompleted = await transformTasksWithUserInfo(finalCompletedTasks);
+
+          setTodoTasks(transformedTodo);
+          setInProgressTasks(transformedInProgress);
+          setCompletedTasks(transformedCompleted);
+
+          console.log('Transformed Todo tasks:', transformedTodo);
+          console.log('Transformed In Progress tasks:', transformedInProgress);
+          console.log('Transformed Completed tasks:', transformedCompleted);
+          console.log('Total tasks set:', transformedTodo.length + transformedInProgress.length + transformedCompleted.length);
+        } else {
+          setError('Project not found');
+        }
       } catch (err) {
-        setError('Failed to load tasks. Please try again later.');
-        console.error('Error loading tasks:', err);
+        console.error('Error fetching project and tasks:', err);
+        setError('Failed to load project and tasks. Please try again.');
       } finally {
         setLoading(false);
       }
     };
 
-    loadTasks();
+    fetchProjectAndTasks();
   }, [projectName]);
 
   // Load current user data
@@ -65,79 +130,195 @@ const MyTask = () => {
     }
   }, []);
 
+  // Function to resolve user information from GUID
+  const resolveUserInfo = async (picGuid) => {
+    if (!picGuid || picGuid === '00000000-0000-0000-0000-000000000000') {
+      return 'Unassigned';
+    }
+    
+    try {
+      const user = await userAPI.getUserById(picGuid);
+      return user.username || user.email || 'Unknown User';
+    } catch (error) {
+      console.error('Error resolving user info:', error);
+      return 'Unknown User';
+    }
+  };
+
+  // Enhanced task transformation with user resolution
+  const transformTasksWithUserInfo = async (tasks) => {
+    const transformedTasks = [];
+    
+    for (const task of tasks) {
+      const assignedTo = await resolveUserInfo(task.pic);
+      transformedTasks.push({
+        id: task.projectTaskId,
+        title: task.taskName,
+        status: normalizeStatus(task.status),
+        description: task.description,
+        deadline: task.deadline,
+        priority: task.priority,
+        assignedTo: assignedTo,
+        pic: task.pic, // Keep the original GUID for API calls
+        projectId: task.projectId,
+        comments: []
+      });
+    }
+    
+    return transformedTasks;
+  };
+
   // Task handlers
   const handleCreateTask = async (taskData) => {
     try {
-      const newTask = await addProjectTask({
-        ...taskData,
-        status: 'Todo',
+      if (!currentProject) {
+        throw new Error('No project selected');
+      }
+
+      // Find the project ID
+      const allProjects = await projectAPI.getAllProjects();
+      const project = allProjects.find(p => p.projectName === currentProject.name);
+      
+      if (!project) {
+        throw new Error('Project not found');
+      }
+
+      // Prepare task data for API
+      const newTaskData = {
+        projectId: project.projectId,
+        taskName: taskData.title,
+        pic: taskData.assignedTo || '00000000-0000-0000-0000-000000000000', // Default GUID if empty
+        deadline: taskData.deadline ? new Date(taskData.deadline).toISOString() : new Date().toISOString(),
+        description: taskData.description,
+        status: normalizeStatus('Todo'), // Always start with Todo status
+        priority: taskData.priority
+      };
+
+      // Create task using API
+      const createdTask = await taskAPI.createTask(newTaskData);
+      
+      // Resolve user information for the created task
+      const assignedTo = await resolveUserInfo(createdTask.pic);
+      
+      // Add to local state
+      const newTask = {
+        id: createdTask.projectTaskId,
+        title: createdTask.taskName,
+        status: normalizeStatus(createdTask.status),
+        description: createdTask.description,
+        deadline: createdTask.deadline,
+        priority: createdTask.priority,
+        assignedTo: assignedTo,
+        pic: createdTask.pic, // Keep the original GUID for API calls
+        projectId: project.projectId,
         comments: []
-      });
-      setTasks(prevTasks => [...prevTasks, newTask]);
+      };
+
+      setTodoTasks(prev => [...prev, newTask]);
       setIsAddModalOpen(false);
     } catch (err) {
       console.error('Error creating task:', err);
-      // You might want to show an error message to the user here
+      alert('Failed to create task. Please try again.');
     }
   };
 
   const handleEditTask = async (updatedTask) => {
     try {
-      await editProjectTask(updatedTask.id, updatedTask);
-      setTasks(prevTasks =>
-        prevTasks.map(task =>
-          task.id === updatedTask.id ? { ...task, ...updatedTask } : task
-        )
-      );
+      // Get the projectId from the task or currentProject
+      const projectId = updatedTask.projectId || currentProject?.projectId;
+      
+      if (!projectId) {
+        throw new Error('Project ID not found for task update');
+      }
+
+      // Prepare task data for API
+      const taskData = {
+        projectId: projectId,
+        taskName: updatedTask.title,
+        pic: updatedTask.pic || updatedTask.assignedTo || '00000000-0000-0000-0000-000000000000',
+        deadline: updatedTask.deadline ? new Date(updatedTask.deadline).toISOString() : new Date().toISOString(),
+        description: updatedTask.description,
+        status: normalizeStatus(updatedTask.status),
+        priority: updatedTask.priority
+      };
+
+      console.log('Updating task with data:', taskData);
+
+      // Update task using API
+      await taskAPI.updateTask(updatedTask.id, taskData);
+      
+      // Resolve user information for the updated task
+      const assignedTo = await resolveUserInfo(taskData.pic);
+      
+      // Remove task from all arrays first
+      setTodoTasks(prev => prev.filter(task => task.id !== updatedTask.id));
+      setInProgressTasks(prev => prev.filter(task => task.id !== updatedTask.id));
+      setCompletedTasks(prev => prev.filter(task => task.id !== updatedTask.id));
+
+      // Add task to the correct array based on its new status
+      const normalizedStatus = normalizeStatus(updatedTask.status);
+      const taskWithNormalizedStatus = { 
+        ...updatedTask, 
+        status: normalizedStatus,
+        projectId: projectId, // Ensure projectId is preserved
+        assignedTo: assignedTo, // Use resolved user information
+        pic: taskData.pic // Keep the original GUID for API calls
+      };
+
+      if (normalizedStatus === 'Todo') {
+        setTodoTasks(prev => [...prev, taskWithNormalizedStatus]);
+      } else if (normalizedStatus === 'In Progress') {
+        setInProgressTasks(prev => [...prev, taskWithNormalizedStatus]);
+      } else if (normalizedStatus === 'Completed') {
+        setCompletedTasks(prev => [...prev, taskWithNormalizedStatus]);
+      }
+
       setIsEditModalOpen(false);
       setSelectedTask(null);
     } catch (err) {
       console.error('Error updating task:', err);
-      // You might want to show an error message to the user here
+      alert('Failed to update task. Please try again.');
     }
   };
 
   const handleDeleteTask = async (taskId) => {
     try {
-      await deleteProjectTask(taskId);
-      setTasks(prevTasks => prevTasks.filter(t => t.id !== taskId));
+      await taskAPI.deleteTask(taskId);
+      setTodoTasks(prev => prev.filter(t => t.id !== taskId));
+      setInProgressTasks(prev => prev.filter(t => t.id !== taskId));
+      setCompletedTasks(prev => prev.filter(t => t.id !== taskId));
     } catch (err) {
       console.error('Error deleting task:', err);
-      // You might want to show an error message to the user here
+      alert('Failed to delete task. Please try again.');
     }
   };
 
   const handleChangeStatus = async (task, newStatus) => {
     try {
-      const updatedTask = { ...task, status: newStatus };
-      await editProjectTask(task.id, updatedTask);
-      setTasks(prevTasks => 
-        prevTasks.map(t => 
-          t.id === task.id ? { ...t, status: newStatus } : t
-        )
-      );
+      const updatedTask = { ...task, status: normalizeStatus(newStatus) };
+      await handleEditTask(updatedTask);
     } catch (err) {
-      console.error('Error updating task status:', err);
-      // You might want to show an error message to the user here
+      console.error('Error changing task status:', err);
+      alert('Failed to update task status. Please try again.');
     }
   };
 
   // Get next status in the workflow
   const getNextStatus = (currentStatus) => {
-    const currentIndex = statusList.findIndex(s => s.key === currentStatus);
+    const currentIndex = statusList.findIndex(s => s.key.toLowerCase() === currentStatus.toLowerCase());
     return currentIndex < statusList.length - 1 ? statusList[currentIndex + 1].key : null;
   };
 
   // Get previous status in the workflow
   const getPreviousStatus = (currentStatus) => {
-    const currentIndex = statusList.findIndex(s => s.key === currentStatus);
+    const currentIndex = statusList.findIndex(s => s.key.toLowerCase() === currentStatus.toLowerCase());
     return currentIndex > 0 ? statusList[currentIndex - 1].key : null;
   };
 
   // Filter tasks based on search query
   const filterTasks = (taskList, status) => {
     return taskList
-      .filter(task => task.status === status)
+      .filter(task => task.status.toLowerCase() === status.toLowerCase())
       .filter(task => 
         searchQuery === '' ||
         task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -148,6 +329,7 @@ const MyTask = () => {
 
   // Format date to display
   const formatDate = (dateString) => {
+    if (!dateString) return 'No date set';
     const options = { year: 'numeric', month: 'short', day: 'numeric' };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
@@ -180,49 +362,31 @@ const MyTask = () => {
   // Comment handling functions
   const handleAddComment = async (comment) => {
     try {
-      // In a real app, you would save this to your backend
-      setTasks(prevTasks =>
-        prevTasks.map(task =>
-          task.id === comment.taskId
-            ? { ...task, comments: [...(task.comments || []), comment] }
-            : task
-        )
-      );
+      // Implement comment addition logic with API
+      console.log('Adding comment:', comment);
     } catch (error) {
       console.error('Error adding comment:', error);
-      throw error;
+      alert('Failed to add comment. Please try again.');
     }
   };
 
   const handleEditComment = async (commentId, updatedComment) => {
     try {
-      // In a real app, you would save this to your backend
-      setTasks(prevTasks =>
-        prevTasks.map(task => ({
-          ...task,
-          comments: (task.comments || []).map(comment =>
-            comment.id === commentId ? updatedComment : comment
-          )
-        }))
-      );
+      // Implement comment editing logic with API
+      console.log('Editing comment:', commentId, updatedComment);
     } catch (error) {
       console.error('Error editing comment:', error);
-      throw error;
+      alert('Failed to edit comment. Please try again.');
     }
   };
 
   const handleDeleteComment = async (commentId) => {
     try {
-      // In a real app, you would delete this from your backend
-      setTasks(prevTasks =>
-        prevTasks.map(task => ({
-          ...task,
-          comments: (task.comments || []).filter(comment => comment.id !== commentId)
-        }))
-      );
+      // Implement comment deletion logic with API
+      console.log('Deleting comment:', commentId);
     } catch (error) {
       console.error('Error deleting comment:', error);
-      throw error;
+      alert('Failed to delete comment. Please try again.');
     }
   };
 
@@ -238,7 +402,28 @@ const MyTask = () => {
       uploadedAt: new Date().toISOString()
     }));
 
-    setTasks(prevTasks =>
+    // Update the appropriate task array with new attachments
+    setTodoTasks(prevTasks =>
+      prevTasks.map(task =>
+        task.id === taskId
+          ? {
+              ...task,
+              attachments: [...(task.attachments || []), ...fileList]
+            }
+          : task
+      )
+    );
+    setInProgressTasks(prevTasks =>
+      prevTasks.map(task =>
+        task.id === taskId
+          ? {
+              ...task,
+              attachments: [...(task.attachments || []), ...fileList]
+            }
+          : task
+      )
+    );
+    setCompletedTasks(prevTasks =>
       prevTasks.map(task =>
         task.id === taskId
           ? {
@@ -321,7 +506,7 @@ const MyTask = () => {
           <div className="flex items-center gap-2">
             <User size={16} className={darkMode ? 'text-gray-400' : 'text-gray-500'} />
             <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
-              {task.assignedTo}
+              {task.assignedTo || 'Unassigned'}
             </span>
           </div>
           <div className={`flex items-center gap-2 ${
@@ -422,119 +607,167 @@ const MyTask = () => {
 
   return (
     <Layout>
-      <div className={`min-h-screen p-4 ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-100'}`}>
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">{projectName || 'My Tasks'}</h1>
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-              darkMode
-                ? 'bg-blue-600 hover:bg-blue-700'
-                : 'bg-blue-500 hover:bg-blue-600'
-            } text-white transition-colors`}
-          >
-            <Plus size={20} />
-            Add Task
-          </button>
-        </div>
-
-        {/* Search Bar */}
-        <div className="mb-6">
-          <div className={`flex items-center gap-2 p-2 rounded-lg ${
-            darkMode ? 'bg-gray-800' : 'bg-white'
-          }`}>
-            <Search size={20} className="text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search tasks..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className={`w-full bg-transparent focus:outline-none ${
-                darkMode ? 'text-white' : 'text-gray-700'
-              }`}
-            />
+      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="px-4 py-6 sm:px-0">
+          <div className="text-center mb-8">
+            <h2 className={`text-3xl font-extrabold mb-2 ${darkMode ? 'bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent' : 'text-gray-900'}`}>
+              My Tasks for {decodeURIComponent(projectName)}
+            </h2>
+            {currentProject && (
+              <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                Project Deadline: {formatDate(currentProject.dueDate)}
+              </p>
+            )}
           </div>
-        </div>
 
-        {/* Loading State */}
-        {loading && (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-          </div>
-        )}
-
-        {/* Error State */}
-        {error && (
-          <div className={`p-4 rounded-lg mb-6 ${darkMode ? 'bg-red-900' : 'bg-red-100'} ${darkMode ? 'text-red-200' : 'text-red-700'}`}>
-            <p>{error}</p>
-          </div>
-        )}
-
-        {/* Task Columns */}
-        {!loading && !error && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {statusList.map((status) => (
-              <div
-                key={status.key}
-                className={`p-4 rounded-lg ${
-                  darkMode ? 'bg-gray-800' : 'bg-white'
-                }`}
-              >
-                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                  <span
-                    className={`w-3 h-3 rounded-full bg-${status.color}-500`}
-                  ></span>
-                  {status.key}
-                  <span className="text-sm font-normal text-gray-500 ml-2">
-                    ({filterTasks(tasks, status.key).length})
-                  </span>
-                </h2>
-                <div className="space-y-4">
-                  {filterTasks(tasks, status.key).map((task) => renderTaskCard(task))}
-                </div>
+          {/* Loading State */}
+          {loading && (
+            <div className="flex items-center justify-center py-12">
+              <div className={`text-center ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
+                <p>Loading tasks...</p>
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          )}
 
-        {/* Modals */}
-        {isAddModalOpen && (
-          <AddTaskModal
-            isOpen={isAddModalOpen}
-            onClose={() => setIsAddModalOpen(false)}
-            onSubmit={handleCreateTask}
-            darkMode={darkMode}
-          />
-        )}
+          {/* Error State */}
+          {error && !loading && (
+            <div className="flex items-center justify-center py-12">
+              <div className={`text-center ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                <p className="text-red-500 mb-4">{error}</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
+          )}
+          
+          {/* Main Content */}
+          {!loading && !error && (
+            <>
+              <div className="flex justify-between items-center mb-6">
+                {/* Search Bar */}
+                <div className={`relative flex-1 max-w-md ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className={`h-5 w-5 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search tasks..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className={`block w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                      darkMode
+                        ? 'bg-gray-800 border-gray-600 focus:ring-cyan-500 text-gray-200 placeholder-gray-400'
+                        : 'bg-white border-gray-300 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
+                    }`}
+                  />
+                </div>
 
-        {isEditModalOpen && selectedTask && (
-          <EditTaskModal
-            isOpen={isEditModalOpen}
-            onClose={() => {
-              setIsEditModalOpen(false);
-              setSelectedTask(null);
-            }}
-            task={selectedTask}
-            onSubmit={handleEditTask}
-            darkMode={darkMode}
-          />
-        )}
+                {/* Add Task Button */}
+                <button
+                  onClick={() => setIsAddModalOpen(true)}
+                  className={`ml-4 px-4 py-2 rounded-lg flex items-center ${
+                    darkMode
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                      : 'bg-blue-500 hover:bg-blue-600 text-white'
+                  }`}
+                >
+                  <Plus className="w-5 h-5 mr-2" />
+                  Add Task
+                </button>
+              </div>
 
-        {isViewModalOpen && selectedTask && (
-          <ViewTaskModal
-            task={selectedTask}
-            onClose={() => {
-              setIsViewModalOpen(false);
-              setSelectedTask(null);
-            }}
-            onAddComment={handleAddComment}
-            onEditComment={handleEditComment}
-            onDeleteComment={handleDeleteComment}
-            currentUser={currentUser}
-          />
-        )}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {statusList.map(({ key, color }) => (
+                  <div key={key} className={`${darkMode ? 'bg-gray-800 border-' + color + '-500/30' : 'bg-white border-' + color + '-300'} border rounded-lg shadow-xl p-4 flex flex-col`}>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className={`text-lg font-semibold ${darkMode ? `text-${color}-300` : `text-${color}-700`}`}>{key}</h3>
+                      <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {filterTasks(key === 'Todo' ? todoTasks : key === 'In Progress' ? inProgressTasks : completedTasks, key).length} tasks
+                      </span>
+                    </div>
+                    <div className="flex-1 space-y-4">
+                      {filterTasks(key === 'Todo' ? todoTasks : key === 'In Progress' ? inProgressTasks : completedTasks, key).length === 0 && (
+                        <div className={`text-center text-sm ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                          {searchQuery ? 'No matching tasks' : 'No tasks'}
+                        </div>
+                      )}
+                      {filterTasks(key === 'Todo' ? todoTasks : key === 'In Progress' ? inProgressTasks : completedTasks, key).map(renderTaskCard)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Results Count */}
+              <div className="mt-8 text-center">
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Showing {[
+                    ...todoTasks.filter(task => 
+                      searchQuery === '' ||
+                      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      task.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      task.assignedTo.toLowerCase().includes(searchQuery.toLowerCase())
+                    ),
+                    ...inProgressTasks.filter(task => 
+                      searchQuery === '' ||
+                      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      task.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      task.assignedTo.toLowerCase().includes(searchQuery.toLowerCase())
+                    ),
+                    ...completedTasks.filter(task => 
+                      searchQuery === '' ||
+                      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      task.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      task.assignedTo.toLowerCase().includes(searchQuery.toLowerCase())
+                    )
+                  ].length} of {todoTasks.length + inProgressTasks.length + completedTasks.length} tasks
+                </p>
+              </div>
+            </>
+          )}
+        </div>
       </div>
+
+      {/* Modals */}
+      {isAddModalOpen && (
+        <AddTaskModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          onSubmit={handleCreateTask}
+          darkMode={darkMode}
+        />
+      )}
+
+      {isEditModalOpen && selectedTask && (
+        <EditTaskModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedTask(null);
+          }}
+          task={selectedTask}
+          onSubmit={handleEditTask}
+          darkMode={darkMode}
+        />
+      )}
+
+      {isViewModalOpen && selectedTask && (
+        <ViewTaskModal
+          task={selectedTask}
+          onClose={() => {
+            setIsViewModalOpen(false);
+            setSelectedTask(null);
+          }}
+          onAddComment={handleAddComment}
+          onEditComment={handleEditComment}
+          onDeleteComment={handleDeleteComment}
+          currentUser={currentUser}
+        />
+      )}
     </Layout>
   );
 };

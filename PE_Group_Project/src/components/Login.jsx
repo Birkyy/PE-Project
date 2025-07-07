@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import api from '../API/api';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -80,8 +79,8 @@ const Login = () => {
     }
 
     try {
-      const response = await api.post('/auth/login', formData);
-      console.log('Login successful:', response.data);
+      // Just log the login data for now
+      console.log('Login attempt:', formData);
       
       // Reset failed attempts on successful login
       resetFailedAttempts(formData.email);
@@ -91,10 +90,8 @@ const Login = () => {
         localStorage.setItem('token', response.data.token);
       }
       
-      // Store user data
-      if (response.data.user) {
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-      }
+      localStorage.setItem('token', 'demo-token');
+      localStorage.setItem('user', JSON.stringify(demoUser));
       
       // Navigate to dashboard after successful login
       navigate('/home');

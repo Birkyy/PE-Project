@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PE_Group_Project.API.Data;
 
@@ -11,9 +12,11 @@ using PE_Group_Project.API.Data;
 namespace PE_Group_Project.API.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    partial class AppDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250704111451_InitScheme")]
+    partial class InitScheme
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,36 +24,6 @@ namespace PE_Group_Project.API.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("PE_Group_Project.API.Models.Domain.Notification", b =>
-                {
-                    b.Property<Guid>("NotificationId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsRead")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Message")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("NotificationId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Notifications");
-                });
 
             modelBuilder.Entity("PE_Group_Project.API.Models.Domain.Project", b =>
                 {
@@ -117,27 +90,6 @@ namespace PE_Group_Project.API.Migrations
                     b.ToTable("ProjectTasks");
                 });
 
-            modelBuilder.Entity("PE_Group_Project.API.Models.Domain.TaskComment", b =>
-                {
-                    b.Property<Guid>("TaskCommentId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Comment")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("ProjectTaskId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("TaskCommentId");
-
-                    b.ToTable("TaskComments");
-                });
-
             modelBuilder.Entity("PE_Group_Project.API.Models.Domain.User", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -197,17 +149,6 @@ namespace PE_Group_Project.API.Migrations
                     b.ToTable("UserProjects");
                 });
 
-            modelBuilder.Entity("PE_Group_Project.API.Models.Domain.Notification", b =>
-                {
-                    b.HasOne("PE_Group_Project.API.Models.Domain.User", "User")
-                        .WithMany("Notifications")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("PE_Group_Project.API.Models.Domain.UserProject", b =>
                 {
                     b.HasOne("PE_Group_Project.API.Models.Domain.Project", "Project")
@@ -234,8 +175,6 @@ namespace PE_Group_Project.API.Migrations
 
             modelBuilder.Entity("PE_Group_Project.API.Models.Domain.User", b =>
                 {
-                    b.Navigation("Notifications");
-
                     b.Navigation("UserProjects");
                 });
 #pragma warning restore 612, 618
