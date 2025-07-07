@@ -7,7 +7,7 @@ import AddTaskModal from './AddTaskModal';
 import EditTaskModal from './EditTaskModal';
 import ViewTaskModal from './ViewTaskModal';
 import EditProjectModal from './EditProjectModal';
-import { projectAPI } from '../API/apiService';
+import { projectAPI, taskAPI } from '../API/apiService';
 
 const statusList = [
   { key: 'Todo', color: 'blue' },
@@ -20,6 +20,43 @@ const isTaskOverdue = (task) => {
   if (task.status === 'Completed') return false;
   if (!task.deadline) return false;
   return new Date(task.deadline) < new Date();
+};
+
+// Helper function to validate GUID format
+const isValidGuid = (str) => {
+  const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return guidRegex.test(str);
+};
+
+// Helper function to convert string to GUID
+const stringToGuid = (str) => {
+  // If it's already a valid GUID, return it as is
+  if (isValidGuid(str)) {
+    return str;
+  }
+  
+  // Simple hash function to convert string to consistent GUID
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  
+  // Convert hash to GUID format
+  const hashStr = Math.abs(hash).toString(16).padStart(8, '0');
+  return `${hashStr}-0000-0000-0000-000000000000`.substring(0, 36);
+};
+
+// Store assigned person names for display
+const assignedPersonNames = new Map();
+
+// Helper function to get assigned person name
+const getAssignedPersonName = (picGuid) => {
+  if (!picGuid || picGuid === '00000000-0000-0000-0000-000000000000') {
+    return 'Unassigned';
+  }
+  return assignedPersonNames.get(picGuid) || 'Unknown Person';
 };
 
 function Project() {
@@ -73,7 +110,7 @@ function Project() {
 
     const fetchTasks = async () => {
         try {
-            const tasksData = await projectAPI.getTasksByProjectId(id);
+            const tasksData = await taskAPI.getTasksByProjectId(id);
             setTasks(tasksData || []);
         } catch (err) {
             console.error('Error fetching tasks:', err);
@@ -84,11 +121,27 @@ function Project() {
     // Task handlers
     const handleCreateTask = async (taskData) => {
         try {
-            const newTask = await projectAPI.createTask({
-                ...taskData,
-                projectId: id,
-                status: 'Todo'
-            });
+            // Convert assignedTo string to GUID
+            const picGuid = taskData.assignedTo ? stringToGuid(taskData.assignedTo) : '00000000-0000-0000-0000-000000000000';
+            
+            // Store the assigned person's name for display
+            if (taskData.assignedTo) {
+                assignedPersonNames.set(picGuid, taskData.assignedTo);
+            }
+            
+            // Map frontend data to backend DTO structure
+            const createTaskRequest = {
+                projectTaskId: '00000000-0000-0000-0000-000000000000', // Let backend generate this
+                projectId: id, // Use the current project ID
+                taskName: taskData.title, // Map title to TaskName
+                PIC: picGuid, // Convert assignedTo to GUID
+                deadline: new Date(taskData.deadline), // Convert string to DateTime
+                description: taskData.description,
+                status: 'Todo', // Default status
+                priority: taskData.priority
+            };
+            
+            const newTask = await taskAPI.createTask(createTaskRequest);
             setTasks([...tasks, newTask]);
             setIsAddTaskModalOpen(false);
         } catch (err) {
@@ -99,10 +152,11 @@ function Project() {
 
     const handleEditTask = async (updatedTask) => {
         try {
-            const editedTask = await projectAPI.updateTask(updatedTask.id, updatedTask);
+            const taskId = updatedTask.projectTaskId || updatedTask.id;
+            const editedTask = await taskAPI.updateTask(taskId, updatedTask);
             setTasks(prevTasks =>
                 prevTasks.map(task =>
-                    task.id === updatedTask.id ? editedTask : task
+                    (task.projectTaskId || task.id) === taskId ? editedTask : task
                 )
             );
             setIsEditModalOpen(false);
@@ -115,8 +169,8 @@ function Project() {
 
     const handleDeleteTask = async (taskId) => {
         try {
-            await projectAPI.deleteTask(taskId);
-            setTasks(tasks.filter(t => t.id !== taskId));
+            await taskAPI.deleteTask(taskId);
+            setTasks(tasks.filter(t => (t.projectTaskId || t.id) !== taskId));
         } catch (err) {
             console.error('Error deleting task:', err);
             alert('Failed to delete task. Please try again.');
@@ -125,9 +179,10 @@ function Project() {
 
     const handleChangeStatus = async (task, newStatus) => {
         try {
-            const updatedTask = await projectAPI.updateTask(task.id, { ...task, status: newStatus });
+            const taskId = task.projectTaskId || task.id;
+            const updatedTask = await taskAPI.updateTask(taskId, { ...task, status: newStatus });
             setTasks(tasks.map(t => 
-                t.id === task.id ? updatedTask : t
+                (t.projectTaskId || t.id) === taskId ? updatedTask : t
             ));
         } catch (err) {
             console.error('Error updating task status:', err);
@@ -241,10 +296,11 @@ function Project() {
 
     const renderTaskCard = (task) => {
         const isOverdue = isTaskOverdue(task);
+        const taskId = task.projectTaskId || task.id;
         
         return (
             <div
-                key={task.id}
+                key={taskId}
                 className={`p-4 rounded-lg border ${
                     darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'
                 } hover:shadow-md transition-all duration-200 cursor-pointer`}
@@ -257,7 +313,7 @@ function Project() {
                     <h4 className={`font-medium ${
                         darkMode ? 'text-white' : 'text-gray-900'
                     }`}>
-                        {task.title}
+                        {task.taskName || task.title}
                     </h4>
                     <div className="flex items-center gap-1">
                         <button
@@ -275,7 +331,7 @@ function Project() {
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();
-                                handleDeleteTask(task.id);
+                                handleDeleteTask(taskId);
                             }}
                             className={`p-1 rounded ${
                                 darkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-100'
@@ -307,7 +363,7 @@ function Project() {
                     <div className="flex items-center gap-2 text-xs">
                         <User className="w-3 h-3" />
                         <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
-                            {task.assignedTo || 'Unassigned'}
+                            {getAssignedPersonName(task.PIC)}
                         </span>
                     </div>
                     
@@ -317,15 +373,6 @@ function Project() {
                             Due: {formatDate(task.deadline)}
                         </span>
                     </div>
-                    
-                    {task.attachments && task.attachments.length > 0 && (
-                        <div className="flex items-center gap-2 text-xs">
-                            <File className="w-3 h-3" />
-                            <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
-                                {task.attachments.length} attachment{task.attachments.length !== 1 ? 's' : ''}
-                            </span>
-                        </div>
-                    )}
                 </div>
                 
                 <div className="mt-3 flex items-center justify-between">
@@ -638,7 +685,14 @@ function Project() {
                                     </span>
                                 </h3>
                                 <div className="space-y-3">
-                                    {filterTasks(tasks, status).map(task => renderTaskCard(task))}
+                                    {filterTasks(tasks, status).map(task => {
+                                        const taskId = task.projectTaskId || task.id;
+                                        return (
+                                            <div key={taskId}>
+                                                {renderTaskCard(task)}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         ))}
@@ -650,7 +704,7 @@ function Project() {
             <AddTaskModal
                 isOpen={isAddTaskModalOpen}
                 onClose={() => setIsAddTaskModalOpen(false)}
-                onSubmit={handleCreateTask}
+                onSave={handleCreateTask}
             />
             <EditTaskModal
                 isOpen={isEditModalOpen}

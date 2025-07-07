@@ -36,9 +36,10 @@ api.interceptors.response.use(
 // Project API calls
 export const projectAPI = {
   // Get all projects
-  getAllProjects: async () => {
+  getAllProjects: async (userId = null) => {
     try {
-      const response = await api.get('/Project');
+      const params = userId ? { userId } : {};
+      const response = await api.get('/Project', { params });
       return response.data;
     } catch (error) {
       console.error('Error fetching all projects:', error);

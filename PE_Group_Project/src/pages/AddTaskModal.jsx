@@ -1,6 +1,6 @@
-import { X, AlertCircle, Search, ChevronDown, UserCheck, Upload, File, Trash2 } from 'lucide-react';
+import { X, AlertCircle } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 
 const AddTaskModal = ({ isOpen, onClose, onSave }) => {
   const { darkMode } = useTheme();
@@ -9,16 +9,10 @@ const AddTaskModal = ({ isOpen, onClose, onSave }) => {
     description: '',
     deadline: '',
     priority: 'medium',
-    assignedTo: '',
-    attachments: []
+    assignedTo: ''
   });
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [dragActive, setDragActive] = useState(false);
-  const dropdownRef = useRef(null);
-  const fileInputRef = useRef(null);
 
   // Get tomorrow's date as the minimum date for the deadline
   const tomorrow = new Date();
@@ -33,102 +27,11 @@ const AddTaskModal = ({ isOpen, onClose, onSave }) => {
         description: '',
         deadline: '',
         priority: 'medium',
-        assignedTo: '',
-        attachments: []
+        assignedTo: ''
       });
       setError('');
-      setSearchTerm('');
-      setIsDropdownOpen(false);
-      setDragActive(false);
     }
   }, [isOpen]);
-
-  // Handle click outside dropdown
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  const handleUserSelect = (user) => {
-    setTaskData(prev => ({
-      ...prev,
-      assignedTo: user.name
-    }));
-    setSearchTerm('');
-    setIsDropdownOpen(false);
-  };
-
-  const handleUserRemove = () => {
-    setTaskData(prev => ({
-      ...prev,
-      assignedTo: ''
-    }));
-  };
-
-  // File handling functions
-  const handleDrag = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFiles(e.dataTransfer.files);
-    }
-  };
-
-  const handleFileChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      handleFiles(e.target.files);
-    }
-  };
-
-  const handleFiles = (files) => {
-    const newFiles = Array.from(files).map(file => ({
-      id: Math.random().toString(36).substr(2, 9),
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      file: file
-    }));
-
-    setTaskData(prev => ({
-      ...prev,
-      attachments: [...prev.attachments, ...newFiles]
-    }));
-  };
-
-  const removeFile = (fileId) => {
-    setTaskData(prev => ({
-      ...prev,
-      attachments: prev.attachments.filter(file => file.id !== fileId)
-    }));
-  };
-
-  const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -158,8 +61,7 @@ const AddTaskModal = ({ isOpen, onClose, onSave }) => {
         description: taskData.description,
         deadline: taskData.deadline,
         priority: taskData.priority,
-        assignedTo: taskData.assignedTo || '00000000-0000-0000-0000-000000000000',
-        attachments: taskData.attachments
+        assignedTo: taskData.assignedTo || '00000000-0000-0000-0000-000000000000'
       });
 
       // Reset form and close modal
@@ -168,8 +70,7 @@ const AddTaskModal = ({ isOpen, onClose, onSave }) => {
         description: '',
         deadline: '',
         priority: 'medium',
-        assignedTo: '',
-        attachments: []
+        assignedTo: ''
       });
       setError('');
       onClose();
@@ -322,191 +223,24 @@ const AddTaskModal = ({ isOpen, onClose, onSave }) => {
             </div>
 
             {/* Assigned To Input */}
-            <div className="relative" ref={dropdownRef}>
-              <label className={`block text-sm font-medium mb-1 ${
+            <div>
+              <label htmlFor="assignedTo" className={`block text-sm font-medium mb-1 ${
                 darkMode ? 'text-gray-300' : 'text-gray-700'
               }`}>
                 Assigned To
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setIsDropdownOpen(true);
-                  }}
-                  onClick={() => setIsDropdownOpen(true)}
-                  placeholder={taskData.assignedTo || "Search users..."}
-                  className={`w-full rounded-lg border ${
-                    darkMode
-                      ? 'bg-gray-700 border-gray-600 text-white'
-                      : 'bg-white border-gray-300 text-gray-900'
-                  } p-2.5 pr-10 focus:ring-2 focus:ring-blue-500`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className={`absolute inset-y-0 right-0 flex items-center px-2 ${
-                    darkMode ? 'text-gray-400' : 'text-gray-500'
-                  }`}
-                >
-                  <ChevronDown className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Selected User */}
-              {taskData.assignedTo && (
-                <div className={`mt-2 p-2 rounded-lg flex items-center justify-between ${
-                  darkMode ? 'bg-gray-700' : 'bg-gray-100'
-                }`}>
-                  <div className="flex items-center gap-2">
-                    <UserCheck className={`w-5 h-5 ${
-                      darkMode ? 'text-green-400' : 'text-green-600'
-                    }`} />
-                    <span className={darkMode ? 'text-white' : 'text-gray-900'}>
-                      {taskData.assignedTo}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleUserRemove}
-                    className={`p-1 rounded-full ${
-                      darkMode
-                        ? 'hover:bg-gray-600 text-gray-400'
-                        : 'hover:bg-gray-200 text-gray-600'
-                    }`}
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
-
-              {/* Dropdown */}
-              {isDropdownOpen && (
-                <div className={`absolute z-10 mt-1 w-full rounded-lg shadow-lg ${
-                  darkMode ? 'bg-gray-700' : 'bg-white'
-                } border ${
-                  darkMode ? 'border-gray-600' : 'border-gray-200'
-                }`}>
-                  {filteredUsers.length > 0 ? (
-                    filteredUsers.map(user => (
-                      <button
-                        key={user.id}
-                        type="button"
-                        onClick={() => handleUserSelect(user)}
-                        className={`w-full text-left px-4 py-2 first:rounded-t-lg last:rounded-b-lg ${
-                          darkMode
-                            ? 'hover:bg-gray-600 text-gray-200'
-                            : 'hover:bg-gray-100 text-gray-900'
-                        }`}
-                      >
-                        <div className="font-medium">{user.name}</div>
-                        <div className={`text-sm ${
-                          darkMode ? 'text-gray-400' : 'text-gray-500'
-                        }`}>
-                          {user.role}
-                        </div>
-                      </button>
-                    ))
-                  ) : (
-                    <div className={`px-4 py-2 text-sm ${
-                      darkMode ? 'text-gray-400' : 'text-gray-500'
-                    }`}>
-                      No users found
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* File Attachments */}
-            <div>
-              <label className={`block text-sm font-medium mb-2 ${
-                darkMode ? 'text-gray-300' : 'text-gray-700'
-              }`}>
-                Attachments
-              </label>
-              
-              {/* Drag and Drop Zone */}
-              <div
-                onDragEnter={handleDrag}
-                onDragLeave={handleDrag}
-                onDragOver={handleDrag}
-                onDrop={handleDrop}
-                onClick={() => fileInputRef.current.click()}
-                className={`
-                  border-2 border-dashed rounded-lg p-6 text-center cursor-pointer
-                  transition-all duration-200 ease-in-out
-                  ${darkMode 
-                    ? 'border-gray-600 hover:border-blue-500' 
-                    : 'border-gray-300 hover:border-blue-500'
-                  }
-                  ${dragActive 
-                    ? darkMode 
-                      ? 'border-blue-500 bg-blue-500/10' 
-                      : 'border-blue-500 bg-blue-50'
-                    : ''
-                  }
-                `}
-              >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-                <Upload className={`w-10 h-10 mx-auto mb-3 ${
-                  darkMode ? 'text-gray-400' : 'text-gray-500'
-                }`} />
-                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Drag and drop files here, or click to select files
-                </p>
-              </div>
-
-              {/* File List */}
-              {taskData.attachments.length > 0 && (
-                <div className="mt-3 space-y-2">
-                  {taskData.attachments.map(file => (
-                    <div
-                      key={file.id}
-                      className={`flex items-center justify-between p-2 rounded-lg ${
-                        darkMode 
-                          ? 'bg-gray-700 border border-gray-600' 
-                          : 'bg-gray-50 border border-gray-200'
-                      }`}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <File className={darkMode ? 'text-blue-400' : 'text-blue-600'} />
-                        <div>
-                          <p className={`text-sm font-medium ${
-                            darkMode ? 'text-gray-200' : 'text-gray-900'
-                          }`}>
-                            {file.name}
-                          </p>
-                          <p className={`text-xs ${
-                            darkMode ? 'text-gray-400' : 'text-gray-500'
-                          }`}>
-                            {formatFileSize(file.size)}
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeFile(file.id)}
-                        className={`p-1 rounded-full hover:bg-red-500 hover:text-white transition-colors ${
-                          darkMode 
-                            ? 'text-gray-400 hover:text-white' 
-                            : 'text-gray-500 hover:text-white'
-                        }`}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <input
+                type="text"
+                id="assignedTo"
+                value={taskData.assignedTo}
+                onChange={(e) => setTaskData({ ...taskData, assignedTo: e.target.value })}
+                placeholder="Enter assignee name"
+                className={`w-full rounded-lg border ${
+                  darkMode
+                    ? 'bg-gray-700 border-gray-600 text-white'
+                    : 'bg-white border-gray-300 text-gray-900'
+                } p-2.5 focus:ring-2 focus:ring-blue-500 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+              />
             </div>
 
             {/* Submit Button */}

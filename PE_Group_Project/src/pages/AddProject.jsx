@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Users, Save, X, Search, ChevronDown, UserCheck, Upload, File, Trash2 } from 'lucide-react';
@@ -17,7 +17,8 @@ const AddProject = () => {
     status: 'to-do',
     teamMembers: [],
     projectLeader: null,
-    attachments: []
+    attachments: [],
+    contributors: []
   });
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -26,21 +27,16 @@ const AddProject = () => {
   const [leaderSearchTerm, setLeaderSearchTerm] = useState('');
   const dropdownRef = useRef(null);
   const leaderDropdownRef = useRef(null);
+  const fileInputRef = useRef(null);
   const [dragActive, setDragActive] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   
-  // Filter users based on search term
-  const filteredUsers = mockUsers.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter users based on search term (empty array for now)
+  const filteredUsers = [];
 
-  // Filter users for project leader based on leader search term
-  const filteredLeaderUsers = mockUsers.filter(user =>
-    user.name.toLowerCase().includes(leaderSearchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(leaderSearchTerm.toLowerCase())
-  );
+  // Filter users for project leader based on leader search term (empty array for now)
+  const filteredLeaderUsers = [];
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -142,7 +138,8 @@ const AddProject = () => {
       status: 'to-do',
       teamMembers: [],
       projectLeader: null,
-      attachments: []
+      attachments: [],
+      contributors: []
     });
     navigate('/my-projects');
   };

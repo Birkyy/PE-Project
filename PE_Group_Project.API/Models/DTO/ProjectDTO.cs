@@ -8,6 +8,7 @@ namespace PE_Group_Project.API.Models.DTO
         public string Status { get; set; } = null!;
         public string PriorityLevel { get; set; } = null!;
         public Guid ProjectManagerInCharge { get; set; }
+        public required List<Guid> Contributors { get; set; }
         public string? Description { get; set; }
         public List<ProjectAttachmentDTO> Attachments { get; set; } = new List<ProjectAttachmentDTO>();
     }

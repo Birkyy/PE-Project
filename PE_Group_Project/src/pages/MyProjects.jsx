@@ -17,6 +17,7 @@ const MyProjects = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewProject, setViewProject] = useState(null);
   const [editProjectObj, setEditProjectObj] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const [editForm, setEditForm] = useState({
     projectName: '',
     date: '',
@@ -31,10 +32,20 @@ const MyProjects = () => {
   const dropdownRef = useRef(null);
   const leaderDropdownRef = useRef(null);
 
+  // Load current user data
+  useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      setCurrentUser(JSON.parse(userStr));
+    }
+  }, []);
+
   // Fetch all projects on component mount
   useEffect(() => {
-    fetchProjects();
-  }, []);
+    if (currentUser) {
+      fetchProjects();
+    }
+  }, [currentUser]);
 
   // Filter projects when searchTerm changes
   useEffect(() => {
@@ -53,7 +64,10 @@ const MyProjects = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await projectAPI.getAllProjects();
+      // Pass the current user's ID to get projects based on user permissions
+      // Check for both userId and id fields since the API might use different naming
+      const userId = currentUser?.userId || currentUser?.id || currentUser?.UserId;
+      const data = await projectAPI.getAllProjects(userId);
       setProjects(data);
     } catch (err) {
       console.error('Error fetching projects:', err);

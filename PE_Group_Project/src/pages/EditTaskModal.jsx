@@ -1,5 +1,4 @@
 import { X, AlertCircle, Search, ChevronDown, UserCheck, Upload, File, Trash2 } from 'lucide-react';
-import { X, AlertCircle } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useState, useEffect, useRef } from 'react';
 
@@ -28,11 +27,7 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit }) => {
   const minDate = tomorrow.toISOString().split('T')[0];
 
   // Filter users based on search term
-  const filteredUsers = mockUsers.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.role.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = [];
 
   // Initialize form with task data when modal is opened
   useEffect(() => {
@@ -42,9 +37,7 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit }) => {
         // Format the deadline date for the input field (YYYY-MM-DD format)
         const deadlineDate = task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : '';
         
-        // Find the assigned user from mockUsers
-        const assignedUser = mockUsers.find(user => user.name === task.assignedTo);
-        
+        // Remove mockUsers dependency - just use the task's assignedTo directly
         setTaskData({
           id: task.id,
           title: task.title,
@@ -52,7 +45,7 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit }) => {
           deadline: deadlineDate,
           priority: task.priority || 'medium',
           status: task.status || 'Todo',
-          assignedTo: assignedUser ? assignedUser.name : (task.pic || task.assignedTo || ''),
+          assignedTo: task.assignedTo || task.pic || '',
           comments: task.comments || [],
           attachments: task.attachments || []
         });

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { userAPI } from '../API/apiService';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -79,19 +80,15 @@ const Login = () => {
     }
 
     try {
-      // Just log the login data for now
-      console.log('Login attempt:', formData);
+      // Call the actual login API
+      const response = await userAPI.loginUser(formData);
       
       // Reset failed attempts on successful login
       resetFailedAttempts(formData.email);
       
-      // Store token if provided
-      if (response.data.token) {
-        localStorage.setItem('token', response.data.token);
-      }
-      
-      localStorage.setItem('token', 'demo-token');
-      localStorage.setItem('user', JSON.stringify(demoUser));
+      // Store user data from API response
+      localStorage.setItem('token', 'demo-token'); // Keep demo token for now
+      localStorage.setItem('user', JSON.stringify(response));
       
       // Navigate to dashboard after successful login
       navigate('/home');
@@ -120,9 +117,10 @@ const Login = () => {
   const handleSkip = () => {
     // Set demo user data for skip functionality
     const demoUser = {
-      username: 'Demo User',
-      email: 'demo@taskio.com',
-      role: 'project_member'
+      userId: '86580A7F-9A01-40DD-BE70-E95509CA3184', // Demo GUID
+      username: 'admin1',
+      email: 'admin@gmail.com',
+      role: 'Admin' // Set as Admin to see all projects
     };
     
     localStorage.setItem('token', 'demo-token');
