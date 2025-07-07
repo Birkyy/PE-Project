@@ -12,5 +12,6 @@ namespace PE_Group_Project.API.Models.Domain
         public required string Description { get; set; }
         public required string Status { get; set; }
         public required string Priority { get; set; }
+        public ICollection<Blob> Blobs { get; set; } = new List<Blob>();
     }
 }

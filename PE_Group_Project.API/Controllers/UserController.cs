@@ -29,18 +29,20 @@ namespace PE_Group_Project.API.Controllers
         public IActionResult GetAllUsers()
         {
             var users = _context.Users.ToList();
-            var userDTOs = users.Select(user => new UserDTO
-            {
-                UserId = user.UserId,
-                Username = user.Username,
-                Email = user.Email,
-                Role = user.Role,
-                Age = user.Age,
-                Gender = user.Gender,
-                Nationality = user.Nationality,
-                PhoneNumber = user.PhoneNumber,
-                LastLoginTime = user.LastLoginTime
-            }).ToList();
+            var userDTOs = users
+                .Select(user => new UserDTO
+                {
+                    UserId = user.UserId,
+                    Username = user.Username,
+                    Email = user.Email,
+                    Role = user.Role,
+                    Age = user.Age,
+                    Gender = user.Gender,
+                    Nationality = user.Nationality,
+                    PhoneNumber = user.PhoneNumber,
+                    LastLoginTime = user.LastLoginTime,
+                })
+                .ToList();
 
             return Ok(userDTOs);
         }
