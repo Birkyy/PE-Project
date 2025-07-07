@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Trash2, Search, Calendar, Users, Save, X, ChevronDown, UserCheck, Plus, Archive, Eye, Edit } from 'lucide-react';
 import Layout from '../components/Layout';
 import { useState, useRef, useEffect } from 'react';
-import { projectAPI } from '../API/apiService';
+import { projectAPI, taskAPI } from '../API/apiService';
+import EditProjectModal from './EditProjectModal';
 
 const MyProjects = () => {
   const { darkMode } = useTheme();
@@ -17,6 +18,7 @@ const MyProjects = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewProject, setViewProject] = useState(null);
   const [editProjectObj, setEditProjectObj] = useState(null);
+  const [editProjectLoading, setEditProjectLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [editForm, setEditForm] = useState({
     projectName: '',
@@ -31,6 +33,7 @@ const MyProjects = () => {
   const [leaderSearchTerm, setLeaderSearchTerm] = useState('');
   const dropdownRef = useRef(null);
   const leaderDropdownRef = useRef(null);
+  const [projectProgress, setProjectProgress] = useState({});
 
   // Load current user data
   useEffect(() => {
@@ -60,6 +63,29 @@ const MyProjects = () => {
     }
   }, [searchTerm, projects]);
 
+  // Fetch progress for all projects after they are loaded
+  useEffect(() => {
+    const fetchAllProgress = async () => {
+      if (projects.length === 0) return;
+      const progressMap = {};
+      await Promise.all(projects.map(async (project) => {
+        try {
+          const tasks = await taskAPI.getTasksByProjectId(project.projectId);
+          if (tasks.length === 0) {
+            progressMap[project.projectId] = 0;
+          } else {
+            const completed = tasks.filter(t => t.status === 'Completed').length;
+            progressMap[project.projectId] = Math.round((completed / tasks.length) * 100);
+          }
+        } catch (e) {
+          progressMap[project.projectId] = 0;
+        }
+      }));
+      setProjectProgress(progressMap);
+    };
+    fetchAllProgress();
+  }, [projects]);
+
   const fetchProjects = async () => {
     try {
       setLoading(true);
@@ -81,16 +107,17 @@ const MyProjects = () => {
     setViewProject(project);
   };
 
-  const handleEdit = (project) => {
-    setEditProjectObj(project);
-    setEditForm({
-      projectName: project.projectName,
-      date: project.date ? project.date.slice(0, 10) : '',
-      status: project.status,
-      priorityLevel: project.priorityLevel,
-      projectManagerInCharge: project.projectManagerInCharge,
-      contributors: project.contributors || [],
-    });
+  const handleEdit = async (project) => {
+    setEditProjectLoading(true);
+    try {
+      const fullProject = await projectAPI.getProjectById(project.projectId);
+      setEditProjectObj(fullProject);
+    } catch (err) {
+      alert('Failed to fetch project details.');
+      console.error('Error fetching project details:', err);
+    } finally {
+      setEditProjectLoading(false);
+    }
   };
 
   const handleEditFormChange = (e) => {
@@ -98,25 +125,28 @@ const MyProjects = () => {
     setEditForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleEditSave = async () => {
+  const handleEditProjectModalClose = () => {
+    setEditProjectObj(null);
+  };
+
+  const handleEditProjectModalSubmit = async (updatedProject) => {
     if (!editProjectObj) return;
     try {
       // Update the project using API
-      await projectAPI.updateProject(editProjectObj.projectId, editForm);
-      
+      const edited = await projectAPI.updateProject(editProjectObj.projectId, updatedProject);
       // Update the project in local state
       setProjects(prev => prev.map(p => 
         p.projectId === editProjectObj.projectId 
-          ? { ...p, ...editForm }
+          ? { ...p, ...edited }
           : p
       ));
       setFilteredProjects(prev => prev.map(p => 
         p.projectId === editProjectObj.projectId 
-          ? { ...p, ...editForm }
+          ? { ...p, ...edited }
           : p
       ));
       setEditProjectObj(null);
-      console.log('Project updated:', editForm);
+      console.log('Project updated:', edited);
     } catch (err) {
       console.error('Error editing project:', err);
       alert('Failed to update project. Please try again.');
@@ -313,8 +343,9 @@ const MyProjects = () => {
                             <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>Due: {project.date ? project.date.slice(0, 10) : ''}</span>
                           </div>
                           <div className={`w-full rounded-full h-2 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}> 
-                            <div className={`bg-purple-500 h-2 rounded-full`} style={{width: `${project.progress || 0}%`}}></div>
+                            <div className={`bg-purple-500 h-2 rounded-full`} style={{width: `${projectProgress[project.projectId] || 0}%`}}></div>
                           </div>
+                          <div className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Progress: {projectProgress[project.projectId] || 0}%</div>
                         </div>
                         {/* Action Icons */}
                         <div className="flex justify-end space-x-2" onClick={e => e.stopPropagation()}>
@@ -426,55 +457,14 @@ const MyProjects = () => {
       )}
 
       {/* Edit Project Modal */}
-      {editProjectObj && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className={`w-full max-w-2xl mx-auto ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-lg shadow-xl p-6 space-y-6 overflow-y-auto max-h-[80vh]`}>
-            <h2 className={`text-3xl font-extrabold mb-4 text-center ${darkMode ? 'bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent' : 'text-gray-900'}`}>Edit Project</h2>
-            <form onSubmit={e => { e.preventDefault(); handleEditSave(); }} className="space-y-6">
-              {/* Project Name */}
-              <div>
-                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Project Name *</label>
-                <input type="text" name="projectName" value={editForm.projectName} onChange={handleEditFormChange} required className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-purple-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-purple-500'}`} />
-              </div>
-              {/* Date */}
-              <div>
-                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Date</label>
-                <input type="date" name="date" value={editForm.date} onChange={handleEditFormChange} className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 ${darkMode ? 'bg-gray-700 border-gray-600 text-white focus:border-purple-400' : 'bg-white border-gray-300 text-gray-900 focus:border-purple-500'}`} />
-              </div>
-              {/* Priority Level */}
-              <div>
-                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Priority Level</label>
-                <input type="text" name="priorityLevel" value={editForm.priorityLevel} onChange={handleEditFormChange} className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 ${darkMode ? 'bg-gray-700 border-gray-600 text-white focus:border-purple-400' : 'bg-white border-gray-300 text-gray-900 focus:border-purple-500'}`} />
-              </div>
-              {/* Status */}
-              <div>
-                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Status</label>
-                <input type="text" name="status" value={editForm.status} onChange={handleEditFormChange} className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 ${darkMode ? 'bg-gray-700 border-gray-600 text-white focus:border-purple-400' : 'bg-white border-gray-300 text-gray-900 focus:border-purple-500'}`} />
-              </div>
-              {/* Project Manager */}
-              <div>
-                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Project Manager</label>
-                <input type="text" name="projectManagerInCharge" value={editForm.projectManagerInCharge} onChange={handleEditFormChange} className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 ${darkMode ? 'bg-gray-700 border-gray-600 text-white focus:border-purple-400' : 'bg-white border-gray-300 text-gray-900 focus:border-purple-500'}`} />
-              </div>
-              {/* Contributors */}
-              <div>
-                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Contributors (comma separated user IDs)</label>
-                <input type="text" name="contributors" value={editForm.contributors.join(',')} onChange={e => setEditForm(prev => ({ ...prev, contributors: e.target.value.split(',').map(s => s.trim()) }))} className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 ${darkMode ? 'bg-gray-700 border-gray-600 text-white focus:border-purple-400' : 'bg-white border-gray-300 text-gray-900 focus:border-purple-500'}`} />
-              </div>
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <button type="submit" className="flex-1 flex items-center justify-center px-6 py-3 bg-gradient-to-r from-purple-600 to-cyan-600 text-white rounded-lg hover:from-purple-700 hover:to-cyan-700 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/25 focus:outline-none focus:ring-2 focus:ring-purple-400/50">
-                  <Save className="w-5 h-5 mr-2" />
-                  Save Changes
-                </button>
-                <button type="button" onClick={closeModal} className={`flex-1 flex items-center justify-center px-6 py-3 border rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-gray-400/50 ${darkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700 hover:border-gray-500' : 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'}`}>
-                  <X className="w-5 h-5 mr-2" />
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+      {(editProjectObj || editProjectLoading) && (
+        <EditProjectModal
+          isOpen={!!editProjectObj || editProjectLoading}
+          onClose={handleEditProjectModalClose}
+          onSubmit={handleEditProjectModalSubmit}
+          project={editProjectObj}
+          loading={editProjectLoading}
+        />
       )}
     </Layout>
   );

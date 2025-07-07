@@ -2,7 +2,7 @@ import { X, AlertCircle, Search, ChevronDown, UserCheck, Upload, File, Trash2 } 
 import { useTheme } from '../context/ThemeContext';
 import { useState, useEffect, useRef } from 'react';
 
-const EditTaskModal = ({ isOpen, task, onClose, onSubmit }) => {
+const EditTaskModal = ({ isOpen, task, onClose, onSubmit, contributors }) => {
   const { darkMode } = useTheme();
   const [taskData, setTaskData] = useState({
     title: '',
@@ -20,6 +20,8 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit }) => {
   const [dragActive, setDragActive] = useState(false);
   const dropdownRef = useRef(null);
   const fileInputRef = useRef(null);
+  const [contributorOptions, setContributorOptions] = useState([]);
+  const [loadingContributors, setLoadingContributors] = useState(false);
 
   // Get tomorrow's date as the minimum date for the deadline
   const tomorrow = new Date();
@@ -40,7 +42,7 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit }) => {
         // Remove mockUsers dependency - just use the task's assignedTo directly
         setTaskData({
           id: task.id,
-          title: task.title,
+          title: task.title || task.taskName || '',
           description: task.description,
           deadline: deadlineDate,
           priority: task.priority || 'medium',
@@ -61,6 +63,27 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit }) => {
       }
     }
   }, [task, isOpen]);
+
+  useEffect(() => {
+    if (contributors && contributors.length > 0) {
+      if (typeof contributors[0] === 'object') {
+        setContributorOptions(contributors);
+      } else {
+        setLoadingContributors(true);
+        Promise.all(contributors.map(async (guid) => {
+          try {
+            const res = await import('../API/apiService');
+            const user = await res.userAPI.getUserById(guid);
+            return { id: guid, name: user.username || user.email || guid };
+          } catch {
+            return { id: guid, name: guid };
+          }
+        })).then(setContributorOptions).finally(() => setLoadingContributors(false));
+      }
+    } else {
+      setContributorOptions([]);
+    }
+  }, [contributors]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -324,103 +347,24 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit }) => {
               />
             </div>
 
-            {/* Assigned To Input */}
-            <div className="relative" ref={dropdownRef}>
-              <label className={`block text-sm font-medium mb-1 ${
-                darkMode ? 'text-gray-300' : 'text-gray-700'
-              }`}>
-                Assigned To *
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setIsDropdownOpen(true);
-                  }}
-                  onClick={() => setIsDropdownOpen(true)}
-                  placeholder={taskData.assignedTo || "Search users..."}
-                  className={`w-full rounded-lg border ${
-                    darkMode
-                      ? 'bg-gray-700 border-gray-600 text-white'
-                      : 'bg-white border-gray-300 text-gray-900'
-                  } p-2.5 pr-10 focus:ring-2 focus:ring-blue-500`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className={`absolute inset-y-0 right-0 flex items-center px-2 ${
-                    darkMode ? 'text-gray-400' : 'text-gray-500'
-                  }`}
-                >
-                  <ChevronDown className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Selected User */}
-              {taskData.assignedTo && (
-                <div className={`mt-2 p-2 rounded-lg flex items-center justify-between ${
-                  darkMode ? 'bg-gray-700' : 'bg-gray-100'
-                }`}>
-                  <div className="flex items-center gap-2">
-                    <UserCheck className={`w-5 h-5 ${
-                      darkMode ? 'text-green-400' : 'text-green-600'
-                    }`} />
-                    <span className={darkMode ? 'text-white' : 'text-gray-900'}>
-                      {taskData.assignedTo}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleUserRemove}
-                    className={`p-1 rounded-full ${
-                      darkMode
-                        ? 'hover:bg-gray-600 text-gray-400'
-                        : 'hover:bg-gray-200 text-gray-600'
-                    }`}
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
-
-              {/* Dropdown */}
-              {isDropdownOpen && (
-                <div className={`absolute z-10 mt-1 w-full rounded-lg shadow-lg ${
-                  darkMode ? 'bg-gray-700' : 'bg-white'
-                } border ${
-                  darkMode ? 'border-gray-600' : 'border-gray-200'
-                }`}>
-                  {filteredUsers.length > 0 ? (
-                    filteredUsers.map(user => (
-                      <button
-                        key={user.id}
-                        type="button"
-                        onClick={() => handleUserSelect(user)}
-                        className={`w-full text-left px-4 py-2 first:rounded-t-lg last:rounded-b-lg ${
-                          darkMode
-                            ? 'hover:bg-gray-600 text-gray-200'
-                            : 'hover:bg-gray-100 text-gray-900'
-                        }`}
-                      >
-                        <div className="font-medium">{user.name}</div>
-                        <div className={`text-sm ${
-                          darkMode ? 'text-gray-400' : 'text-gray-500'
-                        }`}>
-                          {user.role}
-                        </div>
-                      </button>
-                    ))
-                  ) : (
-                    <div className={`px-4 py-2 text-sm ${
-                      darkMode ? 'text-gray-400' : 'text-gray-500'
-                    }`}>
-                      No users found
-                    </div>
-                  )}
-                </div>
-              )}
+            {/* Assigned To Dropdown */}
+            <div>
+              <label htmlFor="assignedTo" className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Assigned To</label>
+              <select
+                id="assignedTo"
+                required
+                disabled={loading || loadingContributors}
+                value={taskData.assignedTo}
+                onChange={e => setTaskData(prev => ({ ...prev, assignedTo: e.target.value }))}
+                className={`w-full rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} p-2.5 focus:ring-2 focus:ring-blue-500 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <option value="">Select contributor</option>
+                {contributorOptions.map(user => (
+                  <option key={user.id || user} value={user.id || user}>
+                    {user.name || user.email || user.id || user}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* File Attachments */}

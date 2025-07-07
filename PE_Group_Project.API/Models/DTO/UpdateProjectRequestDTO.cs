@@ -11,7 +11,7 @@ namespace PE_Group_Project.API.Models.DTO
         public required string PriorityLevel { get; set; }
         public required Guid ProjectManagerInCharge { get; set; }
         public required List<Guid> Contributors { get; set; }
-        public string? Description { get; set; }
+        public required string Description { get; set; }
         public List<IFormFile>? NewAttachments { get; set; }
         public List<Guid>? AttachmentsToRemove { get; set; }
     }

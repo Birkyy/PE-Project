@@ -99,7 +99,12 @@ function Project() {
             setLoading(true);
             setError(null);
             const projectData = await projectAPI.getProjectById(id);
-            setProject(projectData);
+            // Normalize description field
+            const normalizedProject = {
+                ...projectData,
+                description: projectData.description || projectData.Description || '',
+            };
+            setProject(normalizedProject);
         } catch (err) {
             console.error('Error fetching project:', err);
             setError('Failed to fetch project. Please try again later.');
@@ -412,8 +417,6 @@ function Project() {
                             <ChevronRight className="w-4 h-4" />
                         </button>
                     </div>
-                    
-                    <MoveRight className="w-4 h-4 text-gray-400" />
                 </div>
             </div>
         );
@@ -487,6 +490,18 @@ function Project() {
                             }`}>
                                 {project.projectName || project.name}
                             </h1>
+                            {/* Progress Bar */}
+                            <div className={`w-full rounded-full h-3 mt-3 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}> 
+                                <div
+                                    className={`bg-purple-500 h-3 rounded-full transition-all duration-300`}
+                                    style={{
+                                        width: `${tasks.length > 0 ? Math.round((tasks.filter(t => t.status === 'Completed').length / tasks.length) * 100) : 0}%`
+                                    }}
+                                ></div>
+                            </div>
+                            <div className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                Progress: {tasks.length > 0 ? Math.round((tasks.filter(t => t.status === 'Completed').length / tasks.length) * 100) : 0}%
+                            </div>
                         </div>
                     </div>
 
@@ -705,6 +720,7 @@ function Project() {
                 isOpen={isAddTaskModalOpen}
                 onClose={() => setIsAddTaskModalOpen(false)}
                 onSave={handleCreateTask}
+                contributors={project.contributors || []}
             />
             <EditTaskModal
                 isOpen={isEditModalOpen}
@@ -714,6 +730,7 @@ function Project() {
                 }}
                 onSubmit={handleEditTask}
                 task={editTask}
+                contributors={project.contributors || []}
             />
             <ViewTaskModal
                 task={viewTask}

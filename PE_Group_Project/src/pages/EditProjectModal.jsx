@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { X, Upload, Trash2, File } from 'lucide-react';
+import { userAPI } from '../API/apiService';
 
-function EditProjectModal({ isOpen, onClose, onSubmit, project }) {
+function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
     const { darkMode } = useTheme();
     const [formData, setFormData] = useState({
         projectName: '',
@@ -10,23 +11,53 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project }) {
         status: '',
         priorityLevel: '',
         date: '',
-        files: []
+        files: [],
+        projectManagerInCharge: '',
+        contributors: []
     });
     const [dragActive, setDragActive] = useState(false);
     const [fileError, setFileError] = useState('');
+    const [allUsers, setAllUsers] = useState([]);
+    const [usersLoading, setUsersLoading] = useState(true);
+    const [usersError, setUsersError] = useState(null);
+    const [projectReady, setProjectReady] = useState(false);
+
+    // Ensure IDs are always strings for dropdown compatibility
+    function toStringId(id) {
+        return id ? String(id) : '';
+    }
+
+    // Set form data when project changes and users are loaded
+    useEffect(() => {
+        if (project && allUsers.length > 0) {
+            setFormData({
+                projectName: project.projectName || '',
+                description: project.description,
+                status: project.status || '',
+                priorityLevel: project.priorityLevel || '',
+                date: project.date ? project.date.slice(0, 10) : '',
+                files: project.attachments || [],
+                projectManagerInCharge: toStringId(project.projectManagerInCharge),
+                contributors: Array.isArray(project.contributors) ? project.contributors.map(toStringId) : []
+            });
+            setProjectReady(true);
+        }
+    }, [project, allUsers]);
 
     useEffect(() => {
-        if (project) {
-            setFormData({
-                projectName: project.name || '',
-                description: project.description || '',
-                status: project.status || '',
-                priorityLevel: project.priority || '',
-                date: project.dueDate || '',
-                files: project.attachments || []
-            });
-        }
-    }, [project]);
+        const fetchUsers = async () => {
+            try {
+                setUsersLoading(true);
+                const users = await userAPI.getAllUsers();
+                setAllUsers(users);
+            } catch (err) {
+                setUsersError('Failed to load users');
+            } finally {
+                setUsersLoading(false);
+            }
+        };
+        fetchUsers();
+    }, []);
 
     const handleDrag = (e) => {
         e.preventDefault();
@@ -108,10 +139,31 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        onSubmit(formData);
+        // Map formData to backend DTO field names
+        const payload = {
+            projectName: formData.projectName,
+            Description: formData.description,
+            status: formData.status,
+            priorityLevel: formData.priorityLevel,
+            date: formData.date,
+            projectManagerInCharge: formData.projectManagerInCharge,
+            contributors: formData.contributors,
+            // Add attachments if needed
+        };
+        onSubmit(payload);
     };
 
-    if (!isOpen) return null;
+    if (!isOpen || usersLoading || !projectReady) return null;
+    if (loading) {
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                <div className={`w-full max-w-2xl mx-auto ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-lg shadow-xl p-6 flex flex-col items-center justify-center`}>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mb-4"></div>
+                    <p className={darkMode ? 'text-white' : 'text-gray-900'}>Loading project details...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -230,9 +282,10 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project }) {
                                     required
                                 >
                                     <option value="">Select Priority</option>
-                                    <option value="low">Low</option>
-                                    <option value="medium">Medium</option>
-                                    <option value="high">High</option>
+                                    <option value="Low">Low</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                    <option value="Urgent">Urgent</option>
                                 </select>
                             </div>
                         </div>
@@ -354,6 +407,57 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project }) {
                                             </button>
                                         </div>
                                     ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Project Manager */}
+                        <div>
+                            <label className={`block mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Project Manager</label>
+                            <select
+                                name="projectManagerInCharge"
+                                value={formData.projectManagerInCharge || ''}
+                                onChange={e => setFormData(prev => ({ ...prev, projectManagerInCharge: e.target.value }))}
+                                className={`w-full p-2 border rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                                disabled={usersLoading}
+                            >
+                                <option value="">Select a project manager</option>
+                                {allUsers.map(user => (
+                                    <option key={user.userId || user.UserId} value={user.userId || user.UserId}>
+                                        {user.username || user.Username} ({user.email || user.Email})
+                                    </option>
+                                ))}
+                            </select>
+                            {usersLoading && <p className="text-xs mt-1 text-gray-400">Loading users...</p>}
+                            {usersError && <p className="text-xs mt-1 text-red-400">{usersError}</p>}
+                        </div>
+
+                        {/* Contributors */}
+                        <div>
+                            <label className={`block mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Contributors</label>
+                            <select
+                                name="contributors"
+                                multiple
+                                value={formData.contributors}
+                                onChange={e => {
+                                    const selected = Array.from(e.target.selectedOptions, option => option.value);
+                                    setFormData(prev => ({ ...prev, contributors: selected }));
+                                }}
+                                className={`w-full p-2 border rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                                disabled={usersLoading}
+                                size={Math.min(6, allUsers.length)}
+                            >
+                                {allUsers.map(user => (
+                                    <option key={user.userId || user.UserId} value={user.userId || user.UserId}>
+                                        {user.username || user.Username} ({user.email || user.Email})
+                                    </option>
+                                ))}
+                            </select>
+                            {usersLoading && <p className="text-xs mt-1 text-gray-400">Loading users...</p>}
+                            {usersError && <p className="text-xs mt-1 text-red-400">{usersError}</p>}
+                            {formData.contributors && formData.contributors.length > 0 && (
+                                <div className="mt-2">
+                                    <p className={`text-xs ${darkMode ? 'text-green-400' : 'text-green-600'}`}>Contributors: {formData.contributors.length} user(s) added</p>
                                 </div>
                             )}
                         </div>

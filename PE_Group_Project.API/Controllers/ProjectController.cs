@@ -65,6 +65,8 @@ namespace PE_Group_Project.API.Controllers
                             )
                             .Select(up => up.UserId)
                             .ToList(),
+                        Description = project.Description,
+                        Attachments = new List<ProjectAttachmentDTO>() // Add if needed
                     }
                 );
             }
@@ -119,6 +121,8 @@ namespace PE_Group_Project.API.Controllers
                     )
                     .Select(up => up.UserId)
                     .ToList(),
+                Description = project.Description,
+                Attachments = new List<ProjectAttachmentDTO>() // Add if needed
             };
 
             return Ok(projectDTO);
@@ -148,6 +152,8 @@ namespace PE_Group_Project.API.Controllers
                         )
                         .Select(up => up.UserId)
                         .ToList(),
+                    Description = project.Description,
+                    Attachments = new List<ProjectAttachmentDTO>() // Add if needed
                 })
                 .ToList();
 
@@ -192,6 +198,7 @@ namespace PE_Group_Project.API.Controllers
                 Status = createProjectRequestDTO.Status,
                 PriorityLevel = createProjectRequestDTO.PriorityLevel,
                 ProjectManagerInCharge = createProjectRequestDTO.ProjectManagerInCharge,
+                Description = createProjectRequestDTO.Description,
             };
 
             _context.Projects.Add(project);
@@ -261,6 +268,8 @@ namespace PE_Group_Project.API.Controllers
                     .Where(up => up.ProjectRole == "Contributor")
                     .Select(up => up.UserId)
                     .ToList(),
+                Description = project.Description,
+                Attachments = new List<ProjectAttachmentDTO>() // Add if needed
             };
 
             return CreatedAtAction(
@@ -322,6 +331,7 @@ namespace PE_Group_Project.API.Controllers
             project.Status = updateProjectRequestDTO.Status;
             project.PriorityLevel = updateProjectRequestDTO.PriorityLevel;
             project.ProjectManagerInCharge = updateProjectRequestDTO.ProjectManagerInCharge;
+            project.Description = updateProjectRequestDTO.Description;
 
             // Remove old user projects
             var oldUserProjects = _context.UserProjects.Where(up => up.ProjectId == id).ToList();
@@ -386,6 +396,8 @@ namespace PE_Group_Project.API.Controllers
                     .Where(up => up.ProjectRole == "Contributor")
                     .Select(up => up.UserId)
                     .ToList(),
+                Description = project.Description,
+                Attachments = new List<ProjectAttachmentDTO>() // Add if needed
             };
 
             return Ok(projectDTO);

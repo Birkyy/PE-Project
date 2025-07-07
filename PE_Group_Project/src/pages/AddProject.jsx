@@ -3,7 +3,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Users, Save, X, Search, ChevronDown, UserCheck, Upload, File, Trash2 } from 'lucide-react';
 import Layout from '../components/Layout';
-import { projectAPI } from '../API/apiService';
+import { projectAPI, userAPI } from '../API/apiService';
 
 const AddProject = () => {
   const { darkMode } = useTheme();
@@ -12,13 +12,12 @@ const AddProject = () => {
   const [formData, setFormData] = useState({
     projectName: '',
     description: '',
-    dueDate: '',
-    priority: 'medium',
-    status: 'to-do',
-    teamMembers: [],
-    projectLeader: null,
-    attachments: [],
-    contributors: []
+    date: '',
+    priorityLevel: 'Low',
+    status: 'Todo',
+    projectManagerInCharge: '',
+    contributors: [],
+    attachments: []
   });
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -32,6 +31,10 @@ const AddProject = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   
+  const [allUsers, setAllUsers] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(true);
+  const [usersError, setUsersError] = useState(null);
+
   // Filter users based on search term (empty array for now)
   const filteredUsers = [];
 
@@ -53,6 +56,21 @@ const AddProject = () => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
+  }, []);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setUsersLoading(true);
+        const users = await userAPI.getAllUsers();
+        setAllUsers(users);
+      } catch (err) {
+        setUsersError('Failed to load users');
+      } finally {
+        setUsersLoading(false);
+      }
+    };
+    fetchUsers();
   }, []);
 
   const handleInputChange = (e) => {
@@ -91,12 +109,13 @@ const AddProject = () => {
 
       // Convert form data to match the API DTO structure
       const projectData = {
-        projectName: formData.projectName,
-        date: formData.date ? new Date(formData.date).toISOString() : new Date().toISOString(),
-        status: formData.status,
-        priorityLevel: formData.priorityLevel,
-        projectManagerInCharge: stringToGuid(formData.projectManagerInCharge) || '00000000-0000-0000-0000-000000000000',
-        contributors: formData.contributors.map(id => stringToGuid(id)).filter(id => id !== null)
+        ProjectName: formData.projectName,
+        Description: formData.description,
+        Date: formData.date ? new Date(formData.date).toISOString() : new Date().toISOString(),
+        Status: formData.status,
+        PriorityLevel: formData.priorityLevel,
+        ProjectManagerInCharge: stringToGuid(formData.projectManagerInCharge) || '00000000-0000-0000-0000-000000000000',
+        Contributors: formData.contributors.map(id => stringToGuid(id)).filter(id => id !== null)
       };
 
       console.log('Sending project data:', projectData);
@@ -133,13 +152,12 @@ const AddProject = () => {
     setFormData({
       projectName: '',
       description: '',
-      dueDate: '',
-      priority: 'medium',
-      status: 'to-do',
-      teamMembers: [],
-      projectLeader: null,
-      attachments: [],
-      contributors: []
+      date: '',
+      priorityLevel: 'Low',
+      status: 'Todo',
+      projectManagerInCharge: '',
+      contributors: [],
+      attachments: []
     });
     navigate('/my-projects');
   };
@@ -272,59 +290,55 @@ const AddProject = () => {
               {/* Project Manager */}
               <div>
                 <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Project Manager (User ID)
+                  Project Manager
                 </label>
-                <input
-                  type="text"
+                <select
                   name="projectManagerInCharge"
-                  value={formData.projectManagerInCharge}
-                  onChange={handleInputChange}
-                  placeholder="Enter project manager user ID (GUID)"
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 ${
-                    darkMode 
-                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-purple-400' 
-                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-purple-500'
-                  }`}
-                />
-                <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  Enter the user ID (GUID) of the project manager. Leave empty to use default.
-                </p>
+                  value={formData.projectManagerInCharge || ''}
+                  onChange={e => setFormData(prev => ({ ...prev, projectManagerInCharge: e.target.value }))}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                  disabled={usersLoading}
+                >
+                  <option value="">Select a project manager</option>
+                  {allUsers.map(user => (
+                    <option key={user.userId || user.UserId} value={user.userId || user.UserId}>
+                      {user.username || user.Username} ({user.email || user.Email})
+                    </option>
+                  ))}
+                </select>
+                {usersLoading && <p className="text-xs mt-1 text-gray-400">Loading users...</p>}
+                {usersError && <p className="text-xs mt-1 text-red-400">{usersError}</p>}
               </div>
 
               {/* Contributors */}
               <div>
                 <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                   <Users className="w-4 h-4 inline mr-2" />
-                  Contributors (User IDs)
+                  Contributors
                 </label>
-                <input
-                  type="text"
-                  name="contributorsInput"
-                  value={formData.contributorsInput || ''}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    const contributors = value.split(',').map(id => id.trim()).filter(id => id.length > 0);
-                    setFormData(prev => ({
-                      ...prev,
-                      contributorsInput: value,
-                      contributors: contributors
-                    }));
+                <select
+                  name="contributors"
+                  multiple
+                  value={formData.contributors}
+                  onChange={e => {
+                    const selected = Array.from(e.target.selectedOptions, option => option.value);
+                    setFormData(prev => ({ ...prev, contributors: selected }));
                   }}
-                  placeholder="Enter contributor user IDs separated by commas (e.g., 123e4567-e89b-12d3-a456-426614174000, 987fcdeb-51a2-43d1-9f12-345678901234)"
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 ${
-                    darkMode 
-                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-purple-400' 
-                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-purple-500'
-                  }`}
-                />
-                <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  Enter user IDs (GUIDs) of contributors separated by commas. Leave empty if no contributors.
-                </p>
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                  disabled={usersLoading}
+                  size={Math.min(6, allUsers.length)}
+                >
+                  {allUsers.map(user => (
+                    <option key={user.userId || user.UserId} value={user.userId || user.UserId}>
+                      {user.username || user.Username} ({user.email || user.Email})
+                    </option>
+                  ))}
+                </select>
+                {usersLoading && <p className="text-xs mt-1 text-gray-400">Loading users...</p>}
+                {usersError && <p className="text-xs mt-1 text-red-400">{usersError}</p>}
                 {formData.contributors.length > 0 && (
                   <div className="mt-2">
-                    <p className={`text-xs ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
-                      Contributors: {formData.contributors.length} user(s) added
-                    </p>
+                    <p className={`text-xs ${darkMode ? 'text-green-400' : 'text-green-600'}`}>Contributors: {formData.contributors.length} user(s) added</p>
                   </div>
                 )}
               </div>
@@ -363,10 +377,10 @@ const AddProject = () => {
                         : 'bg-white border-gray-300 text-gray-900 focus:border-purple-500'
                     }`}
                   >
-                    <option value="low">Low Priority</option>
-                    <option value="medium">Medium Priority</option>
-                    <option value="high">High Priority</option>
-                    <option value="urgent">Urgent</option>
+                    <option value="Low">Low Priority</option>
+                    <option value="Medium">Medium Priority</option>
+                    <option value="High">High Priority</option>
+                    <option value="Urgent">Urgent</option>
                   </select>
                 </div>
               </div>
@@ -386,10 +400,10 @@ const AddProject = () => {
                       : 'bg-white border-gray-300 text-gray-900 focus:border-purple-500'
                   }`}
                 >
-                  <option value="pending">Pending</option>
-                  <option value="in progress">In Progress</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
+                  <option value="Todo">Todo</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Completed">Completed</option>
+                  <option value="Cancelled">Cancelled</option>
                 </select>
               </div>
 

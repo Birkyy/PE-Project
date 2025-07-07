@@ -8,7 +8,7 @@ namespace PE_Group_Project.API.Models.Domain
         public required string Status { get; set; }
         public required string PriorityLevel { get; set; }
         public required Guid ProjectManagerInCharge { get; set; }
-        public string? Description { get; set; }
+        public required string Description { get; set; }
         public ICollection<ProjectAttachment> Attachments { get; set; } = new List<ProjectAttachment>();
         public ICollection<UserProject> Contributors { get; set; } = new List<UserProject>();
     }

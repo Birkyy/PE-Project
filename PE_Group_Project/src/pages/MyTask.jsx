@@ -739,6 +739,7 @@ const MyTask = () => {
           onClose={() => setIsAddModalOpen(false)}
           onSubmit={handleCreateTask}
           darkMode={darkMode}
+          contributors={currentProject?.contributors || []}
         />
       )}
 
@@ -752,6 +753,7 @@ const MyTask = () => {
           task={selectedTask}
           onSubmit={handleEditTask}
           darkMode={darkMode}
+          contributors={currentProject?.contributors || []}
         />
       )}
 

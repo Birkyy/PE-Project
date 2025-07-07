@@ -4899,19 +4899,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\laose\\.nuget\\packages\\": {}
+    "C:\\Users\\Asus\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\laose\\Desktop\\Y3S3\\Programming Elective (II)\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj",
+      "projectUniqueName": "D:\\PE II (2)\\PE-Project\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj",
       "projectName": "PE_Group_Project.API",
-      "projectPath": "C:\\Users\\laose\\Desktop\\Y3S3\\Programming Elective (II)\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj",
-      "packagesPath": "C:\\Users\\laose\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\laose\\Desktop\\Y3S3\\Programming Elective (II)\\PE-Project\\PE_Group_Project.API\\obj\\",
+      "projectPath": "D:\\PE II (2)\\PE-Project\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj",
+      "packagesPath": "C:\\Users\\Asus\\.nuget\\packages\\",
+      "outputPath": "D:\\PE II (2)\\PE-Project\\PE-Project\\PE_Group_Project.API\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\laose\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\Asus\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net9.0"
@@ -4980,13 +4980,5 @@
         "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.202/PortableRuntimeIdentifierGraph.json"
       }
     }
-  },
-  "logs": [
-    {
-      "code": "Undefined",
-      "level": "Warning",
-      "warningLevel": 1,
-      "message": "Problem reading the cache file C:\\Users\\laose\\Desktop\\Y3S3\\Programming Elective (II)\\PE-Project\\PE_Group_Project.API\\obj\\project.nuget.cache : Invalid property identifier character: <. Path 'version', line 3, position 0."
-    }
-  ]
+  }
 }

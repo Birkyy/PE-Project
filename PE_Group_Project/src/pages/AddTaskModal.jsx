@@ -2,7 +2,7 @@ import { X, AlertCircle } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useState, useEffect } from 'react';
 
-const AddTaskModal = ({ isOpen, onClose, onSave }) => {
+const AddTaskModal = ({ isOpen, onClose, onSave, contributors }) => {
   const { darkMode } = useTheme();
   const [taskData, setTaskData] = useState({
     title: '',
@@ -13,6 +13,8 @@ const AddTaskModal = ({ isOpen, onClose, onSave }) => {
   });
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [contributorOptions, setContributorOptions] = useState([]);
+  const [loadingContributors, setLoadingContributors] = useState(false);
 
   // Get tomorrow's date as the minimum date for the deadline
   const tomorrow = new Date();
@@ -32,6 +34,29 @@ const AddTaskModal = ({ isOpen, onClose, onSave }) => {
       setError('');
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (contributors && contributors.length > 0) {
+      // If contributors are objects with name/email, use directly
+      if (typeof contributors[0] === 'object') {
+        setContributorOptions(contributors);
+      } else {
+        // If contributors are GUIDs, fetch user details
+        setLoadingContributors(true);
+        Promise.all(contributors.map(async (guid) => {
+          try {
+            const res = await import('../API/apiService');
+            const user = await res.userAPI.getUserById(guid);
+            return { id: guid, name: user.username || user.email || guid };
+          } catch {
+            return { id: guid, name: guid };
+          }
+        })).then(setContributorOptions).finally(() => setLoadingContributors(false));
+      }
+    } else {
+      setContributorOptions([]);
+    }
+  }, [contributors]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -222,25 +247,24 @@ const AddTaskModal = ({ isOpen, onClose, onSave }) => {
               </select>
             </div>
 
-            {/* Assigned To Input */}
+            {/* Assigned To Dropdown */}
             <div>
-              <label htmlFor="assignedTo" className={`block text-sm font-medium mb-1 ${
-                darkMode ? 'text-gray-300' : 'text-gray-700'
-              }`}>
-                Assigned To
-              </label>
-              <input
-                type="text"
+              <label htmlFor="assignedTo" className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Assigned To</label>
+              <select
                 id="assignedTo"
+                required
+                disabled={isSubmitting || loadingContributors}
                 value={taskData.assignedTo}
-                onChange={(e) => setTaskData({ ...taskData, assignedTo: e.target.value })}
-                placeholder="Enter assignee name"
-                className={`w-full rounded-lg border ${
-                  darkMode
-                    ? 'bg-gray-700 border-gray-600 text-white'
-                    : 'bg-white border-gray-300 text-gray-900'
-                } p-2.5 focus:ring-2 focus:ring-blue-500 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
-              />
+                onChange={e => setTaskData({ ...taskData, assignedTo: e.target.value })}
+                className={`w-full rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} p-2.5 focus:ring-2 focus:ring-blue-500 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <option value="">Select contributor</option>
+                {contributorOptions.map(user => (
+                  <option key={user.id || user} value={user.id || user}>
+                    {user.name || user.email || user.id || user}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Submit Button */}
