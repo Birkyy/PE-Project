@@ -67,6 +67,7 @@ const UsersManagement = () => {
       }
 
       const transformedUsers = apiUsers.map((user) => ({
+        id: user.userId,
         name: user.username,
         username: user.username,
         email: user.email,
