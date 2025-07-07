@@ -302,4 +302,38 @@ export const userAPI = {
   },
 };
 
+export const commentAPI = {
+  // Get all comments
+  getCommentsByTaskId: async (taskId) => {
+    try {
+      const response = await api.get(`/Comment/${taskId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+      throw error;
+    }
+  },
+
+  createComment: async (taskId, commentData) => {
+    try {
+      const response = await api.post(`/Comment/${taskId}`, commentData);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating user:', error);
+      throw error;
+    }
+  },
+
+  // Update user
+  deleteComment: async (taskId) =>{
+    try {
+      const response = await api.delete(`/Comment/${taskId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      throw error;
+    }
+  }
+};
+
 export default api; 
