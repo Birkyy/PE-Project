@@ -1,31 +1,65 @@
-import { useParams } from 'react-router-dom';
-import Layout from '../components/Layout';
-import { useTheme } from '../context/ThemeContext';
-import { Plus, Edit, Trash2, Search, MoveRight, Clock, Edit2, ChevronRight, ChevronLeft, User, Eye, Upload, File, X, Download, Filter, MoreVertical, Calendar, MessageCircle, ArrowRight, ArrowLeft, CheckCircle, AlertTriangle } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
-import AddTaskModal from './AddTaskModal';
-import EditTaskModal from './EditTaskModal';
-import ViewTaskModal from './ViewTaskModal';
-import { taskAPI, projectAPI, userAPI } from '../API/apiService';
+import { useParams } from "react-router-dom";
+import Layout from "../components/Layout";
+import { useTheme } from "../context/ThemeContext";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Search,
+  MoveRight,
+  Clock,
+  Edit2,
+  ChevronRight,
+  ChevronLeft,
+  User,
+  Eye,
+  Upload,
+  File,
+  X,
+  Download,
+  Filter,
+  MoreVertical,
+  Calendar,
+  MessageCircle,
+  ArrowRight,
+  ArrowLeft,
+  CheckCircle,
+  AlertTriangle,
+} from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import AddTaskModal from "./AddTaskModal";
+import EditTaskModal from "./EditTaskModal";
+import ViewTaskModal from "./ViewTaskModal";
+import { taskAPI, projectAPI, userAPI, commentAPI } from "../API/apiService";
 
 const statusList = [
-  { key: 'Todo', color: 'blue' },
-  { key: 'In Progress', color: 'yellow' },
-  { key: 'Completed', color: 'green' },
+  { key: "Todo", color: "blue" },
+  { key: "In Progress", color: "yellow" },
+  { key: "Completed", color: "green" },
 ];
 
 // Helper function to normalize status values
 const normalizeStatus = (status) => {
   const statusLower = status.toLowerCase();
-  if (statusLower === 'todo' || statusLower === 'to do') return 'Todo';
-  if (statusLower === 'in progress' || statusLower === 'inprogress' || statusLower === 'progress') return 'In Progress';
-  if (statusLower === 'completed' || statusLower === 'complete' || statusLower === 'done') return 'Completed';
+  if (statusLower === "todo" || statusLower === "to do") return "Todo";
+  if (
+    statusLower === "in progress" ||
+    statusLower === "inprogress" ||
+    statusLower === "progress"
+  )
+    return "In Progress";
+  if (
+    statusLower === "completed" ||
+    statusLower === "complete" ||
+    statusLower === "done"
+  )
+    return "Completed";
   return status; // Return original if no match
 };
 
 // Helper function to check if a task is overdue
 const isTaskOverdue = (task) => {
-  if (task.status.toLowerCase() === 'completed') return false;
+  if (task.status.toLowerCase() === "completed") return false;
   if (!task.deadline) return false;
   return new Date(task.deadline) < new Date();
 };
@@ -36,7 +70,7 @@ const MyTask = () => {
   const [todoTasks, setTodoTasks] = useState([]);
   const [inProgressTasks, setInProgressTasks] = useState([]);
   const [completedTasks, setCompletedTasks] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -58,62 +92,82 @@ const MyTask = () => {
 
         // First, get all projects to find the current project
         const allProjects = await projectAPI.getAllProjects();
-        console.log('All projects:', allProjects);
-        console.log('Looking for project:', decodeURIComponent(projectName));
-        
-        const project = allProjects.find(p => p.projectName === decodeURIComponent(projectName));
-        console.log('Found project:', project);
-        
+        console.log("All projects:", allProjects);
+        console.log("Looking for project:", decodeURIComponent(projectName));
+
+        const project = allProjects.find(
+          (p) => p.projectName === decodeURIComponent(projectName)
+        );
+        console.log("Found project:", project);
+
         if (project) {
           setCurrentProject({
             name: project.projectName,
-            description: project.description || '',
+            description: project.description || "",
             dueDate: project.date,
             progress: 0, // You can calculate this based on completed tasks
-            color: 'purple',
-            projectId: project.projectId // Add projectId to currentProject
+            color: "purple",
+            projectId: project.projectId, // Add projectId to currentProject
           });
 
-          console.log('Project ID for task fetching:', project.projectId);
+          console.log("Project ID for task fetching:", project.projectId);
 
           // First, let's get all tasks to see what's available
           const allTasks = await taskAPI.getAllTasks();
-          console.log('All tasks from backend:', allTasks);
-          console.log('Tasks for this project:', allTasks.filter(task => task.projectId === project.projectId));
+          console.log("All tasks from backend:", allTasks);
+          console.log(
+            "Tasks for this project:",
+            allTasks.filter((task) => task.projectId === project.projectId)
+          );
 
           // Fetch tasks for each status separately
-          const finalTodoTasks = allTasks.filter(task => 
-            task.projectId === project.projectId && 
-            task.status.toLowerCase() === 'todo'
+          const finalTodoTasks = allTasks.filter(
+            (task) =>
+              task.projectId === project.projectId &&
+              task.status.toLowerCase() === "todo"
           );
-          const finalInProgressTasks = allTasks.filter(task => 
-            task.projectId === project.projectId && 
-            (task.status.toLowerCase() === 'in progress' || task.status.toLowerCase() === 'inprogress')
+          const finalInProgressTasks = allTasks.filter(
+            (task) =>
+              task.projectId === project.projectId &&
+              (task.status.toLowerCase() === "in progress" ||
+                task.status.toLowerCase() === "inprogress")
           );
-          const finalCompletedTasks = allTasks.filter(task => 
-            task.projectId === project.projectId && 
-            task.status.toLowerCase() === 'completed'
+          const finalCompletedTasks = allTasks.filter(
+            (task) =>
+              task.projectId === project.projectId &&
+              task.status.toLowerCase() === "completed"
           );
 
           // Transform tasks with user information
-          const transformedTodo = await transformTasksWithUserInfo(finalTodoTasks);
-          const transformedInProgress = await transformTasksWithUserInfo(finalInProgressTasks);
-          const transformedCompleted = await transformTasksWithUserInfo(finalCompletedTasks);
+          const transformedTodo = await transformTasksWithUserInfo(
+            finalTodoTasks
+          );
+          const transformedInProgress = await transformTasksWithUserInfo(
+            finalInProgressTasks
+          );
+          const transformedCompleted = await transformTasksWithUserInfo(
+            finalCompletedTasks
+          );
 
           setTodoTasks(transformedTodo);
           setInProgressTasks(transformedInProgress);
           setCompletedTasks(transformedCompleted);
 
-          console.log('Transformed Todo tasks:', transformedTodo);
-          console.log('Transformed In Progress tasks:', transformedInProgress);
-          console.log('Transformed Completed tasks:', transformedCompleted);
-          console.log('Total tasks set:', transformedTodo.length + transformedInProgress.length + transformedCompleted.length);
+          console.log("Transformed Todo tasks:", transformedTodo);
+          console.log("Transformed In Progress tasks:", transformedInProgress);
+          console.log("Transformed Completed tasks:", transformedCompleted);
+          console.log(
+            "Total tasks set:",
+            transformedTodo.length +
+              transformedInProgress.length +
+              transformedCompleted.length
+          );
         } else {
-          setError('Project not found');
+          setError("Project not found");
         }
       } catch (err) {
-        console.error('Error fetching project and tasks:', err);
-        setError('Failed to load project and tasks. Please try again.');
+        console.error("Error fetching project and tasks:", err);
+        setError("Failed to load project and tasks. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -124,7 +178,7 @@ const MyTask = () => {
 
   // Load current user data
   useEffect(() => {
-    const userStr = localStorage.getItem('user');
+    const userStr = localStorage.getItem("user");
     if (userStr) {
       setCurrentUser(JSON.parse(userStr));
     }
@@ -132,23 +186,23 @@ const MyTask = () => {
 
   // Function to resolve user information from GUID
   const resolveUserInfo = async (picGuid) => {
-    if (!picGuid || picGuid === '00000000-0000-0000-0000-000000000000') {
-      return 'Unassigned';
+    if (!picGuid || picGuid === "00000000-0000-0000-0000-000000000000") {
+      return "Unassigned";
     }
-    
+
     try {
       const user = await userAPI.getUserById(picGuid);
-      return user.username || user.email || 'Unknown User';
+      return user.username || user.email || "Unknown User";
     } catch (error) {
-      console.error('Error resolving user info:', error);
-      return 'Unknown User';
+      console.error("Error resolving user info:", error);
+      return "Unknown User";
     }
   };
 
   // Enhanced task transformation with user resolution
   const transformTasksWithUserInfo = async (tasks) => {
     const transformedTasks = [];
-    
+
     for (const task of tasks) {
       const assignedTo = await resolveUserInfo(task.pic);
       transformedTasks.push({
@@ -161,10 +215,10 @@ const MyTask = () => {
         assignedTo: assignedTo,
         pic: task.pic, // Keep the original GUID for API calls
         projectId: task.projectId,
-        comments: []
+        comments: [],
       });
     }
-    
+
     return transformedTasks;
   };
 
@@ -172,34 +226,38 @@ const MyTask = () => {
   const handleCreateTask = async (taskData) => {
     try {
       if (!currentProject) {
-        throw new Error('No project selected');
+        throw new Error("No project selected");
       }
 
       // Find the project ID
       const allProjects = await projectAPI.getAllProjects();
-      const project = allProjects.find(p => p.projectName === currentProject.name);
-      
+      const project = allProjects.find(
+        (p) => p.projectName === currentProject.name
+      );
+
       if (!project) {
-        throw new Error('Project not found');
+        throw new Error("Project not found");
       }
 
       // Prepare task data for API
       const newTaskData = {
         projectId: project.projectId,
         taskName: taskData.title,
-        pic: taskData.assignedTo || '00000000-0000-0000-0000-000000000000', // Default GUID if empty
-        deadline: taskData.deadline ? new Date(taskData.deadline).toISOString() : new Date().toISOString(),
+        pic: taskData.assignedTo || "00000000-0000-0000-0000-000000000000", // Default GUID if empty
+        deadline: taskData.deadline
+          ? new Date(taskData.deadline).toISOString()
+          : new Date().toISOString(),
         description: taskData.description,
-        status: normalizeStatus('Todo'), // Always start with Todo status
-        priority: taskData.priority
+        status: normalizeStatus("Todo"), // Always start with Todo status
+        priority: taskData.priority,
       };
 
       // Create task using API
       const createdTask = await taskAPI.createTask(newTaskData);
-      
+
       // Resolve user information for the created task
       const assignedTo = await resolveUserInfo(createdTask.pic);
-      
+
       // Add to local state
       const newTask = {
         id: createdTask.projectTaskId,
@@ -211,14 +269,14 @@ const MyTask = () => {
         assignedTo: assignedTo,
         pic: createdTask.pic, // Keep the original GUID for API calls
         projectId: project.projectId,
-        comments: []
+        comments: [],
       };
 
-      setTodoTasks(prev => [...prev, newTask]);
+      setTodoTasks((prev) => [...prev, newTask]);
       setIsAddModalOpen(false);
     } catch (err) {
-      console.error('Error creating task:', err);
-      alert('Failed to create task. Please try again.');
+      console.error("Error creating task:", err);
+      alert("Failed to create task. Please try again.");
     }
   };
 
@@ -226,70 +284,79 @@ const MyTask = () => {
     try {
       // Get the projectId from the task or currentProject
       const projectId = updatedTask.projectId || currentProject?.projectId;
-      
+
       if (!projectId) {
-        throw new Error('Project ID not found for task update');
+        throw new Error("Project ID not found for task update");
       }
 
       // Prepare task data for API
       const taskData = {
         projectId: projectId,
         taskName: updatedTask.title,
-        pic: updatedTask.pic || updatedTask.assignedTo || '00000000-0000-0000-0000-000000000000',
-        deadline: updatedTask.deadline ? new Date(updatedTask.deadline).toISOString() : new Date().toISOString(),
+        pic:
+          updatedTask.pic ||
+          updatedTask.assignedTo ||
+          "00000000-0000-0000-0000-000000000000",
+        deadline: updatedTask.deadline
+          ? new Date(updatedTask.deadline).toISOString()
+          : new Date().toISOString(),
         description: updatedTask.description,
         status: normalizeStatus(updatedTask.status),
-        priority: updatedTask.priority
+        priority: updatedTask.priority,
       };
 
-      console.log('Updating task with data:', taskData);
+      console.log("Updating task with data:", taskData);
 
       // Update task using API
       await taskAPI.updateTask(updatedTask.id, taskData);
-      
+
       // Resolve user information for the updated task
       const assignedTo = await resolveUserInfo(taskData.pic);
-      
+
       // Remove task from all arrays first
-      setTodoTasks(prev => prev.filter(task => task.id !== updatedTask.id));
-      setInProgressTasks(prev => prev.filter(task => task.id !== updatedTask.id));
-      setCompletedTasks(prev => prev.filter(task => task.id !== updatedTask.id));
+      setTodoTasks((prev) => prev.filter((task) => task.id !== updatedTask.id));
+      setInProgressTasks((prev) =>
+        prev.filter((task) => task.id !== updatedTask.id)
+      );
+      setCompletedTasks((prev) =>
+        prev.filter((task) => task.id !== updatedTask.id)
+      );
 
       // Add task to the correct array based on its new status
       const normalizedStatus = normalizeStatus(updatedTask.status);
-      const taskWithNormalizedStatus = { 
-        ...updatedTask, 
+      const taskWithNormalizedStatus = {
+        ...updatedTask,
         status: normalizedStatus,
         projectId: projectId, // Ensure projectId is preserved
         assignedTo: assignedTo, // Use resolved user information
-        pic: taskData.pic // Keep the original GUID for API calls
+        pic: taskData.pic, // Keep the original GUID for API calls
       };
 
-      if (normalizedStatus === 'Todo') {
-        setTodoTasks(prev => [...prev, taskWithNormalizedStatus]);
-      } else if (normalizedStatus === 'In Progress') {
-        setInProgressTasks(prev => [...prev, taskWithNormalizedStatus]);
-      } else if (normalizedStatus === 'Completed') {
-        setCompletedTasks(prev => [...prev, taskWithNormalizedStatus]);
+      if (normalizedStatus === "Todo") {
+        setTodoTasks((prev) => [...prev, taskWithNormalizedStatus]);
+      } else if (normalizedStatus === "In Progress") {
+        setInProgressTasks((prev) => [...prev, taskWithNormalizedStatus]);
+      } else if (normalizedStatus === "Completed") {
+        setCompletedTasks((prev) => [...prev, taskWithNormalizedStatus]);
       }
 
       setIsEditModalOpen(false);
       setSelectedTask(null);
     } catch (err) {
-      console.error('Error updating task:', err);
-      alert('Failed to update task. Please try again.');
+      console.error("Error updating task:", err);
+      alert("Failed to update task. Please try again.");
     }
   };
 
   const handleDeleteTask = async (taskId) => {
     try {
       await taskAPI.deleteTask(taskId);
-      setTodoTasks(prev => prev.filter(t => t.id !== taskId));
-      setInProgressTasks(prev => prev.filter(t => t.id !== taskId));
-      setCompletedTasks(prev => prev.filter(t => t.id !== taskId));
+      setTodoTasks((prev) => prev.filter((t) => t.id !== taskId));
+      setInProgressTasks((prev) => prev.filter((t) => t.id !== taskId));
+      setCompletedTasks((prev) => prev.filter((t) => t.id !== taskId));
     } catch (err) {
-      console.error('Error deleting task:', err);
-      alert('Failed to delete task. Please try again.');
+      console.error("Error deleting task:", err);
+      alert("Failed to delete task. Please try again.");
     }
   };
 
@@ -298,48 +365,56 @@ const MyTask = () => {
       const updatedTask = { ...task, status: normalizeStatus(newStatus) };
       await handleEditTask(updatedTask);
     } catch (err) {
-      console.error('Error changing task status:', err);
-      alert('Failed to update task status. Please try again.');
+      console.error("Error changing task status:", err);
+      alert("Failed to update task status. Please try again.");
     }
   };
 
   // Get next status in the workflow
   const getNextStatus = (currentStatus) => {
-    const currentIndex = statusList.findIndex(s => s.key.toLowerCase() === currentStatus.toLowerCase());
-    return currentIndex < statusList.length - 1 ? statusList[currentIndex + 1].key : null;
+    const currentIndex = statusList.findIndex(
+      (s) => s.key.toLowerCase() === currentStatus.toLowerCase()
+    );
+    return currentIndex < statusList.length - 1
+      ? statusList[currentIndex + 1].key
+      : null;
   };
 
   // Get previous status in the workflow
   const getPreviousStatus = (currentStatus) => {
-    const currentIndex = statusList.findIndex(s => s.key.toLowerCase() === currentStatus.toLowerCase());
+    const currentIndex = statusList.findIndex(
+      (s) => s.key.toLowerCase() === currentStatus.toLowerCase()
+    );
     return currentIndex > 0 ? statusList[currentIndex - 1].key : null;
   };
 
   // Filter tasks based on search query
   const filterTasks = (taskList, status) => {
     return taskList
-      .filter(task => task.status.toLowerCase() === status.toLowerCase())
-      .filter(task => 
-        searchQuery === '' ||
-        task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        task.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (task.assignedTo && task.assignedTo.toLowerCase().includes(searchQuery.toLowerCase()))
+      .filter((task) => task.status.toLowerCase() === status.toLowerCase())
+      .filter(
+        (task) =>
+          searchQuery === "" ||
+          task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          task.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (task.assignedTo &&
+            task.assignedTo.toLowerCase().includes(searchQuery.toLowerCase()))
       );
   };
 
   // Format date to display
   const formatDate = (dateString) => {
-    if (!dateString) return 'No date set';
-    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    if (!dateString) return "No date set";
+    const options = { year: "numeric", month: "short", day: "numeric" };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
   // Get priority color
   const getPriorityColor = (priority) => {
     const colors = {
-      low: darkMode ? 'text-green-300' : 'text-green-600',
-      medium: darkMode ? 'text-yellow-300' : 'text-yellow-600',
-      high: darkMode ? 'text-red-300' : 'text-red-600'
+      low: darkMode ? "text-green-300" : "text-green-600",
+      medium: darkMode ? "text-yellow-300" : "text-yellow-600",
+      high: darkMode ? "text-red-300" : "text-red-600",
     };
     return colors[priority] || colors.medium;
   };
@@ -351,7 +426,10 @@ const MyTask = () => {
 
   const isTaskAssignedToMe = (task) => {
     if (!currentUser) return false;
-    return task.assignedTo === currentUser.username || task.assignedTo === currentUser.email;
+    return (
+      task.assignedTo === currentUser.username ||
+      task.assignedTo === currentUser.email
+    );
   };
 
   const openViewModal = (task) => {
@@ -360,75 +438,75 @@ const MyTask = () => {
   };
 
   // Comment handling functions
-  const handleAddComment = async (comment) => {
+  const handleAddComment = async (taskId, commentData) => {
     try {
-      // Implement comment addition logic with API
-      console.log('Adding comment:', comment);
+      const data = await commentAPI.createComment(taskId, commentData);
+      console.log("Adding comment:", commentData);
     } catch (error) {
-      console.error('Error adding comment:', error);
-      alert('Failed to add comment. Please try again.');
+      console.error("Error adding comment:", error);
+      alert("Failed to add comment. Please try again.");
     }
   };
 
   const handleEditComment = async (commentId, updatedComment) => {
     try {
       // Implement comment editing logic with API
-      console.log('Editing comment:', commentId, updatedComment);
+      console.log("Editing comment:", commentId, updatedComment);
     } catch (error) {
-      console.error('Error editing comment:', error);
-      alert('Failed to edit comment. Please try again.');
+      console.error("Error editing comment:", error);
+      alert("Failed to edit comment. Please try again.");
     }
   };
 
   const handleDeleteComment = async (commentId) => {
     try {
       // Implement comment deletion logic with API
-      console.log('Deleting comment:', commentId);
+      console.log("Deleting comment:", commentId);
     } catch (error) {
-      console.error('Error deleting comment:', error);
-      alert('Failed to delete comment. Please try again.');
+      console.error("Error deleting comment:", error);
+      alert("Failed to delete comment. Please try again.");
     }
   };
 
   const handleFileUpload = (taskId, files) => {
     // Here you would typically upload the files to your backend
     // For now, we'll just update the task with the file information
-    const fileList = Array.from(files).map(file => ({
+    const fileList = Array.from(files).map((file) => ({
       id: Date.now(),
       name: file.name,
       size: file.size,
       type: file.type,
-      uploadedBy: currentUser?.username || 'Anonymous',
-      uploadedAt: new Date().toISOString()
+      uploadedBy: currentUser?.username || "Anonymous",
+      uploadedAt: new Date().toISOString(),
     }));
 
     // Update the appropriate task array with new attachments
-    setTodoTasks(prevTasks =>
-      prevTasks.map(task =>
+    setTodoTasks((prevTasks) =>
+      prevTasks.map((task) =>
         task.id === taskId
           ? {
               ...task,
-              attachments: [...(task.attachments || []), ...fileList]
+              attachments: [...(task.attachments || []), ...fileList],
             }
           : task
       )
     );
-    setInProgressTasks(prevTasks =>
-      prevTasks.map(task =>
+    setInProgressTasks((prevTasks) =>
+      prevTasks.map((task) =>
         task.id === taskId
           ? {
               ...task,
-              attachments: [...(task.attachments || []), ...fileList]
+              attachments: [...(task.attachments || []), ...fileList],
             }
           : task
       )
     );
-    setCompletedTasks(prevTasks =>
-      prevTasks.map(task =>
+    setCompletedTasks((prevTasks) =>
+      prevTasks.map((task) =>
         task.id === taskId
           ? {
               ...task,
-              attachments: [...(task.attachments || []), ...fileList]
+              attachments: [...(task.attachments || []), ...fileList],
             }
           : task
       )
@@ -442,16 +520,16 @@ const MyTask = () => {
     }
     // Reset the file input
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
   const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   const renderTaskCard = (task) => {
@@ -462,16 +540,24 @@ const MyTask = () => {
     return (
       <div
         className={`p-4 rounded-lg ${
-          darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+          darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
         } border shadow-sm hover:shadow-md transition-shadow duration-200`}
       >
         {/* Task Header */}
         <div className="flex justify-between items-start mb-2">
           <div>
-            <h3 className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+            <h3
+              className={`font-medium ${
+                darkMode ? "text-white" : "text-gray-900"
+              }`}
+            >
               {task.title}
             </h3>
-            <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            <p
+              className={`text-sm ${
+                darkMode ? "text-gray-400" : "text-gray-600"
+              }`}
+            >
               {task.description}
             </p>
           </div>
@@ -480,7 +566,9 @@ const MyTask = () => {
               <button
                 onClick={() => handleChangeStatus(task, previousStatus)}
                 className={`p-1 rounded-full ${
-                  darkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-600'
+                  darkMode
+                    ? "hover:bg-gray-700 text-gray-400"
+                    : "hover:bg-gray-100 text-gray-600"
                 }`}
                 title={`Move to ${previousStatus}`}
               >
@@ -491,7 +579,9 @@ const MyTask = () => {
               <button
                 onClick={() => handleChangeStatus(task, nextStatus)}
                 className={`p-1 rounded-full ${
-                  darkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-600'
+                  darkMode
+                    ? "hover:bg-gray-700 text-gray-400"
+                    : "hover:bg-gray-100 text-gray-600"
                 }`}
                 title={`Move to ${nextStatus}`}
               >
@@ -504,14 +594,25 @@ const MyTask = () => {
         {/* Task Info */}
         <div className="flex items-center justify-between text-sm mt-4">
           <div className="flex items-center gap-2">
-            <User size={16} className={darkMode ? 'text-gray-400' : 'text-gray-500'} />
-            <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
-              {task.assignedTo || 'Unassigned'}
+            <User
+              size={16}
+              className={darkMode ? "text-gray-400" : "text-gray-500"}
+            />
+            <span className={darkMode ? "text-gray-400" : "text-gray-500"}>
+              {task.assignedTo || "Unassigned"}
             </span>
           </div>
-          <div className={`flex items-center gap-2 ${
-            isOverdue ? (darkMode ? 'text-red-400' : 'text-red-600') : (darkMode ? 'text-gray-400' : 'text-gray-500')
-          }`}>
+          <div
+            className={`flex items-center gap-2 ${
+              isOverdue
+                ? darkMode
+                  ? "text-red-400"
+                  : "text-red-600"
+                : darkMode
+                ? "text-gray-400"
+                : "text-gray-500"
+            }`}
+          >
             <Clock size={16} />
             <span>{formatDate(task.deadline)}</span>
           </div>
@@ -529,7 +630,9 @@ const MyTask = () => {
           <button
             onClick={() => fileInputRef.current?.click()}
             className={`p-2 rounded-lg ${
-              darkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-600'
+              darkMode
+                ? "hover:bg-gray-700 text-gray-400"
+                : "hover:bg-gray-100 text-gray-600"
             }`}
             title="Upload Files"
           >
@@ -538,7 +641,9 @@ const MyTask = () => {
           <button
             onClick={() => openViewModal(task)}
             className={`p-2 rounded-lg ${
-              darkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-600'
+              darkMode
+                ? "hover:bg-gray-700 text-gray-400"
+                : "hover:bg-gray-100 text-gray-600"
             }`}
             title="View Details"
           >
@@ -547,7 +652,9 @@ const MyTask = () => {
           <button
             onClick={() => openEditModal(task)}
             className={`p-2 rounded-lg ${
-              darkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-600'
+              darkMode
+                ? "hover:bg-gray-700 text-gray-400"
+                : "hover:bg-gray-100 text-gray-600"
             }`}
             title="Edit Task"
           >
@@ -556,7 +663,9 @@ const MyTask = () => {
           <button
             onClick={() => handleDeleteTask(task.id)}
             className={`p-2 rounded-lg ${
-              darkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-600'
+              darkMode
+                ? "hover:bg-gray-700 text-gray-400"
+                : "hover:bg-gray-100 text-gray-600"
             }`}
             title="Delete Task"
           >
@@ -567,30 +676,45 @@ const MyTask = () => {
         {/* File Attachments */}
         {task.attachments && task.attachments.length > 0 && (
           <div className="mt-4 space-y-2">
-            <div className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            <div
+              className={`text-sm font-medium ${
+                darkMode ? "text-gray-300" : "text-gray-700"
+              }`}
+            >
               Attachments:
             </div>
             <div className="space-y-1">
-              {task.attachments.map(file => (
+              {task.attachments.map((file) => (
                 <div
                   key={file.id}
                   className={`flex items-center justify-between p-2 rounded-lg text-sm ${
-                    darkMode ? 'bg-gray-700' : 'bg-gray-50'
+                    darkMode ? "bg-gray-700" : "bg-gray-50"
                   }`}
                 >
                   <div className="flex items-center gap-2">
-                    <File size={16} className={darkMode ? 'text-gray-400' : 'text-gray-500'} />
-                    <span className={darkMode ? 'text-gray-300' : 'text-gray-700'}>
+                    <File
+                      size={16}
+                      className={darkMode ? "text-gray-400" : "text-gray-500"}
+                    />
+                    <span
+                      className={darkMode ? "text-gray-300" : "text-gray-700"}
+                    >
                       {file.name}
                     </span>
-                    <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <span
+                      className={`text-xs ${
+                        darkMode ? "text-gray-400" : "text-gray-500"
+                      }`}
+                    >
                       ({formatFileSize(file.size)})
                     </span>
                   </div>
                   <button
-                    onClick={() => window.open(file.url, '_blank')}
+                    onClick={() => window.open(file.url, "_blank")}
                     className={`p-1 rounded-lg ${
-                      darkMode ? 'hover:bg-gray-600 text-gray-400' : 'hover:bg-gray-200 text-gray-600'
+                      darkMode
+                        ? "hover:bg-gray-600 text-gray-400"
+                        : "hover:bg-gray-200 text-gray-600"
                     }`}
                     title="Download"
                   >
@@ -610,11 +734,21 @@ const MyTask = () => {
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="text-center mb-8">
-            <h2 className={`text-3xl font-extrabold mb-2 ${darkMode ? 'bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent' : 'text-gray-900'}`}>
+            <h2
+              className={`text-3xl font-extrabold mb-2 ${
+                darkMode
+                  ? "bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent"
+                  : "text-gray-900"
+              }`}
+            >
               My Tasks for {decodeURIComponent(projectName)}
             </h2>
             {currentProject && (
-              <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              <p
+                className={`text-sm ${
+                  darkMode ? "text-gray-400" : "text-gray-600"
+                }`}
+              >
                 Project Deadline: {formatDate(currentProject.dueDate)}
               </p>
             )}
@@ -623,7 +757,11 @@ const MyTask = () => {
           {/* Loading State */}
           {loading && (
             <div className="flex items-center justify-center py-12">
-              <div className={`text-center ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+              <div
+                className={`text-center ${
+                  darkMode ? "text-white" : "text-gray-900"
+                }`}
+              >
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
                 <p>Loading tasks...</p>
               </div>
@@ -633,7 +771,11 @@ const MyTask = () => {
           {/* Error State */}
           {error && !loading && (
             <div className="flex items-center justify-center py-12">
-              <div className={`text-center ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+              <div
+                className={`text-center ${
+                  darkMode ? "text-white" : "text-gray-900"
+                }`}
+              >
                 <p className="text-red-500 mb-4">{error}</p>
                 <button
                   onClick={() => window.location.reload()}
@@ -644,15 +786,23 @@ const MyTask = () => {
               </div>
             </div>
           )}
-          
+
           {/* Main Content */}
           {!loading && !error && (
             <>
               <div className="flex justify-between items-center mb-6">
                 {/* Search Bar */}
-                <div className={`relative flex-1 max-w-md ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>
+                <div
+                  className={`relative flex-1 max-w-md ${
+                    darkMode ? "text-gray-200" : "text-gray-900"
+                  }`}
+                >
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className={`h-5 w-5 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                    <Search
+                      className={`h-5 w-5 ${
+                        darkMode ? "text-gray-400" : "text-gray-500"
+                      }`}
+                    />
                   </div>
                   <input
                     type="text"
@@ -661,8 +811,8 @@ const MyTask = () => {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className={`block w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
                       darkMode
-                        ? 'bg-gray-800 border-gray-600 focus:ring-cyan-500 text-gray-200 placeholder-gray-400'
-                        : 'bg-white border-gray-300 focus:ring-blue-500 text-gray-900 placeholder-gray-500'
+                        ? "bg-gray-800 border-gray-600 focus:ring-cyan-500 text-gray-200 placeholder-gray-400"
+                        : "bg-white border-gray-300 focus:ring-blue-500 text-gray-900 placeholder-gray-500"
                     }`}
                   />
                 </div>
@@ -672,8 +822,8 @@ const MyTask = () => {
                   onClick={() => setIsAddModalOpen(true)}
                   className={`ml-4 px-4 py-2 rounded-lg flex items-center ${
                     darkMode
-                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                      : 'bg-blue-500 hover:bg-blue-600 text-white'
+                      ? "bg-blue-600 hover:bg-blue-700 text-white"
+                      : "bg-blue-500 hover:bg-blue-600 text-white"
                   }`}
                 >
                   <Plus className="w-5 h-5 mr-2" />
@@ -683,20 +833,65 @@ const MyTask = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {statusList.map(({ key, color }) => (
-                  <div key={key} className={`${darkMode ? 'bg-gray-800 border-' + color + '-500/30' : 'bg-white border-' + color + '-300'} border rounded-lg shadow-xl p-4 flex flex-col`}>
+                  <div
+                    key={key}
+                    className={`${
+                      darkMode
+                        ? "bg-gray-800 border-" + color + "-500/30"
+                        : "bg-white border-" + color + "-300"
+                    } border rounded-lg shadow-xl p-4 flex flex-col`}
+                  >
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className={`text-lg font-semibold ${darkMode ? `text-${color}-300` : `text-${color}-700`}`}>{key}</h3>
-                      <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                        {filterTasks(key === 'Todo' ? todoTasks : key === 'In Progress' ? inProgressTasks : completedTasks, key).length} tasks
+                      <h3
+                        className={`text-lg font-semibold ${
+                          darkMode ? `text-${color}-300` : `text-${color}-700`
+                        }`}
+                      >
+                        {key}
+                      </h3>
+                      <span
+                        className={`text-sm ${
+                          darkMode ? "text-gray-400" : "text-gray-600"
+                        }`}
+                      >
+                        {
+                          filterTasks(
+                            key === "Todo"
+                              ? todoTasks
+                              : key === "In Progress"
+                              ? inProgressTasks
+                              : completedTasks,
+                            key
+                          ).length
+                        }{" "}
+                        tasks
                       </span>
                     </div>
                     <div className="flex-1 space-y-4">
-                      {filterTasks(key === 'Todo' ? todoTasks : key === 'In Progress' ? inProgressTasks : completedTasks, key).length === 0 && (
-                        <div className={`text-center text-sm ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                          {searchQuery ? 'No matching tasks' : 'No tasks'}
+                      {filterTasks(
+                        key === "Todo"
+                          ? todoTasks
+                          : key === "In Progress"
+                          ? inProgressTasks
+                          : completedTasks,
+                        key
+                      ).length === 0 && (
+                        <div
+                          className={`text-center text-sm ${
+                            darkMode ? "text-gray-500" : "text-gray-400"
+                          }`}
+                        >
+                          {searchQuery ? "No matching tasks" : "No tasks"}
                         </div>
                       )}
-                      {filterTasks(key === 'Todo' ? todoTasks : key === 'In Progress' ? inProgressTasks : completedTasks, key).map(renderTaskCard)}
+                      {filterTasks(
+                        key === "Todo"
+                          ? todoTasks
+                          : key === "In Progress"
+                          ? inProgressTasks
+                          : completedTasks,
+                        key
+                      ).map(renderTaskCard)}
                     </div>
                   </div>
                 ))}
@@ -704,27 +899,60 @@ const MyTask = () => {
 
               {/* Results Count */}
               <div className="mt-8 text-center">
-                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Showing {[
-                    ...todoTasks.filter(task => 
-                      searchQuery === '' ||
-                      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                      task.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                      task.assignedTo.toLowerCase().includes(searchQuery.toLowerCase())
-                    ),
-                    ...inProgressTasks.filter(task => 
-                      searchQuery === '' ||
-                      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                      task.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                      task.assignedTo.toLowerCase().includes(searchQuery.toLowerCase())
-                    ),
-                    ...completedTasks.filter(task => 
-                      searchQuery === '' ||
-                      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                      task.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                      task.assignedTo.toLowerCase().includes(searchQuery.toLowerCase())
-                    )
-                  ].length} of {todoTasks.length + inProgressTasks.length + completedTasks.length} tasks
+                <p
+                  className={`text-sm ${
+                    darkMode ? "text-gray-400" : "text-gray-600"
+                  }`}
+                >
+                  Showing{" "}
+                  {
+                    [
+                      ...todoTasks.filter(
+                        (task) =>
+                          searchQuery === "" ||
+                          task.title
+                            .toLowerCase()
+                            .includes(searchQuery.toLowerCase()) ||
+                          task.description
+                            .toLowerCase()
+                            .includes(searchQuery.toLowerCase()) ||
+                          task.assignedTo
+                            .toLowerCase()
+                            .includes(searchQuery.toLowerCase())
+                      ),
+                      ...inProgressTasks.filter(
+                        (task) =>
+                          searchQuery === "" ||
+                          task.title
+                            .toLowerCase()
+                            .includes(searchQuery.toLowerCase()) ||
+                          task.description
+                            .toLowerCase()
+                            .includes(searchQuery.toLowerCase()) ||
+                          task.assignedTo
+                            .toLowerCase()
+                            .includes(searchQuery.toLowerCase())
+                      ),
+                      ...completedTasks.filter(
+                        (task) =>
+                          searchQuery === "" ||
+                          task.title
+                            .toLowerCase()
+                            .includes(searchQuery.toLowerCase()) ||
+                          task.description
+                            .toLowerCase()
+                            .includes(searchQuery.toLowerCase()) ||
+                          task.assignedTo
+                            .toLowerCase()
+                            .includes(searchQuery.toLowerCase())
+                      ),
+                    ].length
+                  }{" "}
+                  of{" "}
+                  {todoTasks.length +
+                    inProgressTasks.length +
+                    completedTasks.length}{" "}
+                  tasks
                 </p>
               </div>
             </>
@@ -774,4 +1002,4 @@ const MyTask = () => {
   );
 };
 
-export default MyTask; 
+export default MyTask;
