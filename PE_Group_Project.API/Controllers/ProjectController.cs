@@ -5,7 +5,6 @@ using PE_Group_Project.API.Models.DTO;
 
 namespace PE_Group_Project.API.Controllers
 {
-
     [ApiController]
     [Route("api/[controller]")]
     public class ProjectController(AppDBContext dbContext) : ControllerBase
@@ -16,7 +15,7 @@ namespace PE_Group_Project.API.Controllers
         public IActionResult GetAllProjects([FromQuery] Guid? userId = null)
         {
             List<Project> projects;
-            
+
             if (userId.HasValue)
             {
                 // Get user to check their role
@@ -97,9 +96,10 @@ namespace PE_Group_Project.API.Controllers
                 // If user is not Admin, check if they're involved in this project
                 if (user.Role?.Equals("Admin", StringComparison.OrdinalIgnoreCase) != true)
                 {
-                    var userProject = _context.UserProjects.FirstOrDefault(up => 
-                        up.UserId == userId.Value && up.ProjectId == id);
-                    
+                    var userProject = _context.UserProjects.FirstOrDefault(up =>
+                        up.UserId == userId.Value && up.ProjectId == id
+                    );
+
                     if (userProject == null)
                     {
                         return Forbid("You don't have access to this project.");
@@ -161,7 +161,10 @@ namespace PE_Group_Project.API.Controllers
         }
 
         [HttpPost]
-        public IActionResult AddProject([FromBody] CreateProjectRequestDTO createProjectRequestDTO, [FromQuery] Guid? userId = null)
+        public IActionResult AddProject(
+            [FromBody] CreateProjectRequestDTO createProjectRequestDTO,
+            [FromQuery] Guid? userId = null
+        )
         {
             if (createProjectRequestDTO == null)
             {
@@ -182,7 +185,9 @@ namespace PE_Group_Project.API.Controllers
                 {
                     if (createProjectRequestDTO.ProjectManagerInCharge != userId.Value)
                     {
-                        return Forbid("Only Admin users can create projects for other users. You can only create projects where you are the manager.");
+                        return Forbid(
+                            "Only Admin users can create projects for other users. You can only create projects where you are the manager."
+                        );
                     }
                 }
             }
@@ -306,9 +311,12 @@ namespace PE_Group_Project.API.Controllers
                 // Check if user is Admin or Project Manager
                 if (user.Role?.Equals("Admin", StringComparison.OrdinalIgnoreCase) != true)
                 {
-                    var userProject = _context.UserProjects.FirstOrDefault(up => 
-                        up.UserId == userId.Value && up.ProjectId == id && up.ProjectRole == "Manager");
-                    
+                    var userProject = _context.UserProjects.FirstOrDefault(up =>
+                        up.UserId == userId.Value
+                        && up.ProjectId == id
+                        && up.ProjectRole == "Manager"
+                    );
+
                     if (userProject == null)
                     {
                         return Forbid("Only Admin users or Project Managers can update projects.");
@@ -426,9 +434,12 @@ namespace PE_Group_Project.API.Controllers
                 // Check if user is Admin or Project Manager
                 if (user.Role?.Equals("Admin", StringComparison.OrdinalIgnoreCase) != true)
                 {
-                    var userProject = _context.UserProjects.FirstOrDefault(up => 
-                        up.UserId == userId.Value && up.ProjectId == id && up.ProjectRole == "Manager");
-                    
+                    var userProject = _context.UserProjects.FirstOrDefault(up =>
+                        up.UserId == userId.Value
+                        && up.ProjectId == id
+                        && up.ProjectRole == "Manager"
+                    );
+
                     if (userProject == null)
                     {
                         return Forbid("Only Admin users or Project Managers can delete projects.");
@@ -447,7 +458,10 @@ namespace PE_Group_Project.API.Controllers
 
         [HttpGet]
         [Route("{id:guid}/is-overdue")]
-        public IActionResult GetIfProjectOverdue([FromRoute] Guid id, [FromQuery] Guid? userId = null)
+        public IActionResult GetIfProjectOverdue(
+            [FromRoute] Guid id,
+            [FromQuery] Guid? userId = null
+        )
         {
             var project = _context.Projects.FirstOrDefault(p => p.ProjectId == id);
             if (project == null)
@@ -467,9 +481,10 @@ namespace PE_Group_Project.API.Controllers
                 // If user is not Admin, check if they're involved in this project
                 if (user.Role?.Equals("Admin", StringComparison.OrdinalIgnoreCase) != true)
                 {
-                    var userProject = _context.UserProjects.FirstOrDefault(up => 
-                        up.UserId == userId.Value && up.ProjectId == id);
-                    
+                    var userProject = _context.UserProjects.FirstOrDefault(up =>
+                        up.UserId == userId.Value && up.ProjectId == id
+                    );
+
                     if (userProject == null)
                     {
                         return Forbid("You don't have access to this project.");

@@ -41,6 +41,8 @@ namespace PE_Group_Project.API.Controllers
                     Nationality = user.Nationality,
                     PhoneNumber = user.PhoneNumber,
                     LastLoginTime = user.LastLoginTime,
+                    Status =
+                        user.LastLoginTime < DateTime.UtcNow.AddMonths(-1) ? "Inactive" : "Active",
                 })
                 .ToList();
 
@@ -217,7 +219,7 @@ namespace PE_Group_Project.API.Controllers
             if (updateUserRequestDTO.Email != user.Email)
             {
                 var existingUser = _context.Users.FirstOrDefault(u =>
-                    u.Email == updateUserRequestDTO.Email
+                    u.Email == updateUserRequestDTO.Email && u.UserId != user.UserId
                 );
                 if (existingUser != null)
                 {
@@ -228,7 +230,7 @@ namespace PE_Group_Project.API.Controllers
             if (updateUserRequestDTO.Username != user.Username)
             {
                 var existingUser = _context.Users.FirstOrDefault(u =>
-                    u.Username == updateUserRequestDTO.Username
+                    u.Username == updateUserRequestDTO.Username && u.UserId != user.UserId
                 );
                 if (existingUser != null)
                 {
