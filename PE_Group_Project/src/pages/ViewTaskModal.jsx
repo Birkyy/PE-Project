@@ -11,7 +11,10 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import CommentList from "../components/CommentList";
-import { userAPI } from "../API/apiService";
+import FileUpload from "../components/FileUpload";
+import { userAPI, commentAPI } from "../API/apiService";
+import TaskAttachments from "../components/TaskAttachments";
+import { fileAPI } from "../API/apiService";
 
 const ViewTaskModal = ({
   task,
@@ -36,7 +39,6 @@ const ViewTaskModal = ({
       const user = await userAPI.getUserById(picGuid);
       return user.username || user.email || "Unknown User";
     } catch (error) {
-      console.error("Error resolving user info:", error);
       return "Unknown User";
     }
   };
@@ -49,12 +51,47 @@ const ViewTaskModal = ({
       setAssignedUserName(userName);
     };
 
-    // Initialize attachments and comments from task
-    setAttachments(task.attachments || []);
-    setComments(task.comments || []);
+    const loadComments = async () => {
+      try {
+        const fetchedComments = await commentAPI.getCommentsByTaskId(
+          task.projectTaskId || task.id
+        );
+        setComments(fetchedComments || []);
+      } catch (error) {
+        // Fallback to task comments if API fails
+        setComments(task.comments || []);
+      }
+    };
 
+    // Initialize attachments from task
+    const loadAttachments = async () => {
+      try {
+        const files = await fileAPI.getFilesByTaskId(
+          task.projectTaskId || task.id
+        );
+        setAttachments(files || []);
+      } catch (error) {
+        console.error("Failed to load attachments", error);
+        setAttachments([]);
+      }
+    };
+
+    // Load user name and comments
     loadUserName();
+    loadComments();
+    loadAttachments();
   }, [task]);
+
+  const refreshComments = async () => {
+    if (!task) return;
+
+    try {
+      const fetchedComments = await commentAPI.getCommentsByTaskId(
+        task.projectTaskId || task.id
+      );
+      setComments(fetchedComments || []);
+    } catch (error) {}
+  };
 
   if (!task) return null;
 
@@ -69,6 +106,44 @@ const ViewTaskModal = ({
     const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  };
+
+  const refreshAttachments = async () => {
+    try {
+      const files = await fileAPI.getFilesByTaskId(
+        task.projectTaskId || task.id
+      );
+      setAttachments(files || []);
+    } catch (err) {
+      console.error("Failed to refresh attachments", err);
+    }
+  };
+
+  // Function to handle file download
+  const handleDownload = (file) => {
+    const link = document.createElement("a");
+    link.href = file.url;
+    link.download = file.name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleDelete = async (file) => {
+    console.log(
+      "Deleting file:",
+      file.name,
+      "for task:",
+      task.projectTaskId || task.id
+    );
+    if (!window.confirm("Are you sure you want to delete this file?")) return;
+
+    try {
+      await fileAPI.deleteFile(task.projectTaskId || task.id, file.name);
+      await refreshAttachments();
+    } catch (err) {
+      console.error("Delete failed:", err);
+    }
   };
 
   const getPriorityColor = (priority) => {
@@ -97,20 +172,6 @@ const ViewTaskModal = ({
         : "bg-green-100 text-green-800",
     };
     return colors[status] || colors["Todo"];
-  };
-
-  // Function to handle file download
-  const handleDownload = (file) => {
-    // In a real implementation, this would download from your backend
-    // For now, we'll create a download link for the file object
-    const url = URL.createObjectURL(file);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = file.name;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
   };
 
   return (
@@ -313,17 +374,19 @@ const ViewTaskModal = ({
             </div>
 
             {/* Attachments Section */}
-            {attachments.length > 0 && (
-              <div>
-                <h4
-                  className={`text-sm font-medium mb-3 flex items-center gap-2 ${
-                    darkMode ? "text-gray-300" : "text-gray-700"
-                  }`}
-                >
-                  <File className="w-4 h-4" />
-                  Attachments ({attachments.length})
-                </h4>
-                <div className="grid grid-cols-1 gap-2">
+            <div>
+              <h4
+                className={`text-sm font-medium mb-3 flex items-center gap-2 ${
+                  darkMode ? "text-gray-300" : "text-gray-700"
+                }`}
+              >
+                <File className="w-4 h-4" />
+                Attachments ({attachments.length})
+              </h4>
+
+              {/* Existing Attachments */}
+              {attachments.length > 0 && (
+                <div className="grid grid-cols-1 gap-2 mb-4">
                   {attachments.map((file) => (
                     <div
                       key={file.id}
@@ -357,8 +420,9 @@ const ViewTaskModal = ({
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleDownload(file)}
+                        <a
+                          href={file.url}
+                          download={file.name}
                           className={`p-2 rounded-lg transition-colors ${
                             darkMode
                               ? "hover:bg-gray-600 text-gray-400 hover:text-gray-200"
@@ -367,7 +431,7 @@ const ViewTaskModal = ({
                           title="Download file"
                         >
                           <Download className="w-4 h-4" />
-                        </button>
+                        </a>
                         {file.url && (
                           <a
                             href={file.url}
@@ -383,22 +447,91 @@ const ViewTaskModal = ({
                             <ExternalLink className="w-4 h-4" />
                           </a>
                         )}
+                        <button
+                          onClick={() => handleDelete(file)}
+                          className={`p-2 rounded-lg transition-colors ${
+                            darkMode
+                              ? "hover:bg-red-600 text-red-400 hover:text-white"
+                              : "hover:bg-red-100 text-red-600 hover:text-red-800"
+                          }`}
+                          title="Delete file"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
                   ))}
                 </div>
+              )}
+
+              {/* File Upload Section */}
+              <div className="mt-4">
+                <h5
+                  className={`text-sm font-medium mb-2 ${
+                    darkMode ? "text-gray-400" : "text-gray-600"
+                  }`}
+                >
+                  Add New Attachments
+                </h5>
+                <FileUpload
+                  onFileUploaded={async (fileInfo) => {
+                    try {
+                      // Re-fetch attachment list from backend
+                      const files = await fileAPI.getFilesByTaskId(
+                        task.projectTaskId || task.id
+                      );
+                      setAttachments(files || []);
+                    } catch (error) {
+                      console.error(
+                        "Failed to refresh attachments after upload",
+                        error
+                      );
+                    }
+                  }}
+                  category="task"
+                  relatedId={task.projectTaskId || task.id}
+                  maxFiles={5}
+                  acceptedTypes=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.mp4,.avi,.zip,.rar"
+                  maxFileSize={50 * 1024 * 1024} // 50MB
+                />
               </div>
-            )}
+            </div>
 
             {/* Comments Section */}
-            <div className="mt-8">
+            <div>
               <CommentList
                 comments={comments}
                 currentUser={currentUser}
-                onAddComment={onAddComment}
-                onEditComment={onEditComment}
-                onDeleteComment={onDeleteComment}
-                taskId={task.projectTaskId}
+                onAddComment={async (taskId, commentData) => {
+                  try {
+                    const result = await onAddComment(taskId, commentData);
+                    await refreshComments();
+                    return result;
+                  } catch (error) {
+                    throw error;
+                  }
+                }}
+                onEditComment={async (commentId, updatedComment) => {
+                  try {
+                    const result = await onEditComment(
+                      commentId,
+                      updatedComment
+                    );
+                    await refreshComments();
+                    return result;
+                  } catch (error) {
+                    throw error;
+                  }
+                }}
+                onDeleteComment={async (commentId) => {
+                  try {
+                    await onDeleteComment(commentId);
+                    await refreshComments();
+                  } catch (error) {
+                    throw error;
+                  }
+                }}
+                taskId={task.projectTaskId || task.id}
               />
             </div>
           </div>

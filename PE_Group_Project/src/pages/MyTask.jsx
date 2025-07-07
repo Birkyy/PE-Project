@@ -199,13 +199,26 @@ const MyTask = () => {
     }
   };
 
-  // Enhanced task transformation with user resolution
+  // Enhanced task transformation with user resolution and comments
   const transformTasksWithUserInfo = async (tasks) => {
     const transformedTasks = [];
-    const comments = await commentAPI.getCommentsByTaskId(task.projectTaskId);
 
     for (const task of tasks) {
       const assignedTo = await resolveUserInfo(task.pic);
+
+      // Fetch comments for this task
+      let comments = [];
+      try {
+        comments = await commentAPI.getCommentsByTaskId(task.projectTaskId);
+        console.log(`Comments for task ${task.projectTaskId}:`, comments);
+      } catch (error) {
+        console.error(
+          `Error fetching comments for task ${task.projectTaskId}:`,
+          error
+        );
+        // Continue with empty comments array if there's an error
+      }
+
       transformedTasks.push({
         id: task.projectTaskId,
         title: task.taskName,
@@ -438,75 +451,134 @@ const MyTask = () => {
     setIsViewModalOpen(true);
   };
 
-  // Comment handling functions
-  const handleAddComment = async (taskId, commentData) => {
-    const formatted = {
-      Comment: commentData.Comment || commentData.comment,
-      UserId: commentData.UserId || commentData.userId,
-      ProjectTaskId:
-        commentData.ProjectTaskId || commentData.projectTaskId || taskId,
-    };
-
-    console.log("Sending comment to API:", formatted);
+  // Function to refresh comments for a specific task
+  const refreshTaskComments = async (taskId) => {
+    console.log("=== REFRESH: refreshTaskComments START ===");
+    console.log("taskId:", taskId);
 
     try {
-      const newComment = await commentAPI.createComment(taskId, formatted);
-      console.log("API returned:", newComment);
+      console.log("=== REFRESH: About to call getCommentsByTaskId ===");
+      const comments = await commentAPI.getCommentsByTaskId(taskId);
+      console.log("=== REFRESH: getCommentsByTaskId completed ===");
+      console.log("Comments received:", comments);
 
-      const updateTaskComments = (tasks) =>
-        tasks.map((task) =>
-          task.id === taskId
-            ? { ...task, comments: [...(task.comments || []), newComment] }
-            : task
+      // Update comments in all task arrays
+      const updateTaskComments = (taskArray) =>
+        taskArray.map((task) =>
+          task.id === taskId ? { ...task, comments: comments || [] } : task
         );
 
+      console.log("=== REFRESH: About to update task states ===");
       setTodoTasks(updateTaskComments);
       setInProgressTasks(updateTaskComments);
       setCompletedTasks(updateTaskComments);
+      console.log("=== REFRESH: Task states updated ===");
+
+      console.log(`Comments refreshed for task ${taskId}:`, comments);
+    } catch (error) {
+      console.error("=== REFRESH: Error in refreshTaskComments ===", error);
+      console.error("Error details:", error.response?.data);
+      console.error("Error status:", error.response?.status);
+    }
+  };
+
+  // Comment handling functions
+  const handleAddComment = async (taskId, commentData) => {
+    console.log("=== MYTASK: handleAddComment START ===");
+    console.log("taskId received:", taskId);
+    console.log("commentData received:", commentData);
+    console.log("currentUser:", currentUser);
+
+    // Format the comment data according to backend DTO structure
+    const formatted = {
+      ProjectTaskId: taskId,
+      Comment: commentData.comment || commentData.Comment,
+      UserId:
+        commentData.userId ||
+        commentData.UserId ||
+        currentUser?.userId ||
+        currentUser?.id,
+    };
+
+    console.log("=== MYTASK: Formatted comment data ===");
+    console.log("Formatted data:", formatted);
+
+    try {
+      console.log("=== MYTASK: About to call commentAPI.createComment ===");
+      const newComment = await commentAPI.createComment(taskId, formatted);
+      console.log("=== MYTASK: commentAPI.createComment completed ===");
+      console.log("API returned:", newComment);
+
+      console.log("=== MYTASK: About to call refreshTaskComments ===");
+      // Refresh comments from the server to ensure we have the latest data
+      await refreshTaskComments(taskId);
+      console.log("=== MYTASK: refreshTaskComments completed ===");
 
       return newComment;
     } catch (error) {
-      console.error("Error adding comment:", error);
+      console.error("=== MYTASK: Error in handleAddComment ===", error);
+      console.error("Error details:", error.response?.data);
+      console.error("Error status:", error.response?.status);
       alert("Failed to add comment. Please try again.");
     }
   };
 
   const handleEditComment = async (commentId, updatedComment) => {
+    console.log("=== MYTASK: handleEditComment START ===");
+    console.log("commentId:", commentId);
+    console.log("updatedComment:", updatedComment);
+
     try {
-      const updated = await commentAPI.updateComment(commentId, updatedComment);
+      console.log("=== MYTASK: About to call commentAPI.updateComment ===");
+      const updated = await commentAPI.updateComment(commentId, {
+        Comment: updatedComment.comment || updatedComment.Comment,
+      });
+      console.log("=== MYTASK: commentAPI.updateComment completed ===");
+      console.log("API returned:", updated);
 
-      const updateComments = (tasks) =>
-        tasks.map((task) => ({
-          ...task,
-          comments: task.comments.map((c) =>
-            c.commentId === commentId ? updated : c
-          ),
-        }));
+      // Refresh comments for the task
+      const taskId =
+        updatedComment.projectTaskId || updatedComment.ProjectTaskId;
+      if (taskId) {
+        await refreshTaskComments(taskId);
+      }
 
-      setTodoTasks(updateComments);
-      setInProgressTasks(updateComments);
-      setCompletedTasks(updateComments);
+      return updated;
     } catch (error) {
-      console.error("Error editing comment:", error);
+      console.error("=== MYTASK: Error in handleEditComment ===", error);
+      console.error("Error details:", error.response?.data);
+      console.error("Error status:", error.response?.status);
       alert("Failed to edit comment. Please try again.");
     }
   };
 
   const handleDeleteComment = async (commentId) => {
+    console.log("=== MYTASK: handleDeleteComment START ===");
+    console.log("commentId:", commentId);
+
     try {
+      console.log("=== MYTASK: About to call commentAPI.deleteComment ===");
       await commentAPI.deleteComment(commentId);
+      console.log("=== MYTASK: commentAPI.deleteComment completed ===");
 
-      const removeComment = (tasks) =>
-        tasks.map((task) => ({
-          ...task,
-          comments: task.comments.filter((c) => c.commentId !== commentId),
-        }));
+      // Refresh comments for all tasks to update the UI
+      const allTasks = [...todoTasks, ...inProgressTasks, ...completedTasks];
+      for (const task of allTasks) {
+        if (
+          task.comments.some(
+            (c) => c.taskCommentId === commentId || c.commentId === commentId
+          )
+        ) {
+          await refreshTaskComments(task.id);
+          break;
+        }
+      }
 
-      setTodoTasks(removeComment);
-      setInProgressTasks(removeComment);
-      setCompletedTasks(removeComment);
+      console.log("=== MYTASK: Comments refreshed after deletion ===");
     } catch (error) {
-      console.error("Error deleting comment:", error);
+      console.error("=== MYTASK: Error in handleDeleteComment ===", error);
+      console.error("Error details:", error.response?.data);
+      console.error("Error status:", error.response?.status);
       alert("Failed to delete comment. Please try again.");
     }
   };

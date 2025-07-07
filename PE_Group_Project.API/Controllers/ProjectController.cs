@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using PE_Group_Project.API.Data;
 using PE_Group_Project.API.Models.Domain;
@@ -7,9 +8,18 @@ namespace PE_Group_Project.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [EnableCors("AllowAll")]
     public class ProjectController(AppDBContext dbContext) : ControllerBase
     {
         private readonly AppDBContext _context = dbContext;
+
+        [HttpGet]
+        [Route("test")]
+        public IActionResult Test()
+        {
+            Console.WriteLine("Test endpoint called");
+            return Ok(new { message = "Backend is running!", timestamp = DateTime.UtcNow });
+        }
 
         [HttpGet]
         public IActionResult GetAllProjects([FromQuery] Guid? userId = null)
@@ -65,7 +75,7 @@ namespace PE_Group_Project.API.Controllers
                             .Select(up => up.UserId)
                             .ToList(),
                         Description = project.Description,
-                        Attachments = new List<ProjectAttachmentDTO>() // Add if needed
+                        Attachments = new List<ProjectAttachmentDTO>(), // Add if needed
                     }
                 );
             }
@@ -122,7 +132,7 @@ namespace PE_Group_Project.API.Controllers
                     .Select(up => up.UserId)
                     .ToList(),
                 Description = project.Description,
-                Attachments = new List<ProjectAttachmentDTO>() // Add if needed
+                Attachments = new List<ProjectAttachmentDTO>(), // Add if needed
             };
 
             return Ok(projectDTO);
@@ -153,7 +163,7 @@ namespace PE_Group_Project.API.Controllers
                         .Select(up => up.UserId)
                         .ToList(),
                     Description = project.Description,
-                    Attachments = new List<ProjectAttachmentDTO>() // Add if needed
+                    Attachments = new List<ProjectAttachmentDTO>(), // Add if needed
                 })
                 .ToList();
 
@@ -274,7 +284,7 @@ namespace PE_Group_Project.API.Controllers
                     .Select(up => up.UserId)
                     .ToList(),
                 Description = project.Description,
-                Attachments = new List<ProjectAttachmentDTO>() // Add if needed
+                Attachments = new List<ProjectAttachmentDTO>(), // Add if needed
             };
 
             return CreatedAtAction(
@@ -405,7 +415,7 @@ namespace PE_Group_Project.API.Controllers
                     .Select(up => up.UserId)
                     .ToList(),
                 Description = project.Description,
-                Attachments = new List<ProjectAttachmentDTO>() // Add if needed
+                Attachments = new List<ProjectAttachmentDTO>(), // Add if needed
             };
 
             return Ok(projectDTO);

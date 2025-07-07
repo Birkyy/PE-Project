@@ -61,31 +61,62 @@ const CommentList = ({
   };
 
   const handleSubmitComment = async () => {
-    if (!newCommentText.trim()) return;
+    // Allow submission if there's either comment text OR file attachments
+    if (!newCommentText.trim() && newCommentAttachments.length === 0) {
+      return;
+    }
 
     setIsSubmitting(true);
 
     try {
-      const comment = {
-        projectTaskId: taskId,
-        comment: newCommentText.trim(),
-        userId: currentUser.userId,
+      // If there are file attachments, upload them first
+      let uploadedFiles = [];
+      if (newCommentAttachments.length > 0) {
+        for (const attachment of newCommentAttachments) {
+          try {
+            const formData = new FormData();
+            formData.append("file", attachment.file);
+
+            const uploadResponse = await fetch(
+              `http://localhost:5022/api/File/upload/task/${taskId}`,
+              {
+                method: "POST",
+                body: formData,
+              }
+            );
+
+            if (!uploadResponse.ok) {
+              throw new Error(
+                `File upload failed: ${uploadResponse.statusText}`
+              );
+            }
+
+            const uploadResult = await uploadResponse.json();
+            uploadedFiles.push({
+              name: attachment.name,
+              url: uploadResult.url,
+              size: attachment.size,
+            });
+          } catch (uploadError) {
+            throw new Error(
+              `Failed to upload ${attachment.name}: ${uploadError.message}`
+            );
+          }
+        }
+      }
+
+      const commentData = {
+        comment: newCommentText.trim() || "File attachment", // Use default text if no comment
+        userId: currentUser?.userId || currentUser?.id,
+        attachments: uploadedFiles, // Include uploaded file info
       };
 
-      const savedComment = await onAddComment(taskId, {
-        comment: newCommentText,
-        userId: currentUser.userId,
-        projectTaskId: taskId,
-      });
-      console.log("Sending comment:", {
-        content: newCommentText,
-        userId: currentUser.userId,
-        projectTaskId: taskId,
-      });
+      await onAddComment(taskId, commentData);
 
       setNewCommentText("");
+      setNewCommentAttachments([]); // Clear attachments
     } catch (error) {
-      console.error("Error adding comment:", error);
+      // You might want to show an error message to the user here
     } finally {
       setIsSubmitting(false);
     }
@@ -276,7 +307,7 @@ const CommentList = ({
         ) : (
           sortedComments.map((comment) => (
             <Comment
-              key={comment.id}
+              key={comment.taskCommentId || comment.id}
               comment={comment}
               currentUser={currentUser}
               onEdit={onEditComment}

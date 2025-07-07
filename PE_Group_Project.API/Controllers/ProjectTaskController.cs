@@ -91,6 +91,9 @@ namespace PE_Group_Project.API.Controllers
             _context.ProjectTasks.Add(task);
             _context.SaveChanges();
 
+            // Send notification to assigned user
+            SendTaskAssignmentNotification(task);
+
             return CreatedAtAction(
                 nameof(GetProjectTaskById),
                 new { id = task.ProjectTaskId },
@@ -112,6 +115,9 @@ namespace PE_Group_Project.API.Controllers
                 return NotFound();
             }
 
+            // Check if assignee changed
+            var assigneeChanged = task.PIC != updateProjectTaskRequestDTO.PIC;
+
             // Optionally, ensure the DTO ProjectTaskId matches the route Id
             if (
                 updateProjectTaskRequestDTO.ProjectTaskId != Guid.Empty
@@ -131,7 +137,60 @@ namespace PE_Group_Project.API.Controllers
             task.Priority = updateProjectTaskRequestDTO.Priority;
             _context.SaveChanges();
 
+            // Send notification if assignee changed
+            if (assigneeChanged)
+            {
+                SendTaskAssignmentNotification(task);
+            }
+
             return Ok(task);
+        }
+
+        private void SendTaskAssignmentNotification(ProjectTask task)
+        {
+            try
+            {
+                // Skip if no assignee
+                if (
+                    task.PIC == Guid.Empty
+                    || task.PIC == new Guid("00000000-0000-0000-0000-000000000000")
+                )
+                {
+                    return;
+                }
+
+                // Get the assigned user
+                var assignedUser = _context.Users.FirstOrDefault(u => u.UserId == task.PIC);
+                if (assignedUser == null)
+                    return;
+
+                // Get project name
+                var project = _context.Projects.FirstOrDefault(p => p.ProjectId == task.ProjectId);
+                var projectName = project?.ProjectName ?? "Unknown Project";
+
+                // Create notification for assigned user
+                var notification = new Notification
+                {
+                    NotificationId = Guid.NewGuid(),
+                    UserId = assignedUser.UserId,
+                    Title = "New Task Assigned",
+                    Message =
+                        $"You have been assigned to task: {task.TaskName} in project: {projectName}",
+                    CreatedAt = DateTime.UtcNow,
+                    IsRead = false,
+                };
+
+                _context.Notifications.Add(notification);
+                _context.SaveChanges();
+
+                Console.WriteLine(
+                    $"Task assignment notification sent to {assignedUser.Username} for task {task.TaskName}"
+                );
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error sending task assignment notification: {ex.Message}");
+            }
         }
 
         [HttpDelete]

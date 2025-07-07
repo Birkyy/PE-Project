@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PE_Group_Project.API.Data;
@@ -8,6 +9,7 @@ namespace PE_Group_Project.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [EnableCors("AllowAll")]
     public class NotificationController(AppDBContext dbContext) : ControllerBase
     {
         private readonly AppDBContext _context = dbContext;
@@ -16,26 +18,37 @@ namespace PE_Group_Project.API.Controllers
         [Route("{userId:guid}")]
         public IActionResult GetUserNotifications(Guid userId)
         {
-            var notifications = _context
-                .Notifications.Where(n => n.UserId == userId)
-                .OrderByDescending(n => n.CreatedAt)
-                .ToList();
+            Console.WriteLine($"GetUserNotifications called with userId: {userId}");
 
-            if (!notifications.Any())
+            try
             {
-                return NotFound($"No notifications found for user ID: {userId}");
+                var notifications = _context
+                    .Notifications.Where(n => n.UserId == userId)
+                    .OrderByDescending(n => n.CreatedAt)
+                    .ToList();
+
+                Console.WriteLine($"Found {notifications.Count} notifications for user {userId}");
+
+                var notificationDTOs = notifications
+                    .Select(n => new NotificationDTO
+                    {
+                        NotificationId = n.NotificationId,
+                        UserId = n.UserId,
+                        Title = n.Title,
+                        Message = n.Message,
+                        CreatedAt = n.CreatedAt,
+                        IsRead = n.IsRead,
+                    })
+                    .ToList();
+
+                Console.WriteLine($"Returning {notificationDTOs.Count} notification DTOs");
+                return Ok(notificationDTOs);
             }
-
-            var notificationDTOs = notifications
-                .Select(n => new NotificationDTO
-                {
-                    Title = n.Title,
-                    Message = n.Message,
-                    CreatedAt = n.CreatedAt,
-                })
-                .ToList();
-
-            return Ok(notificationDTOs);
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetUserNotifications: {ex.Message}");
+                return StatusCode(500, "Internal server error");
+            }
         }
 
         [HttpPost]

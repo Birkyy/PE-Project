@@ -1,9 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "1nFUjg6sRUU=",
+  "dgSpecHash": "+0oUs93BQ0Y=",
   "success": true,
   "projectFilePath": "C:\\Users\\laose\\Desktop\\Y3S3\\Programming Elective (II)\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\laose\\.nuget\\packages\\awssdk.core\\4.0.0.14\\awssdk.core.4.0.0.14.nupkg.sha512",
+    "C:\\Users\\laose\\.nuget\\packages\\awssdk.s3\\4.0.4.1\\awssdk.s3.4.0.4.1.nupkg.sha512",
     "C:\\Users\\laose\\.nuget\\packages\\azure.core\\1.44.1\\azure.core.1.44.1.nupkg.sha512",
     "C:\\Users\\laose\\.nuget\\packages\\azure.identity\\1.11.4\\azure.identity.1.11.4.nupkg.sha512",
     "C:\\Users\\laose\\.nuget\\packages\\azure.storage.blobs\\12.24.1\\azure.storage.blobs.12.24.1.nupkg.sha512",

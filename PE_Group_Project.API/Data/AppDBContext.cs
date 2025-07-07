@@ -11,7 +11,6 @@ namespace PE_Group_Project.API.Data
         public DbSet<UserProject> UserProjects { get; set; }
         public DbSet<TaskComment> TaskComments { get; set; }
         public DbSet<Notification> Notifications { get; set; }
-        public DbSet<Blob> Blobs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -39,15 +38,6 @@ namespace PE_Group_Project.API.Data
                 .WithMany(u => u.Notifications)
                 .HasForeignKey(n => n.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder
-                .Entity<Blob>()
-                .HasOne(b => b.ProjectTask)
-                .WithMany(t => t.Blobs)
-                .HasForeignKey(b => b.ProjectTaskId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<Blob>().Ignore(b => b.Content);
         }
     }
 }

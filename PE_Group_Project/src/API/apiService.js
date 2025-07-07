@@ -35,6 +35,20 @@ api.interceptors.response.use(
 
 // Project API calls
 export const projectAPI = {
+  // Test backend connection
+  testConnection: async () => {
+    try {
+      console.log("=== TEST: Testing backend connection ===");
+      const response = await api.get('/Project/test');
+      console.log("=== TEST: Backend connection successful ===");
+      console.log("Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("=== TEST: Backend connection failed ===", error);
+      throw error;
+    }
+  },
+
   // Get all projects
   getAllProjects: async (userId = null) => {
     try {
@@ -303,37 +317,236 @@ export const userAPI = {
 };
 
 export const commentAPI = {
-  // Get all comments
+  // Get all comments for a task
   getCommentsByTaskId: async (taskId) => {
+    console.log("=== API: getCommentsByTaskId START ===");
+    console.log("taskId:", taskId);
+    console.log("Full URL:", `${api.defaults.baseURL}/TaskComment/${taskId}`);
+    
     try {
-      const response = await api.get(`/Comment/${taskId}`);
+      console.log("=== API: About to make GET request ===");
+      const response = await api.get(`/TaskComment/${taskId}`);
+      console.log("=== API: GET request completed ===");
+      console.log("Response status:", response.status);
+      console.log("Response data:", response.data);
       return response.data;
     } catch (error) {
-      console.error('Error fetching comments:', error);
+      console.error("=== API: Error in getCommentsByTaskId ===", error);
+      console.error("Error response:", error.response);
+      console.error("Error message:", error.message);
       throw error;
     }
   },
 
+  // Create a new comment
   createComment: async (taskId, commentData) => {
+    console.log("=== API: createComment START ===");
+    console.log("taskId:", taskId);
+    console.log("commentData:", commentData);
+    console.log("Full URL:", `${api.defaults.baseURL}/TaskComment`);
+    
     try {
-      const response = await api.post(`/TaskComment/`, commentData);
+      console.log("=== API: About to make POST request ===");
+      const response = await api.post(`/TaskComment`, commentData);
+      console.log("=== API: POST request completed ===");
+      console.log("Response status:", response.status);
+      console.log("Response data:", response.data);
       return response.data;
     } catch (error) {
-      console.error('Error creating user:', error);
+      console.error("=== API: Error in createComment ===", error);
+      console.error("Error response:", error.response);
+      console.error("Error message:", error.message);
+      throw error;
+    }
+  },
+
+  // Update a comment
+  updateComment: async (commentId, commentData) => {
+    console.log("=== API: updateComment START ===");
+    console.log("commentId:", commentId);
+    console.log("commentData:", commentData);
+    console.log("Full URL:", `${api.defaults.baseURL}/TaskComment/${commentId}`);
+    
+    try {
+      console.log("=== API: About to make PUT request ===");
+      const response = await api.put(`/TaskComment/${commentId}`, commentData);
+      console.log("=== API: PUT request completed ===");
+      console.log("Response status:", response.status);
+      console.log("Response data:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("=== API: Error in updateComment ===", error);
+      console.error("Error response:", error.response);
+      console.error("Error message:", error.message);
+      throw error;
+    }
+  },
+
+  // Delete a comment
+  deleteComment: async (commentId) => {
+    console.log("=== API: deleteComment START ===");
+    console.log("commentId:", commentId);
+    console.log("Full URL:", `${api.defaults.baseURL}/TaskComment/${commentId}`);
+    
+    try {
+      console.log("=== API: About to make DELETE request ===");
+      const response = await api.delete(`/TaskComment/${commentId}`);
+      console.log("=== API: DELETE request completed ===");
+      console.log("Response status:", response.status);
+      console.log("Response data:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("=== API: Error in deleteComment ===", error);
+      console.error("Error response:", error.response);
+      console.error("Error message:", error.message);
+      throw error;
+    }
+  },
+};
+
+export const notificationAPI = {
+  // Get user notifications
+  getUserNotification: async (userId) => {
+    console.log("=== NOTIFICATION API: getUserNotification START ===");
+    console.log("userId:", userId);
+    console.log("Full URL:", `${api.defaults.baseURL}/Notification/${userId}`);
+    
+    try {
+      console.log("=== NOTIFICATION API: About to make GET request ===");
+      const response = await api.get(`/Notification/${userId}`);
+      console.log("=== NOTIFICATION API: GET request completed ===");
+      console.log("Response status:", response.status);
+      console.log("Response data:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("=== NOTIFICATION API: Error in getUserNotification ===", error);
+      console.error("Error response:", error.response);
+      console.error("Error message:", error.message);
+      throw error;
+    }
+  },
+
+  createNotification: async (notificationData) => {
+    try {
+      const response = await api.post(`/Notification`, notificationData);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating notification:', error);
+      throw error;
+    }
+  },
+
+  markNotificationAsRead: async (notificationId) => {
+    try {
+      const response = await api.put(`/Notification/${notificationId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
       throw error;
     }
   },
 
   // Update user
-  deleteComment: async (taskId) =>{
+  deleteNotification: async (notificationId) => {
     try {
-      const response = await api.delete(`/Comment/${taskId}`);
+      const response = await api.delete(`/Notification/${notificationId}`);
       return response.data;
     } catch (error) {
-      console.error('Error deleting comment:', error);
+      console.error('Error deleting notification:', error);
       throw error;
     }
   }
+};
+
+// File Upload API calls
+export const fileAPI = {
+  // Upload general file
+  uploadFile: async (file, category = null, relatedId = null) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      if (category) formData.append('category', category);
+      if (relatedId) formData.append('relatedId', relatedId);
+
+      const response = await api.post('/File/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      throw error;
+    }
+  },
+
+  // Upload project file
+  uploadProjectFile: async (file, projectId) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await api.post(`/File/upload/project/${projectId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error uploading project file:', error);
+      throw error;
+    }
+  },
+
+  // Upload task file
+  uploadTaskFile: async (file, taskId) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await api.post(`/File/upload/task/${taskId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error uploading task file:', error);
+      throw error;
+    }
+  },
+ 
+    getFilesByTaskId: async (taskId) => {
+      try {
+        const response = await api.get(`/File/list/task/${taskId}`);
+        return response.data;
+      } catch (error) {
+        console.error("Error fetching task files:", error);
+        throw error;
+      }
+    },
+
+    downloadFile: async (fileId) => {
+      try {
+        const response = await api.get(`/File/download/${fileId}`, {
+          responseType: "blob", // important to receive actual file data
+        });
+        return response;
+      } catch (error) {
+        console.error("Error downloading file:", error);
+        throw error;
+      }
+    },
+  
+    deleteFile: async (taskId, fileName) => {
+      try {
+        const response = await api.delete(`/File/delete/task/${taskId}/${encodeURIComponent(fileName)}`);
+        return response.data;
+      } catch (error) {
+        console.error("Error deleting file:", error);
+        throw error;
+      }
+    },
 };
 
 export default api; 
