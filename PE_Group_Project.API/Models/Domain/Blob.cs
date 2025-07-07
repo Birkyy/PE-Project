@@ -10,6 +10,7 @@ namespace PE_Group_Project.API.Models.Domain
         public string? Status { get; set; }
         public bool Error { get; set; }
         public Stream? Content { get; set; }
-        public ProjectTask ProjectTask { get; set; } = null!;
+        public ProjectTask? ProjectTask { get; set; } = null!;
+        public TaskComment? TaskComment { get; set; } = null!;
     }
 }

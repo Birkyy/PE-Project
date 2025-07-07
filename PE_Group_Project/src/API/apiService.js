@@ -316,7 +316,7 @@ export const commentAPI = {
 
   createComment: async (taskId, commentData) => {
     try {
-      const response = await api.post(`/Comment/${taskId}`, commentData);
+      const response = await api.post(`/TaskComment/`, commentData);
       return response.data;
     } catch (error) {
       console.error('Error creating user:', error);

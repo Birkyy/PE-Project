@@ -8,5 +8,6 @@ namespace PE_Group_Project.API.Models.Domain
         public Guid ProjectTaskId { get; set; }
         public required string Comment { get; set; }
         public required Guid UserId { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

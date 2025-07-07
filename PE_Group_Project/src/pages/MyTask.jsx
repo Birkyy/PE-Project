@@ -202,6 +202,7 @@ const MyTask = () => {
   // Enhanced task transformation with user resolution
   const transformTasksWithUserInfo = async (tasks) => {
     const transformedTasks = [];
+    const comments = await commentAPI.getCommentsByTaskId(task.projectTaskId);
 
     for (const task of tasks) {
       const assignedTo = await resolveUserInfo(task.pic);
@@ -215,7 +216,7 @@ const MyTask = () => {
         assignedTo: assignedTo,
         pic: task.pic, // Keep the original GUID for API calls
         projectId: task.projectId,
-        comments: [],
+        comments: comments || [],
       });
     }
 
@@ -439,9 +440,31 @@ const MyTask = () => {
 
   // Comment handling functions
   const handleAddComment = async (taskId, commentData) => {
+    const formatted = {
+      Comment: commentData.Comment || commentData.comment,
+      UserId: commentData.UserId || commentData.userId,
+      ProjectTaskId:
+        commentData.ProjectTaskId || commentData.projectTaskId || taskId,
+    };
+
+    console.log("Sending comment to API:", formatted);
+
     try {
-      const data = await commentAPI.createComment(taskId, commentData);
-      console.log("Adding comment:", commentData);
+      const newComment = await commentAPI.createComment(taskId, formatted);
+      console.log("API returned:", newComment);
+
+      const updateTaskComments = (tasks) =>
+        tasks.map((task) =>
+          task.id === taskId
+            ? { ...task, comments: [...(task.comments || []), newComment] }
+            : task
+        );
+
+      setTodoTasks(updateTaskComments);
+      setInProgressTasks(updateTaskComments);
+      setCompletedTasks(updateTaskComments);
+
+      return newComment;
     } catch (error) {
       console.error("Error adding comment:", error);
       alert("Failed to add comment. Please try again.");
@@ -450,8 +473,19 @@ const MyTask = () => {
 
   const handleEditComment = async (commentId, updatedComment) => {
     try {
-      // Implement comment editing logic with API
-      console.log("Editing comment:", commentId, updatedComment);
+      const updated = await commentAPI.updateComment(commentId, updatedComment);
+
+      const updateComments = (tasks) =>
+        tasks.map((task) => ({
+          ...task,
+          comments: task.comments.map((c) =>
+            c.commentId === commentId ? updated : c
+          ),
+        }));
+
+      setTodoTasks(updateComments);
+      setInProgressTasks(updateComments);
+      setCompletedTasks(updateComments);
     } catch (error) {
       console.error("Error editing comment:", error);
       alert("Failed to edit comment. Please try again.");
@@ -460,8 +494,17 @@ const MyTask = () => {
 
   const handleDeleteComment = async (commentId) => {
     try {
-      // Implement comment deletion logic with API
-      console.log("Deleting comment:", commentId);
+      await commentAPI.deleteComment(commentId);
+
+      const removeComment = (tasks) =>
+        tasks.map((task) => ({
+          ...task,
+          comments: task.comments.filter((c) => c.commentId !== commentId),
+        }));
+
+      setTodoTasks(removeComment);
+      setInProgressTasks(removeComment);
+      setCompletedTasks(removeComment);
     } catch (error) {
       console.error("Error deleting comment:", error);
       alert("Failed to delete comment. Please try again.");

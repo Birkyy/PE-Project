@@ -15,12 +15,18 @@ namespace PE_Group_Project.API.Controllers
         [Route("{taskId:guid}")]
         public IActionResult GetCommentsFromTaskId([FromRoute] Guid taskId)
         {
-            var comments = _context.TaskComments.Where(c => c.ProjectTaskId == taskId).ToList();
+            var comments = _context
+                .TaskComments.Where(c => c.ProjectTaskId == taskId)
+                .OrderBy(c => c.CreatedAt)
+                .ToList();
 
-            if (comments == null || comments.Count == 0)
+            if (!comments.Any())
             {
                 return NotFound();
             }
+
+            // Use join to get usernames
+            var users = _context.Users.ToDictionary(u => u.UserId, u => u.Username);
 
             var commentsDTO = comments
                 .Select(c => new TaskCommentDTO
@@ -29,6 +35,8 @@ namespace PE_Group_Project.API.Controllers
                     ProjectTaskId = c.ProjectTaskId,
                     Comment = c.Comment,
                     UserId = c.UserId,
+                    CreatedAt = c.CreatedAt,
+                    Username = users.ContainsKey(c.UserId) ? users[c.UserId] : null,
                 })
                 .ToList();
 
@@ -51,10 +59,14 @@ namespace PE_Group_Project.API.Controllers
                 ProjectTaskId = createTaskCommentRequestDTO.ProjectTaskId,
                 Comment = createTaskCommentRequestDTO.Comment,
                 UserId = createTaskCommentRequestDTO.UserId,
+                CreatedAt = DateTime.UtcNow,
             };
 
             _context.TaskComments.Add(taskComment);
             _context.SaveChanges();
+
+            // Optional: include user info
+            var user = _context.Users.FirstOrDefault(u => u.UserId == taskComment.UserId);
 
             var taskCommentDTO = new TaskCommentDTO
             {
@@ -62,6 +74,8 @@ namespace PE_Group_Project.API.Controllers
                 ProjectTaskId = taskComment.ProjectTaskId,
                 Comment = taskComment.Comment,
                 UserId = taskComment.UserId,
+                CreatedAt = taskComment.CreatedAt,
+                Username = user?.Username,
             };
 
             return CreatedAtAction(
