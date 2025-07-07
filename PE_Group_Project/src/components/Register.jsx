@@ -1,61 +1,110 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { userAPI } from "../API/apiService.js";
 
 const Register = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: '',
-    confirmPassword: ''
+    username: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
+
+    console.log("Form submission started with data:", formData);
 
     // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError("Passwords do not match");
       setLoading(false);
       return;
     }
 
     // Validate password strength
     if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
+      setError("Password must be at least 6 characters long");
+      setLoading(false);
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError("Please enter a valid email address");
+      setLoading(false);
+      return;
+    }
+
+    // Validate username
+    if (formData.username.length < 3) {
+      setError("Username must be at least 3 characters long");
       setLoading(false);
       return;
     }
 
     try {
-      // Just log the registration data for now
-      console.log('Registration attempt:', {
-        username: formData.username,
-        email: formData.email,
-        password: formData.password
-      });
-      
-      setSuccess('Registration successful! Redirecting to login...');
-      
-      // Redirect to login after 2 seconds
+      console.log("Sending registration request...");
+
+      const requestData = {
+        username: formData.username.trim(),
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password,
+        role: "User",
+      };
+
+      console.log("Request data:", requestData);
+
+      // Use your existing API function
+      const response = await userAPI.createUser(requestData);
+
+      console.log("Registration response:", response);
+
+      setSuccess("Registration successful! Redirecting to login...");
       setTimeout(() => {
-        navigate('/login');
-      }, 2000);
-    } catch (error) {
-      setError('Registration failed');
+        console.log("Redirecting to login...");
+        navigate("/login");
+      }, 1500);
+    } catch (err) {
+      console.error("Registration error:", err);
+
+      if (err.response) {
+        console.log("Error response status:", err.response.status);
+        console.log("Error response data:", err.response.data);
+
+        if (err.response.data && err.response.data.message) {
+          setError(err.response.data.message);
+        } else if (err.response.data && typeof err.response.data === "string") {
+          setError(err.response.data);
+        } else {
+          setError(
+            `Registration failed: ${err.response.status} ${err.response.statusText}`
+          );
+        }
+      } else if (err.request) {
+        console.log("No response received:", err.request);
+        setError(
+          "Network error: Unable to reach the server. Please check if the server is running."
+        );
+      } else {
+        console.log("Request setup error:", err.message);
+        setError("Registration failed. Please try again later.");
+      }
     } finally {
       setLoading(false);
     }
@@ -90,7 +139,10 @@ const Register = () => {
             )}
 
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-300">
+              <label
+                htmlFor="username"
+                className="block text-sm font-medium text-gray-300"
+              >
                 Username
               </label>
               <div className="mt-1">
@@ -109,7 +161,10 @@ const Register = () => {
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-300"
+              >
                 Email address
               </label>
               <div className="mt-1">
@@ -128,7 +183,10 @@ const Register = () => {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-300"
+              >
                 Password
               </label>
               <div className="mt-1">
@@ -150,7 +208,10 @@ const Register = () => {
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300">
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-gray-300"
+              >
                 Confirm Password
               </label>
               <div className="mt-1">
@@ -174,14 +235,17 @@ const Register = () => {
                 disabled={loading}
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/25"
               >
-                {loading ? 'Creating account...' : 'Create account'}
+                {loading ? "Creating account..." : "Create account"}
               </button>
             </div>
 
             <div className="text-center">
               <span className="text-sm text-gray-400">
-                Already have an account?{' '}
-                <Link to="/login" className="font-medium text-purple-400 hover:text-purple-300 transition-colors duration-300">
+                Already have an account?{" "}
+                <Link
+                  to="/login"
+                  className="font-medium text-purple-400 hover:text-purple-300 transition-colors duration-300"
+                >
                   Sign in
                 </Link>
               </span>
@@ -193,4 +257,4 @@ const Register = () => {
   );
 };
 
-export default Register; 
+export default Register;

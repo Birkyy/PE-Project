@@ -46,6 +46,8 @@ namespace PE_Group_Project.API.Data
                 .WithMany(t => t.Blobs)
                 .HasForeignKey(b => b.ProjectTaskId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Blob>().Ignore(b => b.Content);
         }
     }
 }
