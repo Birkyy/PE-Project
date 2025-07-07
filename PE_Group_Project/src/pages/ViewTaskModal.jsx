@@ -9,8 +9,9 @@ import {
   Download,
   ExternalLink,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import CommentList from "../components/CommentList";
+import { userAPI } from "../API/apiService";
 
 const ViewTaskModal = ({
   task,
@@ -21,13 +22,41 @@ const ViewTaskModal = ({
   currentUser,
 }) => {
   const { darkMode } = useTheme();
+  const [assignedUserName, setAssignedUserName] = useState("Loading...");
+  const [attachments, setAttachments] = useState([]);
+  const [comments, setComments] = useState([]);
+
+  // Resolve user name from PIC/GUID
+  const resolveUserName = async (picGuid) => {
+    if (!picGuid || picGuid === "00000000-0000-0000-0000-000000000000") {
+      return "Unassigned";
+    }
+
+    try {
+      const user = await userAPI.getUserById(picGuid);
+      return user.username || user.email || "Unknown User";
+    } catch (error) {
+      console.error("Error resolving user info:", error);
+      return "Unknown User";
+    }
+  };
+
+  useEffect(() => {
+    if (!task) return;
+
+    const loadUserName = async () => {
+      const userName = await resolveUserName(task.PIC || task.pic);
+      setAssignedUserName(userName);
+    };
+
+    // Initialize attachments and comments from task
+    setAttachments(task.attachments || []);
+    setComments(task.comments || []);
+
+    loadUserName();
+  }, [task]);
 
   if (!task) return null;
-
-  // Initialize comments array if it doesn't exist
-  const comments = task.comments || [];
-  // Initialize attachments array if it doesn't exist
-  const attachments = task.attachments || [];
 
   const formatDate = (dateString) => {
     const options = { year: "numeric", month: "long", day: "numeric" };
@@ -201,7 +230,7 @@ const ViewTaskModal = ({
                     darkMode ? "text-gray-300" : "text-gray-600"
                   }`}
                 >
-                  {task.assignedTo || "Unassigned"}
+                  {assignedUserName}
                 </span>
               </div>
             </div>

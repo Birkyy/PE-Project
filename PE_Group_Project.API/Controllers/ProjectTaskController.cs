@@ -148,19 +148,5 @@ namespace PE_Group_Project.API.Controllers
             _context.SaveChanges();
             return NoContent();
         }
-
-        [HttpGet]
-        [Route("{id:guid}/is-overdue")]
-        public IActionResult GetIfProjectTaskOverdue([FromRoute] Guid id)
-        {
-            var task = _context.ProjectTasks.FirstOrDefault(t => t.ProjectTaskId == id);
-            if (task == null)
-            {
-                return NotFound();
-            }
-            // If the task's deadline is before now, it's overdue
-            bool isOverdue = task.Deadline < DateTime.UtcNow;
-            return Ok(isOverdue);
-        }
     }
 }

@@ -47,7 +47,7 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit, contributors }) => {
           deadline: deadlineDate,
           priority: task.priority || 'medium',
           status: task.status || 'Todo',
-          assignedTo: task.assignedTo || task.pic || '',
+          assignedTo: task.pic || '',
           comments: task.comments || [],
           attachments: task.attachments || []
         });

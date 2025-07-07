@@ -455,46 +455,5 @@ namespace PE_Group_Project.API.Controllers
             _context.SaveChanges();
             return NoContent();
         }
-
-        [HttpGet]
-        [Route("{id:guid}/is-overdue")]
-        public IActionResult GetIfProjectOverdue(
-            [FromRoute] Guid id,
-            [FromQuery] Guid? userId = null
-        )
-        {
-            var project = _context.Projects.FirstOrDefault(p => p.ProjectId == id);
-            if (project == null)
-            {
-                return NotFound();
-            }
-
-            // If userId is provided, check access permissions
-            if (userId.HasValue)
-            {
-                var user = _context.Users.FirstOrDefault(u => u.UserId == userId.Value);
-                if (user == null)
-                {
-                    return BadRequest("User not found.");
-                }
-
-                // If user is not Admin, check if they're involved in this project
-                if (user.Role?.Equals("Admin", StringComparison.OrdinalIgnoreCase) != true)
-                {
-                    var userProject = _context.UserProjects.FirstOrDefault(up =>
-                        up.UserId == userId.Value && up.ProjectId == id
-                    );
-
-                    if (userProject == null)
-                    {
-                        return Forbid("You don't have access to this project.");
-                    }
-                }
-            }
-
-            // If the project's date is before now, it's overdue
-            bool isOverdue = project.Date < DateTime.UtcNow;
-            return Ok(isOverdue);
-        }
     }
 }

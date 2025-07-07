@@ -7,7 +7,7 @@ import AddTaskModal from './AddTaskModal';
 import EditTaskModal from './EditTaskModal';
 import ViewTaskModal from './ViewTaskModal';
 import EditProjectModal from './EditProjectModal';
-import { projectAPI, taskAPI } from '../API/apiService';
+import { projectAPI, taskAPI, userAPI } from '../API/apiService';
 
 const statusList = [
   { key: 'Todo', color: 'blue' },
@@ -56,7 +56,7 @@ const getAssignedPersonName = (picGuid) => {
   if (!picGuid || picGuid === '00000000-0000-0000-0000-000000000000') {
     return 'Unassigned';
   }
-  return assignedPersonNames.get(picGuid) || 'Unknown Person';
+  return assignedNames[picGuid] || 'Loading...';
 };
 
 function Project() {
@@ -363,13 +363,6 @@ function Project() {
                                 Overdue
                             </span>
                         )}
-                    </div>
-                    
-                    <div className="flex items-center gap-2 text-xs">
-                        <User className="w-3 h-3" />
-                        <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
-                            {getAssignedPersonName(task.PIC)}
-                        </span>
                     </div>
                     
                     <div className="flex items-center gap-2 text-xs">
