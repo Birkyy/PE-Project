@@ -496,6 +496,7 @@ const AddProject = () => {
                     name="date"
                     value={formData.date}
                     onChange={handleInputChange}
+                    min={new Date().toISOString().split('T')[0]}
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 ${
                       darkMode
                         ? "bg-gray-700 border-gray-600 text-white focus:border-purple-400"
