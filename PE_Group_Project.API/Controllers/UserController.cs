@@ -244,7 +244,7 @@ namespace PE_Group_Project.API.Controllers
                 user.Email = updateUserRequestDTO.Email;
                 if (!string.IsNullOrEmpty(updateUserRequestDTO.Password))
                 {
-                    user.Password = updateUserRequestDTO.Password;
+                    user.Password = HashPassword(updateUserRequestDTO.Password);
                 }
                 user.Role = updateUserRequestDTO.Role;
                 user.Age = updateUserRequestDTO.Age;
@@ -271,6 +271,22 @@ namespace PE_Group_Project.API.Controllers
             {
                 return BadRequest($"Failed to update user: {ex.Message}");
             }
+        }
+
+        [HttpDelete]
+        [Route("{id:guid}")]
+        public IActionResult DeleteUser([FromRoute] Guid id)
+        {
+            var user = _context.Users.FirstOrDefault(u => u.UserId == id);
+            if (user == null)
+            {
+                return NotFound("User not found.");
+            }
+
+            _context.Users.Remove(user);
+            _context.SaveChanges();
+
+            return NoContent(); // 204 No Content
         }
     }
 }
