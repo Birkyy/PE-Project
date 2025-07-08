@@ -713,7 +713,7 @@ const MyTask = () => {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            {previousStatus && (
+            {previousStatus && canUserEditTasks(currentUser, currentProject) && (
               <button
                 onClick={() => handleChangeStatus(task, previousStatus)}
                 className={`p-1 rounded-full ${
@@ -726,7 +726,7 @@ const MyTask = () => {
                 <ChevronLeft size={16} />
               </button>
             )}
-            {nextStatus && (
+            {nextStatus && canUserEditTasks(currentUser, currentProject) && (
               <button
                 onClick={() => handleChangeStatus(task, nextStatus)}
                 className={`p-1 rounded-full ${
