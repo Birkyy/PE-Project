@@ -27,7 +27,7 @@ namespace PE_Group_Project.API.Controllers
         [HttpGet]
         [Route("")]
         public IActionResult GetAllUsers()
-        {
+        {   
             var users = _context.Users.ToList();
             var userDTOs = users
                 .Select(user => new UserDTO

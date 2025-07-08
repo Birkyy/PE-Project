@@ -258,7 +258,7 @@ const AddTaskModal = ({ isOpen, onClose, onSave, contributors }) => {
                 onChange={e => setTaskData({ ...taskData, assignedTo: e.target.value })}
                 className={`w-full rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} p-2.5 focus:ring-2 focus:ring-blue-500 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                <option value="">Select contributor</option>
+                <option value="">Select Person In Charge</option>
                 {contributorOptions.map(user => (
                   <option key={user.id || user} value={user.id || user}>
                     {user.name || user.email || user.id || user}

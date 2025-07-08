@@ -498,6 +498,7 @@ function Project() {
     const userId = currentUser?.userId || currentUser?.id || currentUser?.UserId;
     const isAssignedToCurrentUser = isUserAssignedToTask(currentUser, task);
     const userRole = getUserProjectRole(currentUser, project);
+    const canChangeStatus = isAssignedToCurrentUser || userRole === 'admin' || userRole === 'manager';
 
     return (
       <div
@@ -586,7 +587,7 @@ function Project() {
 
         <div className="mt-3 flex items-center justify-between">
           <div className="flex gap-1">
-            {isAssignedToCurrentUser && (
+            {canChangeStatus && (
               <>
                 <button
                   onClick={(e) => {
@@ -1016,7 +1017,10 @@ function Project() {
         isOpen={isAddTaskModalOpen}
         onClose={() => setIsAddTaskModalOpen(false)}
         onSave={handleCreateTask}
-        contributors={project.contributors || []}
+        contributors={[
+          ...(project?.contributors || []),
+          ...(project?.projectManagerInCharge ? [project.projectManagerInCharge] : [])
+        ].filter((v, i, arr) => v && arr.indexOf(v) === i)}
       />
       <EditTaskModal
         isOpen={isEditModalOpen}
@@ -1026,7 +1030,10 @@ function Project() {
         }}
         onSubmit={handleEditTask}
         task={editTask}
-        contributors={project.contributors || []}
+        contributors={[
+          ...(project?.contributors || []),
+          ...(project?.projectManagerInCharge ? [project.projectManagerInCharge] : [])
+        ].filter((v, i, arr) => v && arr.indexOf(v) === i)}
       />
       <ViewTaskModal
         task={viewTask}
