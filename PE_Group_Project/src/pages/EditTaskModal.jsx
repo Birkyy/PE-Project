@@ -1,22 +1,31 @@
-import { X, AlertCircle, Search, ChevronDown, UserCheck, Upload, File, Trash2 } from 'lucide-react';
-import { useTheme } from '../context/ThemeContext';
-import { useState, useEffect, useRef } from 'react';
+import {
+  X,
+  AlertCircle,
+  Search,
+  ChevronDown,
+  UserCheck,
+  Upload,
+  File,
+  Trash2,
+} from "lucide-react";
+import { useTheme } from "../context/ThemeContext";
+import { useState, useEffect, useRef } from "react";
 
 const EditTaskModal = ({ isOpen, task, onClose, onSubmit, contributors }) => {
   const { darkMode } = useTheme();
   const [taskData, setTaskData] = useState({
-    title: '',
-    description: '',
-    deadline: '',
-    priority: 'medium',
-    assignedTo: '',
-    status: 'Todo',
-    attachments: []
+    title: "",
+    description: "",
+    deadline: "",
+    priority: "medium",
+    assignedTo: "",
+    status: "Todo",
+    attachments: [],
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [dragActive, setDragActive] = useState(false);
   const dropdownRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -26,7 +35,7 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit, contributors }) => {
   // Get tomorrow's date as the minimum date for the deadline
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
-  const minDate = tomorrow.toISOString().split('T')[0];
+  const minDate = tomorrow.toISOString().split("T")[0];
 
   // Filter users based on search term
   const filteredUsers = [];
@@ -37,27 +46,29 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit, contributors }) => {
       setLoading(true);
       try {
         // Format the deadline date for the input field (YYYY-MM-DD format)
-        const deadlineDate = task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : '';
-        
+        const deadlineDate = task.deadline
+          ? new Date(task.deadline).toISOString().split("T")[0]
+          : "";
+
         // Remove mockUsers dependency - just use the task's assignedTo directly
         setTaskData({
           id: task.id,
-          title: task.title || task.taskName || '',
+          title: task.title || task.taskName || "",
           description: task.description,
           deadline: deadlineDate,
-          priority: task.priority || 'medium',
-          status: task.status || 'Todo',
-          assignedTo: task.pic || '',
+          priority: task.priority || "medium",
+          status: task.status || "Todo",
+          assignedTo: task.pic || "",
           comments: task.comments || [],
-          attachments: task.attachments || []
+          attachments: task.attachments || [],
         });
-        setError('');
-        setSearchTerm('');
+        setError("");
+        setSearchTerm("");
         setIsDropdownOpen(false);
         setDragActive(false);
       } catch (error) {
-        console.error('Error initializing task data:', error);
-        setError('Failed to load task data. Please try again.');
+        console.error("Error initializing task data:", error);
+        setError("Failed to load task data. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -66,19 +77,23 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit, contributors }) => {
 
   useEffect(() => {
     if (contributors && contributors.length > 0) {
-      if (typeof contributors[0] === 'object') {
+      if (typeof contributors[0] === "object") {
         setContributorOptions(contributors);
       } else {
         setLoadingContributors(true);
-        Promise.all(contributors.map(async (guid) => {
-          try {
-            const res = await import('../API/apiService');
-            const user = await res.userAPI.getUserById(guid);
-            return { id: guid, name: user.username || user.email || guid };
-          } catch {
-            return { id: guid, name: guid };
-          }
-        })).then(setContributorOptions).finally(() => setLoadingContributors(false));
+        Promise.all(
+          contributors.map(async (guid) => {
+            try {
+              const res = await import("../API/apiService");
+              const user = await res.userAPI.getUserById(guid);
+              return { id: guid, name: user.username || user.email || guid };
+            } catch {
+              return { id: guid, name: guid };
+            }
+          })
+        )
+          .then(setContributorOptions)
+          .finally(() => setLoadingContributors(false));
       }
     } else {
       setContributorOptions([]);
@@ -87,34 +102,34 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit, contributors }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     // Submit the updated task data while preserving the original task's data
     onSubmit({
       ...task,
       ...taskData,
       id: task.id,
-      assignedTo: taskData.assignedTo || '',
-      pic: taskData.assignedTo || '00000000-0000-0000-0000-000000000000', // Use the updated PIC value
+      assignedTo: taskData.assignedTo || "",
+      pic: taskData.assignedTo || "00000000-0000-0000-0000-000000000000", // Use the updated PIC value
       comments: task.comments || [],
-      attachments: taskData.attachments
+      attachments: taskData.attachments,
     });
-    
+
     onClose();
   };
 
   const handleUserSelect = (user) => {
-    setTaskData(prev => ({
+    setTaskData((prev) => ({
       ...prev,
-      assignedTo: user.name
+      assignedTo: user.name,
     }));
-    setSearchTerm('');
+    setSearchTerm("");
     setIsDropdownOpen(false);
   };
 
   const handleUserRemove = () => {
-    setTaskData(prev => ({
+    setTaskData((prev) => ({
       ...prev,
-      assignedTo: ''
+      assignedTo: "",
     }));
   };
 
@@ -133,7 +148,7 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit, contributors }) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleFiles(e.dataTransfer.files);
     }
@@ -146,33 +161,33 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit, contributors }) => {
   };
 
   const handleFiles = (files) => {
-    const newFiles = Array.from(files).map(file => ({
+    const newFiles = Array.from(files).map((file) => ({
       id: Math.random().toString(36).substr(2, 9),
       name: file.name,
       size: file.size,
       type: file.type,
-      file: file
+      file: file,
     }));
 
-    setTaskData(prev => ({
+    setTaskData((prev) => ({
       ...prev,
-      attachments: [...prev.attachments, ...newFiles]
+      attachments: [...prev.attachments, ...newFiles],
     }));
   };
 
   const removeFile = (fileId) => {
-    setTaskData(prev => ({
+    setTaskData((prev) => ({
       ...prev,
-      attachments: prev.attachments.filter(file => file.id !== fileId)
+      attachments: prev.attachments.filter((file) => file.id !== fileId),
     }));
   };
 
   const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   if (!isOpen || !task) return null;
@@ -180,37 +195,48 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit, contributors }) => {
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onClick={onClose}></div>
+      <div
+        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        onClick={onClose}
+      ></div>
 
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className={`relative w-full max-w-2xl rounded-lg shadow-xl ${
-          darkMode ? 'bg-gray-800' : 'bg-white'
-        } p-6`}>
+        <div
+          className={`relative w-full max-w-2xl rounded-lg shadow-xl ${
+            darkMode ? "bg-gray-800" : "bg-white"
+          } p-6`}
+        >
           {/* Close button */}
           <button
             onClick={onClose}
             className={`absolute right-4 top-4 p-1 rounded-full ${
               darkMode
-                ? 'hover:bg-gray-700 text-gray-400 hover:text-gray-300'
-                : 'hover:bg-gray-100 text-gray-600 hover:text-gray-900'
+                ? "hover:bg-gray-700 text-gray-400 hover:text-gray-300"
+                : "hover:bg-gray-100 text-gray-600 hover:text-gray-900"
             }`}
           >
             <X className="w-5 h-5" />
           </button>
 
           {/* Title */}
-          <h2 className={`text-2xl font-bold mb-6 ${
-            darkMode ? 'text-white' : 'text-gray-900'
-          }`}>
+          <h2
+            className={`text-2xl font-bold mb-6 ${
+              darkMode ? "text-white" : "text-gray-900"
+            }`}
+          >
             Edit Task
           </h2>
 
           {/* Error Message */}
           {error && (
-            <div className={`mb-4 p-3 rounded-lg flex items-center gap-2 ${
-              darkMode ? 'bg-red-900/50 text-red-300' : 'bg-red-100 text-red-600'
-            }`}>
+            <div
+              className={`mb-4 p-3 rounded-lg flex items-center gap-2 ${
+                darkMode
+                  ? "bg-red-900/50 text-red-300"
+                  : "bg-red-100 text-red-600"
+              }`}
+            >
               <AlertCircle className="w-5 h-5" />
               <span>{error}</span>
             </div>
@@ -221,7 +247,11 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit, contributors }) => {
             {/* Loading State */}
             {loading && (
               <div className="flex items-center justify-center py-4">
-                <div className={`text-center ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                <div
+                  className={`text-center ${
+                    darkMode ? "text-white" : "text-gray-900"
+                  }`}
+                >
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
                   <p className="text-sm">Loading task data...</p>
                 </div>
@@ -230,9 +260,12 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit, contributors }) => {
 
             {/* Title Input */}
             <div>
-              <label htmlFor="title" className={`block text-sm font-medium mb-1 ${
-                darkMode ? 'text-gray-300' : 'text-gray-700'
-              }`}>
+              <label
+                htmlFor="title"
+                className={`block text-sm font-medium mb-1 ${
+                  darkMode ? "text-gray-300" : "text-gray-700"
+                }`}
+              >
                 Task Title *
               </label>
               <input
@@ -241,21 +274,28 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit, contributors }) => {
                 required
                 disabled={loading}
                 value={taskData.title}
-                onChange={(e) => setTaskData(prev => ({ ...prev, title: e.target.value }))}
+                onChange={(e) =>
+                  setTaskData((prev) => ({ ...prev, title: e.target.value }))
+                }
                 className={`w-full rounded-lg border ${
                   darkMode
-                    ? 'bg-gray-700 border-gray-600 text-white'
-                    : 'bg-white border-gray-300 text-gray-900'
-                } p-2.5 focus:ring-2 focus:ring-blue-500 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    ? "bg-gray-700 border-gray-600 text-white"
+                    : "bg-white border-gray-300 text-gray-900"
+                } p-2.5 focus:ring-2 focus:ring-blue-500 ${
+                  loading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
                 placeholder="Enter task title"
               />
             </div>
 
             {/* Description Input */}
             <div>
-              <label htmlFor="description" className={`block text-sm font-medium mb-1 ${
-                darkMode ? 'text-gray-300' : 'text-gray-700'
-              }`}>
+              <label
+                htmlFor="description"
+                className={`block text-sm font-medium mb-1 ${
+                  darkMode ? "text-gray-300" : "text-gray-700"
+                }`}
+              >
                 Description *
               </label>
               <textarea
@@ -263,22 +303,32 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit, contributors }) => {
                 required
                 disabled={loading}
                 value={taskData.description}
-                onChange={(e) => setTaskData(prev => ({ ...prev, description: e.target.value }))}
+                onChange={(e) =>
+                  setTaskData((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
                 rows="3"
                 className={`w-full rounded-lg border ${
                   darkMode
-                    ? 'bg-gray-700 border-gray-600 text-white'
-                    : 'bg-white border-gray-300 text-gray-900'
-                } p-2.5 focus:ring-2 focus:ring-blue-500 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    ? "bg-gray-700 border-gray-600 text-white"
+                    : "bg-white border-gray-300 text-gray-900"
+                } p-2.5 focus:ring-2 focus:ring-blue-500 ${
+                  loading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
                 placeholder="Enter task description"
               />
             </div>
 
             {/* Status Input */}
             <div>
-              <label htmlFor="status" className={`block text-sm font-medium mb-1 ${
-                darkMode ? 'text-gray-300' : 'text-gray-700'
-              }`}>
+              <label
+                htmlFor="status"
+                className={`block text-sm font-medium mb-1 ${
+                  darkMode ? "text-gray-300" : "text-gray-700"
+                }`}
+              >
                 Status *
               </label>
               <select
@@ -286,12 +336,16 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit, contributors }) => {
                 required
                 disabled={loading}
                 value={taskData.status}
-                onChange={(e) => setTaskData(prev => ({ ...prev, status: e.target.value }))}
+                onChange={(e) =>
+                  setTaskData((prev) => ({ ...prev, status: e.target.value }))
+                }
                 className={`w-full rounded-lg border ${
                   darkMode
-                    ? 'bg-gray-700 border-gray-600 text-white'
-                    : 'bg-white border-gray-300 text-gray-900'
-                } p-2.5 focus:ring-2 focus:ring-blue-500 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    ? "bg-gray-700 border-gray-600 text-white"
+                    : "bg-white border-gray-300 text-gray-900"
+                } p-2.5 focus:ring-2 focus:ring-blue-500 ${
+                  loading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
                 <option value="Todo">Todo</option>
                 <option value="In Progress">In Progress</option>
@@ -301,9 +355,12 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit, contributors }) => {
 
             {/* Priority Input */}
             <div>
-              <label htmlFor="priority" className={`block text-sm font-medium mb-1 ${
-                darkMode ? 'text-gray-300' : 'text-gray-700'
-              }`}>
+              <label
+                htmlFor="priority"
+                className={`block text-sm font-medium mb-1 ${
+                  darkMode ? "text-gray-300" : "text-gray-700"
+                }`}
+              >
                 Priority *
               </label>
               <select
@@ -311,12 +368,16 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit, contributors }) => {
                 required
                 disabled={loading}
                 value={taskData.priority}
-                onChange={(e) => setTaskData(prev => ({ ...prev, priority: e.target.value }))}
+                onChange={(e) =>
+                  setTaskData((prev) => ({ ...prev, priority: e.target.value }))
+                }
                 className={`w-full rounded-lg border ${
                   darkMode
-                    ? 'bg-gray-700 border-gray-600 text-white'
-                    : 'bg-white border-gray-300 text-gray-900'
-                } p-2.5 focus:ring-2 focus:ring-blue-500 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    ? "bg-gray-700 border-gray-600 text-white"
+                    : "bg-white border-gray-300 text-gray-900"
+                } p-2.5 focus:ring-2 focus:ring-blue-500 ${
+                  loading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -326,9 +387,12 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit, contributors }) => {
 
             {/* Deadline Input */}
             <div>
-              <label htmlFor="deadline" className={`block text-sm font-medium mb-1 ${
-                darkMode ? 'text-gray-300' : 'text-gray-700'
-              }`}>
+              <label
+                htmlFor="deadline"
+                className={`block text-sm font-medium mb-1 ${
+                  darkMode ? "text-gray-300" : "text-gray-700"
+                }`}
+              >
                 Deadline *
               </label>
               <input
@@ -338,28 +402,57 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit, contributors }) => {
                 min={minDate}
                 disabled={loading}
                 value={taskData.deadline}
-                onChange={(e) => setTaskData(prev => ({ ...prev, deadline: e.target.value }))}
+                onChange={(e) =>
+                  setTaskData((prev) => ({ ...prev, deadline: e.target.value }))
+                }
                 className={`w-full rounded-lg border ${
                   darkMode
-                    ? 'bg-gray-700 border-gray-600 text-white'
-                    : 'bg-white border-gray-300 text-gray-900'
-                } p-2.5 focus:ring-2 focus:ring-blue-500 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    ? "bg-gray-700 border-gray-600 text-white"
+                    : "bg-white border-gray-300 text-gray-900"
+                } p-2.5 focus:ring-2 focus:ring-blue-500 ${
+                  loading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               />
             </div>
 
             {/* Assigned To Dropdown */}
             <div>
-              <label htmlFor="assignedTo" className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Assigned To</label>
+              <label
+                htmlFor="assignedTo"
+                className={`block text-sm font-medium mb-1 ${
+                  darkMode ? "text-gray-300" : "text-gray-700"
+                }`}
+              >
+                Assigned To
+              </label>
               <select
                 id="assignedTo"
                 required
                 disabled={loading || loadingContributors}
                 value={taskData.assignedTo}
-                onChange={e => setTaskData(prev => ({ ...prev, assignedTo: e.target.value }))}
-                className={`w-full rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} p-2.5 focus:ring-2 focus:ring-blue-500 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                onChange={(e) =>
+                  setTaskData((prev) => ({
+                    ...prev,
+                    assignedTo: e.target.value,
+                  }))
+                }
+                className={`w-full rounded-lg border ${
+                  darkMode
+                    ? "bg-gray-700 border-gray-600 text-white"
+                    : "bg-white border-gray-300 text-gray-900"
+                } p-2.5 focus:ring-2 focus:ring-blue-500 ${
+                  loading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
                 <option value="">Select contributor</option>
-                {contributorOptions.map(user => (
+                {/* If the current value is not in contributorOptions, show Unknown User */}
+                {taskData.assignedTo &&
+                  !contributorOptions.some(
+                    (u) => (u.id || u) === taskData.assignedTo
+                  ) && (
+                    <option value={taskData.assignedTo}>Unknown User</option>
+                  )}
+                {contributorOptions.map((user) => (
                   <option key={user.id || user} value={user.id || user}>
                     {user.name || user.email || user.id || user}
                   </option>
@@ -369,12 +462,14 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit, contributors }) => {
 
             {/* File Attachments */}
             <div>
-              <label className={`block text-sm font-medium mb-2 ${
-                darkMode ? 'text-gray-300' : 'text-gray-700'
-              }`}>
+              <label
+                className={`block text-sm font-medium mb-2 ${
+                  darkMode ? "text-gray-300" : "text-gray-700"
+                }`}
+              >
                 Attachments
               </label>
-              
+
               {/* Drag and Drop Zone */}
               <div
                 onDragEnter={handleDrag}
@@ -385,15 +480,17 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit, contributors }) => {
                 className={`
                   border-2 border-dashed rounded-lg p-6 text-center cursor-pointer
                   transition-all duration-200 ease-in-out
-                  ${darkMode 
-                    ? 'border-gray-600 hover:border-blue-500' 
-                    : 'border-gray-300 hover:border-blue-500'
+                  ${
+                    darkMode
+                      ? "border-gray-600 hover:border-blue-500"
+                      : "border-gray-300 hover:border-blue-500"
                   }
-                  ${dragActive 
-                    ? darkMode 
-                      ? 'border-blue-500 bg-blue-500/10' 
-                      : 'border-blue-500 bg-blue-50'
-                    : ''
+                  ${
+                    dragActive
+                      ? darkMode
+                        ? "border-blue-500 bg-blue-500/10"
+                        : "border-blue-500 bg-blue-50"
+                      : ""
                   }
                 `}
               >
@@ -404,10 +501,16 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit, contributors }) => {
                   onChange={handleFileChange}
                   className="hidden"
                 />
-                <Upload className={`w-10 h-10 mx-auto mb-3 ${
-                  darkMode ? 'text-gray-400' : 'text-gray-500'
-                }`} />
-                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                <Upload
+                  className={`w-10 h-10 mx-auto mb-3 ${
+                    darkMode ? "text-gray-400" : "text-gray-500"
+                  }`}
+                />
+                <p
+                  className={`text-sm ${
+                    darkMode ? "text-gray-400" : "text-gray-600"
+                  }`}
+                >
                   Drag and drop files here, or click to select files
                 </p>
               </div>
@@ -415,26 +518,34 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit, contributors }) => {
               {/* File List */}
               {taskData.attachments.length > 0 && (
                 <div className="mt-3 space-y-2">
-                  {taskData.attachments.map(file => (
+                  {taskData.attachments.map((file) => (
                     <div
                       key={file.id}
                       className={`flex items-center justify-between p-2 rounded-lg ${
-                        darkMode 
-                          ? 'bg-gray-700 border border-gray-600' 
-                          : 'bg-gray-50 border border-gray-200'
+                        darkMode
+                          ? "bg-gray-700 border border-gray-600"
+                          : "bg-gray-50 border border-gray-200"
                       }`}
                     >
                       <div className="flex items-center space-x-3">
-                        <File className={darkMode ? 'text-blue-400' : 'text-blue-600'} />
+                        <File
+                          className={
+                            darkMode ? "text-blue-400" : "text-blue-600"
+                          }
+                        />
                         <div>
-                          <p className={`text-sm font-medium ${
-                            darkMode ? 'text-gray-200' : 'text-gray-900'
-                          }`}>
+                          <p
+                            className={`text-sm font-medium ${
+                              darkMode ? "text-gray-200" : "text-gray-900"
+                            }`}
+                          >
                             {file.name}
                           </p>
-                          <p className={`text-xs ${
-                            darkMode ? 'text-gray-400' : 'text-gray-500'
-                          }`}>
+                          <p
+                            className={`text-xs ${
+                              darkMode ? "text-gray-400" : "text-gray-500"
+                            }`}
+                          >
                             {formatFileSize(file.size)}
                           </p>
                         </div>
@@ -443,9 +554,9 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit, contributors }) => {
                         type="button"
                         onClick={() => removeFile(file.id)}
                         className={`p-1 rounded-full hover:bg-red-500 hover:text-white transition-colors ${
-                          darkMode 
-                            ? 'text-gray-400 hover:text-white' 
-                            : 'text-gray-500 hover:text-white'
+                          darkMode
+                            ? "text-gray-400 hover:text-white"
+                            : "text-gray-500 hover:text-white"
                         }`}
                       >
                         <Trash2 className="w-4 h-4" />
@@ -464,9 +575,9 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit, contributors }) => {
                 disabled={loading}
                 className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
                   darkMode
-                    ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
-                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    ? "border-gray-600 text-gray-300 hover:bg-gray-700"
+                    : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 Cancel
               </button>
@@ -475,9 +586,9 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit, contributors }) => {
                 disabled={loading}
                 className={`px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors ${
                   darkMode
-                    ? 'bg-blue-600 hover:bg-blue-700'
-                    : 'bg-blue-500 hover:bg-blue-600'
-                } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    ? "bg-blue-600 hover:bg-blue-700"
+                    : "bg-blue-500 hover:bg-blue-600"
+                } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 Save Changes
               </button>
