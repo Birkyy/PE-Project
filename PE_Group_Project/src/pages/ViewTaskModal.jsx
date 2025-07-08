@@ -15,6 +15,7 @@ import FileUpload from "../components/FileUpload";
 import { userAPI, commentAPI } from "../API/apiService";
 import TaskAttachments from "../components/TaskAttachments";
 import { fileAPI } from "../API/apiService";
+import DeleteAttachmentModal from "../components/DeleteAttachmentModal";
 
 const ViewTaskModal = ({
   task,
@@ -28,6 +29,9 @@ const ViewTaskModal = ({
   const [assignedUserName, setAssignedUserName] = useState("Loading...");
   const [attachments, setAttachments] = useState([]);
   const [comments, setComments] = useState([]);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [fileToDelete, setFileToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Resolve user name from PIC/GUID
   const resolveUserName = async (picGuid) => {
@@ -129,21 +133,39 @@ const ViewTaskModal = ({
     document.body.removeChild(link);
   };
 
-  const handleDelete = async (file) => {
+  const handleDelete = (file) => {
+    setFileToDelete(file);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!fileToDelete) return;
+
     console.log(
       "Deleting file:",
-      file.name,
+      fileToDelete.name,
       "for task:",
       task.projectTaskId || task.id
     );
-    if (!window.confirm("Are you sure you want to delete this file?")) return;
 
+    setIsDeleting(true);
     try {
-      await fileAPI.deleteFile(task.projectTaskId || task.id, file.name);
+      await fileAPI.deleteFile(task.projectTaskId || task.id, fileToDelete.name);
       await refreshAttachments();
+      setDeleteModalOpen(false);
+      setFileToDelete(null);
     } catch (err) {
       console.error("Delete failed:", err);
+      alert("Failed to delete file. Please try again.");
+    } finally {
+      setIsDeleting(false);
     }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteModalOpen(false);
+    setFileToDelete(null);
+    setIsDeleting(false);
   };
 
   const getPriorityColor = (priority) => {
@@ -551,6 +573,16 @@ const ViewTaskModal = ({
           </div>
         </div>
       </div>
+
+      {/* Delete Attachment Confirmation Modal */}
+      <DeleteAttachmentModal
+        isOpen={deleteModalOpen}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        fileName={fileToDelete?.name || ""}
+        fileSize={fileToDelete?.size}
+        isLoading={isDeleting}
+      />
     </div>
   );
 };

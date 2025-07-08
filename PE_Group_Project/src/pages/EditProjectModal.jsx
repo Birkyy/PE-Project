@@ -3,6 +3,7 @@ import { useTheme } from "../context/ThemeContext";
 import { X, Upload, Trash2, File, Download } from "lucide-react";
 import ContributorSelector from "../components/ContributorSelector";
 import { userAPI, fileAPI } from "../API/apiService";
+import DeleteAttachmentModal from "../components/DeleteAttachmentModal";
 
 function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
   const { darkMode } = useTheme();
@@ -24,6 +25,9 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
   const [projectReady, setProjectReady] = useState(false);
   const [projectFiles, setProjectFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [fileToDelete, setFileToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Ensure IDs are always strings for dropdown compatibility
   function toStringId(id) {
@@ -268,10 +272,17 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
     }
   };
 
-  const handleDelete = async (file) => {
-    if (!window.confirm("Are you sure you want to delete this file?")) return;
+  const handleDelete = (file) => {
+    setFileToDelete(file);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!fileToDelete) return;
+
+    setIsDeleting(true);
     try {
-      const fileId = file.fileId || file.Id || file.id;
+      const fileId = fileToDelete.fileId || fileToDelete.Id || fileToDelete.id;
       if (!fileId) {
         alert("File ID not found.");
         return;
@@ -279,10 +290,20 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
       await fileAPI.deleteFileById(fileId);
       const filesList = await fileAPI.getFilesByProjectId(project.projectId);
       setProjectFiles(filesList || []);
+      setDeleteModalOpen(false);
+      setFileToDelete(null);
     } catch (err) {
       alert("Failed to delete file.");
       console.error(err);
+    } finally {
+      setIsDeleting(false);
     }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteModalOpen(false);
+    setFileToDelete(null);
+    setIsDeleting(false);
   };
 
   // Helper to get user display name or fallback
@@ -732,6 +753,16 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
           </form>
         </div>
       </div>
+
+      {/* Delete Attachment Confirmation Modal */}
+      <DeleteAttachmentModal
+        isOpen={deleteModalOpen}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        fileName={fileToDelete?.fileName || fileToDelete?.name || ""}
+        fileSize={fileToDelete?.fileSize || fileToDelete?.size}
+        isLoading={isDeleting}
+      />
     </div>
   );
 }
