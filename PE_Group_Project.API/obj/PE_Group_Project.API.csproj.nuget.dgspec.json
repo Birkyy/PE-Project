@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "D:\\PE II (2)\\PE-Project\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj": {}
+    "C:\\Users\\user\\Documents\\GitHub\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj": {}
   },
   "projects": {
-    "D:\\PE II (2)\\PE-Project\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj": {
+    "C:\\Users\\user\\Documents\\GitHub\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\PE II (2)\\PE-Project\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj",
+        "projectUniqueName": "C:\\Users\\user\\Documents\\GitHub\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj",
         "projectName": "PE_Group_Project.API",
-        "projectPath": "D:\\PE II (2)\\PE-Project\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj",
-        "packagesPath": "C:\\Users\\Asus\\.nuget\\packages\\",
-        "outputPath": "D:\\PE II (2)\\PE-Project\\PE-Project\\PE_Group_Project.API\\obj\\",
+        "projectPath": "C:\\Users\\user\\Documents\\GitHub\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj",
+        "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\user\\Documents\\GitHub\\PE-Project\\PE_Group_Project.API\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\Asus\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net9.0"
@@ -84,7 +84,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.202/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
