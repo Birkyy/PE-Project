@@ -551,38 +551,60 @@ export const fileAPI = {
       throw error;
     }
   },
- 
-    getFilesByTaskId: async (taskId) => {
-      try {
-        const response = await api.get(`/File/list/task/${taskId}`);
-        return response.data;
-      } catch (error) {
-        console.error("Error fetching task files:", error);
-        throw error;
-      }
-    },
 
-    downloadFile: async (fileId) => {
-      try {
-        const response = await api.get(`/File/download/${fileId}`, {
-          responseType: "blob", // important to receive actual file data
-        });
-        return response;
-      } catch (error) {
-        console.error("Error downloading file:", error);
-        throw error;
-      }
-    },
-  
-    deleteFile: async (taskId, fileName) => {
-      try {
-        const response = await api.delete(`/File/delete/task/${taskId}/${encodeURIComponent(fileName)}`);
-        return response.data;
-      } catch (error) {
-        console.error("Error deleting file:", error);
-        throw error;
-      }
-    },
+  // List files by project ID
+  getFilesByProjectId: async (projectId) => {
+    try {
+      const response = await api.get(`/File/list/project/${projectId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error getting project files:', error);
+      throw error;
+    }
+  },
+
+  // Delete project file by projectId and fileName
+  deleteProjectFile: async (projectId, fileName) => {
+    try {
+      const response = await api.delete(`/File/delete/project/${projectId}/${encodeURIComponent(fileName)}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting project file:', error);
+      throw error;
+    }
+  },
+
+  getFilesByTaskId: async (taskId) => {
+    try {
+      const response = await api.get(`/File/list/task/${taskId}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching task files:", error);
+      throw error;
+    }
+  },
+
+  downloadFile: async (fileId) => {
+    try {
+      const response = await api.get(`/File/download/${fileId}`, {
+        responseType: "blob", // important to receive actual file data
+      });
+      return response;
+    } catch (error) {
+      console.error("Error downloading file:", error);
+      throw error;
+    }
+  },
+
+  deleteFile: async (taskId, fileName) => {
+    try {
+      const response = await api.delete(`/File/delete/task/${taskId}/${encodeURIComponent(fileName)}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error deleting file:", error);
+      throw error;
+    }
+  },
 };
 
 export default api; 

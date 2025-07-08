@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PE_Group_Project.API.Data;
+using PE_Group_Project.API.Models.Domain;
 using PE_Group_Project.API.Services;
 
 namespace PE_Group_Project.API.Controllers
@@ -73,7 +74,7 @@ namespace PE_Group_Project.API.Controllers
         [HttpPost("upload/project/{projectId}")]
         public async Task<IActionResult> UploadProjectFile(
             [FromForm] IFormFile file,
-            string projectId
+            Guid projectId
         )
         {
             if (file == null || file.Length == 0)
@@ -89,6 +90,22 @@ namespace PE_Group_Project.API.Controllers
                 $"projects/{projectId}/{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
             var url = await _fileService.UploadFileAsync(file, fileName);
 
+            // Save file record to database
+            var fileRecord = new PE_Group_Project.API.Models.Domain.File
+            {
+                Id = Guid.NewGuid(),
+                Name = file.FileName,
+                Url = url,
+                Size = file.Length,
+                Type = file.ContentType,
+                UploadedAt = DateTime.UtcNow,
+                Category = "project",
+                RelatedId = projectId,
+            };
+
+            _context.Files.Add(fileRecord);
+            await _context.SaveChangesAsync();
+
             return Ok(
                 new
                 {
@@ -103,7 +120,7 @@ namespace PE_Group_Project.API.Controllers
         }
 
         [HttpPost("upload/task/{taskId}")]
-        public async Task<IActionResult> UploadTaskFile([FromForm] IFormFile file, string taskId)
+        public async Task<IActionResult> UploadTaskFile([FromForm] IFormFile file, Guid taskId)
         {
             if (file == null || file.Length == 0)
                 return BadRequest("No file uploaded.");
@@ -116,6 +133,22 @@ namespace PE_Group_Project.API.Controllers
 
             var fileName = $"tasks/{taskId}/{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
             var url = await _fileService.UploadFileAsync(file, fileName);
+
+            // Save file record to database
+            var fileRecord = new PE_Group_Project.API.Models.Domain.File
+            {
+                Id = Guid.NewGuid(),
+                Name = file.FileName,
+                Url = url,
+                Size = file.Length,
+                Type = file.ContentType,
+                UploadedAt = DateTime.UtcNow,
+                Category = "task",
+                RelatedId = taskId,
+            };
+
+            _context.Files.Add(fileRecord);
+            await _context.SaveChangesAsync();
 
             return Ok(
                 new
@@ -152,67 +185,89 @@ namespace PE_Group_Project.API.Controllers
             }
         }
 
-        [HttpGet("list/task/{taskId}")]
-        public IActionResult ListTaskFiles(string taskId)
+        [HttpGet("list/project/{projectId}")]
+        public async Task<IActionResult> ListProjectFiles(Guid projectId)
         {
-            var dirPath = Path.Combine(Directory.GetCurrentDirectory(), "uploads", "tasks", taskId);
-            if (!Directory.Exists(dirPath))
-                return Ok(new List<object>());
-
-            var files = Directory
-                .GetFiles(dirPath)
-                .Select(filePath => new
+            var files = await _context
+                .Files.Where(f => f.RelatedId == projectId && f.Category == "project")
+                .Select(f => new
                 {
-                    name = Path.GetFileName(filePath),
-                    url = $"/api/File/download/tasks/{taskId}/{Path.GetFileName(filePath)}",
-                    size = new FileInfo(filePath).Length,
-                    contentType = GetContentType(filePath),
+                    f.Id,
+                    f.Name,
+                    f.Url,
+                    f.Size,
+                    f.Type,
+                    f.UploadedAt,
                 })
-                .ToList();
+                .ToListAsync();
+
             return Ok(files);
         }
 
-        [HttpGet("list/project/{projectId}")]
-        public IActionResult ListProjectFiles(string projectId)
+        [HttpDelete("delete/{fileId}")]
+        public async Task<IActionResult> DeleteFile(Guid fileId)
         {
-            var dirPath = Path.Combine(
-                Directory.GetCurrentDirectory(),
-                "uploads",
-                "projects",
-                projectId
-            );
-            if (!Directory.Exists(dirPath))
-                return Ok(new List<object>());
+            var file = await _context.Files.FindAsync(fileId);
+            if (file == null)
+                return NotFound("File not found.");
 
-            var files = Directory
-                .GetFiles(dirPath)
-                .Select(filePath => new
-                {
-                    name = Path.GetFileName(filePath),
-                    url = $"/api/File/download/projects/{projectId}/{Path.GetFileName(filePath)}",
-                    size = new FileInfo(filePath).Length,
-                    contentType = GetContentType(filePath),
-                })
-                .ToList();
-            return Ok(files);
+            try
+            {
+                // Extract file path from URL for deletion
+                var filePath = file.Url.Replace($"{Request.Scheme}://{Request.Host}/uploads/", "");
+
+                // Delete from storage
+                await _fileService.DeleteFileAsync(filePath);
+
+                // Delete from database
+                _context.Files.Remove(file);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "File deleted successfully." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(
+                    500,
+                    new { message = "Error deleting file.", error = ex.Message }
+                );
+            }
         }
 
         [HttpDelete("delete/task/{taskId}/{fileName}")]
-        public IActionResult DeleteTaskFile(string taskId, string fileName)
+        public async Task<IActionResult> DeleteTaskFile(string taskId, string fileName)
         {
             fileName = Uri.UnescapeDataString(fileName); // Decode URL-encoded file names
-            var filePath = Path.Combine(
-                Directory.GetCurrentDirectory(),
-                "uploads",
-                "tasks",
-                taskId,
-                fileName
+
+            // Find the file in the database
+            var file = await _context.Files.FirstOrDefaultAsync(f =>
+                f.RelatedId.ToString() == taskId && f.Category == "task" && f.Name == fileName
             );
-            if (!System.IO.File.Exists(filePath))
+
+            if (file == null)
                 return NotFound("File not found.");
 
-            System.IO.File.Delete(filePath);
-            return Ok(new { message = "File deleted successfully." });
+            try
+            {
+                // Extract file path from URL for deletion
+                var filePath = file.Url.Replace($"{Request.Scheme}://{Request.Host}/uploads/", "");
+
+                // Delete from storage
+                await _fileService.DeleteFileAsync(filePath);
+
+                // Delete from database
+                _context.Files.Remove(file);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "File deleted successfully." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(
+                    500,
+                    new { message = "Error deleting file.", error = ex.Message }
+                );
+            }
         }
 
         private string GetContentType(string fileName)

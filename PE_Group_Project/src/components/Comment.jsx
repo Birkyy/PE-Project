@@ -58,17 +58,29 @@ const Comment = ({
     }
   };
 
-  const handleFileDownload = (file) => {
-    // Extract the filename from the URL path
-    const urlParts = file.url.split("/");
-    const fileName = urlParts[urlParts.length - 1];
-    const taskId = urlParts[urlParts.length - 2];
+  const handleFileDownload = (attachment, event) => {
+    event.preventDefault();
+    event.stopPropagation();
 
-    // Construct the download URL
-    const downloadUrl = `http://localhost:5022/api/File/download/tasks/${taskId}/${fileName}`;
-
-    // Open in new tab for download
-    window.open(downloadUrl, "_blank");
+    // For comment attachments, we can use the fileUrl directly
+    if (attachment.fileUrl) {
+      console.log(
+        "Downloading file:",
+        attachment.fileName,
+        "from:",
+        attachment.fileUrl
+      );
+      window.open(attachment.fileUrl, "_blank");
+    } else if (attachment.url) {
+      // Fallback for old format
+      console.log(
+        "Downloading file:",
+        attachment.name,
+        "from:",
+        attachment.url
+      );
+      window.open(attachment.url, "_blank");
+    }
   };
 
   const handleSave = () => {
@@ -91,9 +103,23 @@ const Comment = ({
       } space-y-3`}
     >
       {/* Header */}
-      <div className="flex justify-between">
-        <div className="text-sm font-medium">
-          {comment.username || comment.userId}
+      <div className="flex justify-between items-start">
+        <div className="flex items-center gap-2">
+          <div className="text-sm font-medium">
+            {comment.username || comment.userId}
+          </div>
+          {comment.attachments && comment.attachments.length > 0 && (
+            <span
+              className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
+                darkMode
+                  ? "bg-blue-500/20 text-blue-300"
+                  : "bg-blue-100 text-blue-700"
+              }`}
+            >
+              <Paperclip className="w-3 h-3" />
+              {comment.attachments.length}
+            </span>
+          )}
         </div>
         {isAuthor && !isEditing && (
           <div className="flex gap-2">
@@ -138,9 +164,14 @@ const Comment = ({
         </div>
       ) : (
         <div className="space-y-3">
-          <div className="text-sm">{comment.comment}</div>
-
-          {/* File Attachments */}
+          {/* Only show comment text if it's not the default 'File attachment' or if there are no attachments */}
+          {comment.comment &&
+            (comment.comment !== "File attachment" ||
+              !comment.attachments ||
+              comment.attachments.length === 0) && (
+              <div className="text-sm">{comment.comment}</div>
+            )}
+          {/* Always show attachments if they exist */}
           {comment.attachments && comment.attachments.length > 0 && (
             <div className="space-y-2">
               <div
@@ -155,39 +186,50 @@ const Comment = ({
                 {comment.attachments.map((attachment, index) => (
                   <div
                     key={index}
-                    className={`flex items-center justify-between p-2 rounded border cursor-pointer transition-colors ${
+                    className={`group flex items-center justify-between p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
                       darkMode
-                        ? "bg-gray-600 border-gray-500 hover:bg-gray-500"
-                        : "bg-gray-100 border-gray-300 hover:bg-gray-200"
+                        ? "bg-gray-600/50 border-gray-500 hover:bg-gray-500 hover:border-gray-400 hover:shadow-lg"
+                        : "bg-gray-50 border-gray-300 hover:bg-blue-50 hover:border-blue-300 hover:shadow-md"
                     }`}
-                    onClick={() => handleFileDownload(attachment)}
+                    onClick={(e) => handleFileDownload(attachment, e)}
+                    title={`Click to download ${
+                      attachment.fileName || attachment.name
+                    }`}
                   >
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
                       <span
-                        className={`${
-                          darkMode ? "text-gray-300" : "text-gray-600"
+                        className={`transition-colors duration-200 ${
+                          darkMode
+                            ? "text-blue-400 group-hover:text-blue-300"
+                            : "text-blue-600 group-hover:text-blue-700"
                         }`}
                       >
-                        {getFileIcon(attachment.name)}
+                        {getFileIcon(attachment.fileName || attachment.name)}
                       </span>
-                      <span
-                        className={`text-sm truncate ${
-                          darkMode ? "text-gray-200" : "text-gray-700"
-                        }`}
-                      >
-                        {attachment.name}
-                      </span>
-                      <span
-                        className={`text-xs ${
-                          darkMode ? "text-gray-400" : "text-gray-500"
-                        }`}
-                      >
-                        ({formatFileSize(attachment.size)})
-                      </span>
+                      <div className="flex-1 min-w-0">
+                        <span
+                          className={`text-sm font-medium truncate block ${
+                            darkMode ? "text-gray-200" : "text-gray-700"
+                          }`}
+                        >
+                          {attachment.fileName || attachment.name}
+                        </span>
+                        <span
+                          className={`text-xs ${
+                            darkMode ? "text-gray-400" : "text-gray-500"
+                          }`}
+                        >
+                          {formatFileSize(
+                            attachment.fileSize || attachment.size
+                          )}
+                        </span>
+                      </div>
                     </div>
                     <Download
-                      className={`w-4 h-4 ${
-                        darkMode ? "text-gray-400" : "text-gray-500"
+                      className={`w-4 h-4 transition-colors duration-200 ${
+                        darkMode
+                          ? "text-gray-400 group-hover:text-blue-300"
+                          : "text-gray-500 group-hover:text-blue-600"
                       }`}
                     />
                   </div>

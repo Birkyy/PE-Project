@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace PE_Group_Project.API.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialMigration12 : Migration
+    public partial class InitCleanSchema : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -26,6 +26,19 @@ namespace PE_Group_Project.API.Migrations
                 type: "datetime2",
                 nullable: false,
                 defaultValue: new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified));
+
+            migrationBuilder.AddColumn<DateTime>(
+                name: "ArchivedDate",
+                table: "Projects",
+                type: "datetime2",
+                nullable: true);
+
+            migrationBuilder.AddColumn<bool>(
+                name: "IsArchived",
+                table: "Projects",
+                type: "bit",
+                nullable: false,
+                defaultValue: false);
 
             migrationBuilder.CreateTable(
                 name: "Files",
@@ -59,6 +72,14 @@ namespace PE_Group_Project.API.Migrations
             migrationBuilder.DropColumn(
                 name: "CreatedAt",
                 table: "TaskComments");
+
+            migrationBuilder.DropColumn(
+                name: "ArchivedDate",
+                table: "Projects");
+
+            migrationBuilder.DropColumn(
+                name: "IsArchived",
+                table: "Projects");
 
             migrationBuilder.CreateTable(
                 name: "Blobs",

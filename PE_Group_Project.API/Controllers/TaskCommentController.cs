@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using PE_Group_Project.API.Data;
 using PE_Group_Project.API.Models.Domain;
 using PE_Group_Project.API.Models.DTO;
@@ -16,7 +17,8 @@ namespace PE_Group_Project.API.Controllers
         public IActionResult GetCommentsFromTaskId([FromRoute] Guid taskId)
         {
             var comments = _context
-                .TaskComments.Where(c => c.ProjectTaskId == taskId)
+                .TaskComments.Include(c => c.Attachments)
+                .Where(c => c.ProjectTaskId == taskId)
                 .OrderBy(c => c.CreatedAt)
                 .ToList();
 
@@ -32,6 +34,17 @@ namespace PE_Group_Project.API.Controllers
                     UserId = c.UserId,
                     CreatedAt = c.CreatedAt,
                     Username = users.ContainsKey(c.UserId) ? users[c.UserId] : null,
+                    Attachments = c
+                        .Attachments.Select(a => new CommentAttachmentDTO
+                        {
+                            Id = a.Id,
+                            FileName = a.FileName,
+                            FileUrl = a.FileUrl,
+                            FileSize = a.FileSize,
+                            ContentType = a.ContentType,
+                            UploadedAt = a.UploadedAt,
+                        })
+                        .ToList(),
                 })
                 .ToList();
 
@@ -57,6 +70,28 @@ namespace PE_Group_Project.API.Controllers
                 CreatedAt = DateTime.UtcNow,
             };
 
+            // Add attachments if provided
+            if (
+                createTaskCommentRequestDTO.Attachments != null
+                && createTaskCommentRequestDTO.Attachments.Any()
+            )
+            {
+                foreach (var attachmentDto in createTaskCommentRequestDTO.Attachments)
+                {
+                    var attachment = new CommentAttachment
+                    {
+                        Id = Guid.NewGuid(),
+                        FileName = attachmentDto.FileName,
+                        FileUrl = attachmentDto.FileUrl,
+                        FileSize = attachmentDto.FileSize,
+                        ContentType = attachmentDto.ContentType,
+                        UploadedAt = DateTime.UtcNow,
+                        TaskCommentId = taskComment.TaskCommentId,
+                    };
+                    taskComment.Attachments.Add(attachment);
+                }
+            }
+
             _context.TaskComments.Add(taskComment);
             _context.SaveChanges();
 
@@ -74,6 +109,17 @@ namespace PE_Group_Project.API.Controllers
                 UserId = taskComment.UserId,
                 CreatedAt = taskComment.CreatedAt,
                 Username = user?.Username,
+                Attachments = taskComment
+                    .Attachments.Select(a => new CommentAttachmentDTO
+                    {
+                        Id = a.Id,
+                        FileName = a.FileName,
+                        FileUrl = a.FileUrl,
+                        FileSize = a.FileSize,
+                        ContentType = a.ContentType,
+                        UploadedAt = a.UploadedAt,
+                    })
+                    .ToList(),
             };
 
             return CreatedAtAction(
@@ -138,7 +184,9 @@ namespace PE_Group_Project.API.Controllers
                 $"Request body: {System.Text.Json.JsonSerializer.Serialize(updateTaskCommentRequestDTO)}"
             );
 
-            var comment = _context.TaskComments.FirstOrDefault(c => c.TaskCommentId == id);
+            var comment = _context
+                .TaskComments.Include(c => c.Attachments)
+                .FirstOrDefault(c => c.TaskCommentId == id);
 
             if (comment == null)
             {
@@ -162,6 +210,17 @@ namespace PE_Group_Project.API.Controllers
                 UserId = comment.UserId,
                 CreatedAt = comment.CreatedAt,
                 Username = user?.Username,
+                Attachments = comment
+                    .Attachments.Select(a => new CommentAttachmentDTO
+                    {
+                        Id = a.Id,
+                        FileName = a.FileName,
+                        FileUrl = a.FileUrl,
+                        FileSize = a.FileSize,
+                        ContentType = a.ContentType,
+                        UploadedAt = a.UploadedAt,
+                    })
+                    .ToList(),
             };
 
             Console.WriteLine($"Returning updated comment DTO");
@@ -172,14 +231,33 @@ namespace PE_Group_Project.API.Controllers
         [Route("{id:guid}")]
         public IActionResult DeleteTaskCommentById([FromRoute] Guid id)
         {
-            var comment = _context.TaskComments.FirstOrDefault(c => c.TaskCommentId == id);
+            var comment = _context
+                .TaskComments.Include(c => c.Attachments)
+                .FirstOrDefault(c => c.TaskCommentId == id);
 
             if (comment == null)
             {
                 return NotFound();
             }
 
+            // Delete attachments first (cascade should handle this, but being explicit)
+            _context.CommentAttachments.RemoveRange(comment.Attachments);
             _context.TaskComments.Remove(comment);
+            _context.SaveChanges();
+            return NoContent();
+        }
+
+        [HttpDelete("attachment/{attachmentId:guid}")]
+        public IActionResult DeleteCommentAttachment([FromRoute] Guid attachmentId)
+        {
+            var attachment = _context.CommentAttachments.FirstOrDefault(a => a.Id == attachmentId);
+
+            if (attachment == null)
+            {
+                return NotFound("Attachment not found.");
+            }
+
+            _context.CommentAttachments.Remove(attachment);
             _context.SaveChanges();
             return NoContent();
         }

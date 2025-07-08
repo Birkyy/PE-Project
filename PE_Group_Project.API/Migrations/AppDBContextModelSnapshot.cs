@@ -22,6 +22,39 @@ namespace PE_Group_Project.API.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("PE_Group_Project.API.Models.Domain.CommentAttachment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ContentType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("FileUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("TaskCommentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TaskCommentId");
+
+                    b.ToTable("CommentAttachments");
+                });
+
             modelBuilder.Entity("PE_Group_Project.API.Models.Domain.File", b =>
                 {
                     b.Property<Guid>("Id")
@@ -283,6 +316,17 @@ namespace PE_Group_Project.API.Migrations
                     b.ToTable("UserProjects");
                 });
 
+            modelBuilder.Entity("PE_Group_Project.API.Models.Domain.CommentAttachment", b =>
+                {
+                    b.HasOne("PE_Group_Project.API.Models.Domain.TaskComment", "TaskComment")
+                        .WithMany("Attachments")
+                        .HasForeignKey("TaskCommentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TaskComment");
+                });
+
             modelBuilder.Entity("PE_Group_Project.API.Models.Domain.Notification", b =>
                 {
                     b.HasOne("PE_Group_Project.API.Models.Domain.User", "User")
@@ -329,6 +373,11 @@ namespace PE_Group_Project.API.Migrations
                     b.Navigation("Attachments");
 
                     b.Navigation("Contributors");
+                });
+
+            modelBuilder.Entity("PE_Group_Project.API.Models.Domain.TaskComment", b =>
+                {
+                    b.Navigation("Attachments");
                 });
 
             modelBuilder.Entity("PE_Group_Project.API.Models.Domain.User", b =>

@@ -27,7 +27,13 @@ import AddTaskModal from "./AddTaskModal";
 import EditTaskModal from "./EditTaskModal";
 import ViewTaskModal from "./ViewTaskModal";
 import EditProjectModal from "./EditProjectModal";
-import { projectAPI, taskAPI, userAPI, commentAPI } from "../API/apiService";
+import {
+  projectAPI,
+  taskAPI,
+  userAPI,
+  commentAPI,
+  fileAPI,
+} from "../API/apiService";
 
 const statusList = [
   { key: "Todo", color: "blue" },
@@ -83,31 +89,31 @@ const getAssignedPersonName = (picGuid) => {
 // Helper function to determine user's role in the project
 const getUserProjectRole = (currentUser, project) => {
   if (!currentUser || !project) return null;
-  
+
   const userId = currentUser?.userId || currentUser?.id || currentUser?.UserId;
-  
+
   // Check if user is admin
-  if (currentUser?.role?.toLowerCase() === 'admin') {
-    return 'admin';
+  if (currentUser?.role?.toLowerCase() === "admin") {
+    return "admin";
   }
-  
+
   // Check if user is project manager
   if (project.projectManagerInCharge === userId) {
-    return 'manager';
+    return "manager";
   }
-  
+
   // Check if user is contributor
   if (project.contributors && project.contributors.includes(userId)) {
-    return 'contributor';
+    return "contributor";
   }
-  
+
   return null;
 };
 
 // Helper function to check if user can add tasks
 const canUserAddTasks = (currentUser, project) => {
   const role = getUserProjectRole(currentUser, project);
-  return role === 'admin' || role === 'manager';
+  return role === "admin" || role === "manager";
 };
 
 function Project() {
@@ -119,6 +125,7 @@ function Project() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [projectFiles, setProjectFiles] = useState([]);
 
   // Separate states for view and edit modals
   const [viewTask, setViewTask] = useState(null);
@@ -144,6 +151,15 @@ function Project() {
       fetchTasks();
     }
   }, [id]);
+
+  useEffect(() => {
+    if (project && project.projectId) {
+      fileAPI
+        .getFilesByProjectId(project.projectId)
+        .then(setProjectFiles)
+        .catch(() => setProjectFiles([]));
+    }
+  }, [project]);
 
   const fetchProject = async () => {
     try {
@@ -827,8 +843,8 @@ function Project() {
                 Attachments
               </h2>
               <div className="space-y-3">
-                {project.attachments && project.attachments.length > 0 ? (
-                  project.attachments.map((file) => (
+                {projectFiles.length > 0 ? (
+                  projectFiles.map((file) => (
                     <div
                       key={file.id}
                       className={`flex items-center justify-between p-3 rounded-lg ${

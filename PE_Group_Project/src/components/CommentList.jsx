@@ -106,10 +106,18 @@ const CommentList = ({
       }
 
       const commentData = {
+        projectTaskId: taskId,
         comment: newCommentText.trim() || "File attachment", // Use default text if no comment
         userId: currentUser?.userId || currentUser?.id,
-        attachments: uploadedFiles, // Include uploaded file info
+        attachments: uploadedFiles.map((file) => ({
+          fileName: file.name,
+          fileUrl: file.url,
+          fileSize: file.size,
+          contentType: file.type || "application/octet-stream",
+        })),
       };
+
+      console.log("Submitting comment with data:", commentData);
 
       await onAddComment(taskId, commentData);
 
@@ -205,55 +213,65 @@ const CommentList = ({
 
             {/* Show selected attachments */}
             {newCommentAttachments.length > 0 && (
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <div
-                  className={`text-xs font-medium ${
+                  className={`text-xs font-medium flex items-center gap-1 ${
                     darkMode ? "text-gray-400" : "text-gray-600"
                   }`}
                 >
+                  <Paperclip className="w-3 h-3" />
                   Files to attach ({newCommentAttachments.length}):
                 </div>
-                {newCommentAttachments.map((attachment) => (
-                  <div
-                    key={attachment.id}
-                    className={`flex items-center justify-between p-2 rounded border ${
-                      darkMode
-                        ? "bg-gray-700 border-gray-600"
-                        : "bg-gray-50 border-gray-300"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <span className="text-sm">
-                        {getFileIcon(attachment.name)}
-                      </span>
-                      <span
-                        className={`text-sm truncate ${
-                          darkMode ? "text-gray-300" : "text-gray-700"
-                        }`}
-                      >
-                        {attachment.name}
-                      </span>
-                      <span
-                        className={`text-xs ${
-                          darkMode ? "text-gray-400" : "text-gray-500"
-                        }`}
-                      >
-                        ({formatFileSize(attachment.size)})
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => handleRemoveAttachment(attachment.id)}
-                      disabled={isSubmitting}
-                      className={`p-1 rounded-full transition-colors ${
+                <div className="space-y-1">
+                  {newCommentAttachments.map((attachment) => (
+                    <div
+                      key={attachment.id}
+                      className={`flex items-center justify-between p-2 rounded-lg border ${
                         darkMode
-                          ? "hover:bg-red-600/20 text-red-400 disabled:text-gray-600"
-                          : "hover:bg-red-100 text-red-500 disabled:text-gray-400"
-                      } disabled:cursor-not-allowed`}
+                          ? "bg-gray-700/50 border-gray-600"
+                          : "bg-gray-50 border-gray-300"
+                      }`}
                     >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ))}
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <span
+                          className={`${
+                            darkMode ? "text-blue-400" : "text-blue-600"
+                          }`}
+                        >
+                          {getFileIcon(attachment.name)}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <span
+                            className={`text-sm font-medium truncate block ${
+                              darkMode ? "text-gray-300" : "text-gray-700"
+                            }`}
+                          >
+                            {attachment.name}
+                          </span>
+                          <span
+                            className={`text-xs ${
+                              darkMode ? "text-gray-400" : "text-gray-500"
+                            }`}
+                          >
+                            {formatFileSize(attachment.size)}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleRemoveAttachment(attachment.id)}
+                        disabled={isSubmitting}
+                        className={`p-1 rounded-full transition-colors ${
+                          darkMode
+                            ? "hover:bg-red-600/20 text-red-400 disabled:text-gray-600"
+                            : "hover:bg-red-100 text-red-500 disabled:text-gray-400"
+                        } disabled:cursor-not-allowed`}
+                        title="Remove file"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>

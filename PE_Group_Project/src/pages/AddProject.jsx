@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import Layout from "../components/Layout";
 import FileUpload from "../components/FileUpload";
-import { projectAPI, userAPI } from "../API/apiService";
+import { projectAPI, userAPI, fileAPI } from "../API/apiService";
 
 const AddProject = () => {
   const { darkMode } = useTheme();
@@ -54,9 +54,9 @@ const AddProject = () => {
     if (userStr) {
       const user = JSON.parse(userStr);
       setCurrentUser(user);
-      
+
       // Check if user is admin, if not redirect to projects page
-      if (user?.role?.toLowerCase() !== 'admin') {
+      if (user?.role?.toLowerCase() !== "admin") {
         alert("Access denied. Only administrators can create projects.");
         navigate("/my-projects");
         return;
@@ -167,7 +167,29 @@ const AddProject = () => {
       // Create project using API
       const createdProject = await projectAPI.createProject(projectData);
 
-      console.log("Project created successfully:", createdProject);
+      // Upload attachments if any
+      if (
+        formData.attachments &&
+        formData.attachments.length > 0 &&
+        createdProject?.projectId
+      ) {
+        for (const attachment of formData.attachments) {
+          if (attachment.file) {
+            try {
+              await fileAPI.uploadProjectFile(
+                attachment.file,
+                createdProject.projectId
+              );
+            } catch (err) {
+              console.error(
+                "Failed to upload project file:",
+                attachment.name,
+                err
+              );
+            }
+          }
+        }
+      }
 
       // Navigate back to projects page
       navigate("/my-projects");

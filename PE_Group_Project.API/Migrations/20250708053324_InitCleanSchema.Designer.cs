@@ -12,8 +12,8 @@ using PE_Group_Project.API.Data;
 namespace PE_Group_Project.API.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    [Migration("20250708042149_InitialMigration11")]
-    partial class InitialMigration11
+    [Migration("20250708053324_InitCleanSchema")]
+    partial class InitCleanSchema
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -97,12 +97,18 @@ namespace PE_Group_Project.API.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTime?>("ArchivedDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("bit");
 
                     b.Property<string>("PriorityLevel")
                         .IsRequired()
