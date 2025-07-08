@@ -14,7 +14,7 @@ import {
   Lock,
   Download,
 } from "lucide-react";
-import { userAPI } from "../API/apiService.js";
+import { userAPI, deleteUser } from "../API/apiService.js";
 
 const UsersManagement = () => {
   const { darkMode } = useTheme();
@@ -62,7 +62,7 @@ const UsersManagement = () => {
     }
 
     // Check if user is admin, if not redirect to dashboard
-    if (user?.role?.toLowerCase() !== 'admin') {
+    if (user?.role?.toLowerCase() !== "admin") {
       alert("Access denied. Only administrators can access user management.");
       navigate("/home");
       return;
@@ -471,9 +471,15 @@ const UsersManagement = () => {
     });
   };
 
-  const handleDeleteUser = (userId) => {
+  const handleDeleteUser = async (userId) => {
     if (window.confirm("Are you sure you want to delete this user?")) {
-      setUsers(users.filter((user) => user.id !== userId));
+      try {
+        await deleteUser(userId);
+        // Refresh user list after deletion
+        fetchUsers();
+      } catch (error) {
+        alert("Failed to delete user.");
+      }
     }
   };
 
