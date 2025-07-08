@@ -525,48 +525,46 @@ function Project() {
         </div>
 
         <div className="mt-3 flex items-center justify-between">
-          {canUserEditTasks(currentUser, project) && (
-            <div className="flex gap-1">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const prevStatus = getPreviousStatus(task.status);
-                  if (prevStatus !== task.status) {
-                    handleChangeStatus(task, prevStatus);
-                  }
-                }}
-                disabled={task.status === statusList[0].key}
-                className={`p-1 rounded ${
-                  task.status === statusList[0].key
-                    ? "opacity-50 cursor-not-allowed"
-                    : darkMode
-                    ? "hover:bg-gray-600"
-                    : "hover:bg-gray-100"
-                }`}
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const nextStatus = getNextStatus(task.status);
-                  if (nextStatus !== task.status) {
-                    handleChangeStatus(task, nextStatus);
-                  }
-                }}
-                disabled={task.status === statusList[statusList.length - 1].key}
-                className={`p-1 rounded ${
-                  task.status === statusList[statusList.length - 1].key
-                    ? "opacity-50 cursor-not-allowed"
-                    : darkMode
-                    ? "hover:bg-gray-600"
-                    : "hover:bg-gray-100"
-                }`}
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
+          <div className="flex gap-1">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                const prevStatus = getPreviousStatus(task.status);
+                if (prevStatus !== task.status) {
+                  handleChangeStatus(task, prevStatus);
+                }
+              }}
+              disabled={task.status === statusList[0].key}
+              className={`p-1 rounded ${
+                task.status === statusList[0].key
+                  ? "opacity-50 cursor-not-allowed"
+                  : darkMode
+                  ? "hover:bg-gray-600"
+                  : "hover:bg-gray-100"
+              }`}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                const nextStatus = getNextStatus(task.status);
+                if (nextStatus !== task.status) {
+                  handleChangeStatus(task, nextStatus);
+                }
+              }}
+              disabled={task.status === statusList[statusList.length - 1].key}
+              className={`p-1 rounded ${
+                task.status === statusList[statusList.length - 1].key
+                  ? "opacity-50 cursor-not-allowed"
+                  : darkMode
+                  ? "hover:bg-gray-600"
+                  : "hover:bg-gray-100"
+              }`}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
     );
