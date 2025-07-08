@@ -300,13 +300,6 @@ const MyProjects = () => {
         </div>
         {/* Action Icons */}
         <div className="flex justify-end space-x-2" onClick={e => e.stopPropagation()}>
-          <button 
-            onClick={() => handleView(project)}
-            className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-purple-300' : 'hover:bg-gray-100 text-gray-600 hover:text-purple-600'}`}
-            title="View Project"
-          >
-            <Eye className="w-4 h-4" />
-          </button>
           {isManagingProject && (
             <>
               <button 
