@@ -412,7 +412,7 @@ const MyProjects = () => {
                   ? 'bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent'
                   : 'text-gray-900'
               }`}>
-                My Projects
+                {currentUser?.role?.toLowerCase() === 'admin' ? 'Projects' : 'My Projects'}
               </h2>
               <div className="flex-1 flex justify-end">
                 {isUserAdmin() && (
