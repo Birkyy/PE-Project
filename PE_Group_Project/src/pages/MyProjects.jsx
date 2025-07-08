@@ -318,13 +318,15 @@ const MyProjects = () => {
               >
                 <Archive className="w-4 h-4" />
               </button>
-              <button 
-                onClick={() => handleDelete(project.projectId)}
-                className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-red-300' : 'hover:bg-gray-100 text-gray-600 hover:text-red-600'}`}
-                title="Delete Project"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+              {currentUser?.role?.toLowerCase() === 'admin' && (
+                <button 
+                  onClick={() => handleDelete(project.projectId)}
+                  className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-red-300' : 'hover:bg-gray-100 text-gray-600 hover:text-red-600'}`}
+                  title="Delete Project"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
             </>
           )}
         </div>
