@@ -22,40 +22,40 @@ namespace PE_Group_Project.API.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("PE_Group_Project.API.Models.Domain.Blob", b =>
+            modelBuilder.Entity("PE_Group_Project.API.Models.Domain.File", b =>
                 {
-                    b.Property<Guid>("BlobId")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("ContentType")
+                    b.Property<string>("Category")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("Error")
-                        .HasColumnType("bit");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("ProjectTaskId")
+                    b.Property<Guid>("RelatedId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Status")
+                    b.Property<long>("Size")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid?>("TaskCommentId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Url")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("BlobId");
+                    b.HasKey("Id");
 
-                    b.HasIndex("ProjectTaskId");
-
-                    b.HasIndex("TaskCommentId");
-
-                    b.ToTable("Blobs");
+                    b.ToTable("Files");
                 });
 
             modelBuilder.Entity("PE_Group_Project.API.Models.Domain.Notification", b =>
@@ -277,23 +277,6 @@ namespace PE_Group_Project.API.Migrations
                     b.ToTable("UserProjects");
                 });
 
-            modelBuilder.Entity("PE_Group_Project.API.Models.Domain.Blob", b =>
-                {
-                    b.HasOne("PE_Group_Project.API.Models.Domain.ProjectTask", "ProjectTask")
-                        .WithMany("Blobs")
-                        .HasForeignKey("ProjectTaskId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("PE_Group_Project.API.Models.Domain.TaskComment", "TaskComment")
-                        .WithMany()
-                        .HasForeignKey("TaskCommentId");
-
-                    b.Navigation("ProjectTask");
-
-                    b.Navigation("TaskComment");
-                });
-
             modelBuilder.Entity("PE_Group_Project.API.Models.Domain.Notification", b =>
                 {
                     b.HasOne("PE_Group_Project.API.Models.Domain.User", "User")
@@ -340,11 +323,6 @@ namespace PE_Group_Project.API.Migrations
                     b.Navigation("Attachments");
 
                     b.Navigation("Contributors");
-                });
-
-            modelBuilder.Entity("PE_Group_Project.API.Models.Domain.ProjectTask", b =>
-                {
-                    b.Navigation("Blobs");
                 });
 
             modelBuilder.Entity("PE_Group_Project.API.Models.Domain.User", b =>

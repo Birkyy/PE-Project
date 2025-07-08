@@ -242,6 +242,114 @@ const MyProjects = () => {
     }));
   };
 
+  // Helper function to filter projects based on user role
+  const getFilteredProjectsByRole = () => {
+    if (!currentUser || !filteredProjects.length) return { managingProjects: [], contributingProjects: [] };
+
+    const userId = currentUser?.userId || currentUser?.id || currentUser?.UserId;
+    const isAdmin = currentUser?.role?.toLowerCase() === 'admin';
+
+    if (isAdmin) {
+      // For admin, return all projects in managingProjects (no change in display)
+      return { managingProjects: filteredProjects, contributingProjects: [] };
+    }
+
+    // For regular users, separate projects based on their role
+    const managingProjects = filteredProjects.filter(project => 
+      project.projectManagerInCharge === userId
+    );
+    
+    const contributingProjects = filteredProjects.filter(project => 
+      project.projectManagerInCharge !== userId && 
+      project.contributors && 
+      project.contributors.includes(userId)
+    );
+
+    return { managingProjects, contributingProjects };
+  };
+
+  // Helper function to render project card
+  const renderProjectCard = (project, isManagingProject = false) => (
+    <div
+      key={project.projectId}
+      className={`${darkMode ? `bg-gray-800 border-purple-500/30` : `bg-white border-purple-300`} border overflow-hidden shadow-xl rounded-lg hover:shadow-lg ${darkMode ? `hover:shadow-purple-500/20` : `hover:shadow-purple-300/30`} transition-all duration-300 cursor-pointer`}
+      onClick={() => handleProjectClick(project.projectId)}
+    >
+      <div className="px-6 py-4">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className={`text-lg font-semibold ${darkMode ? `text-purple-300` : `text-purple-700`}`}>{project.projectName}</h3>
+        </div>
+        <p className={`text-sm mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{project.description || ''}</p>
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>Due: {project.date ? project.date.slice(0, 10) : ''}</span>
+          </div>
+          <div className={`w-full rounded-full h-2 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}> 
+            <div className={`bg-purple-500 h-2 rounded-full`} style={{width: `${projectProgress[project.projectId] || 0}%`}}></div>
+          </div>
+          <div className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Progress: {projectProgress[project.projectId] || 0}%</div>
+        </div>
+        {/* Action Icons */}
+        <div className="flex justify-end space-x-2" onClick={e => e.stopPropagation()}>
+          <button 
+            onClick={() => handleView(project)}
+            className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-purple-300' : 'hover:bg-gray-100 text-gray-600 hover:text-purple-600'}`}
+            title="View Project"
+          >
+            <Eye className="w-4 h-4" />
+          </button>
+          {isManagingProject && (
+            <>
+              <button 
+                onClick={() => handleEdit(project)}
+                className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-cyan-300' : 'hover:bg-gray-100 text-gray-600 hover:text-cyan-600'}`}
+                title="Edit Project"
+              >
+                <Edit className="w-4 h-4" />
+              </button>
+              <button 
+                onClick={() => handleArchive(project.projectId, project.projectName)}
+                className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-yellow-300' : 'hover:bg-gray-100 text-gray-600 hover:text-yellow-600'}`}
+                title="Archive Project"
+              >
+                <Archive className="w-4 h-4" />
+              </button>
+              <button 
+                onClick={() => handleDelete(project.projectId)}
+                className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-red-300' : 'hover:bg-gray-100 text-gray-600 hover:text-red-600'}`}
+                title="Delete Project"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  // Helper function to render project section
+  const renderProjectSection = (title, projects, emptyMessage, isManagingProject = false) => (
+    <div className="mb-8">
+      <h3 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-purple-300' : 'text-purple-700'}`}>
+        {title}
+      </h3>
+      {projects.length === 0 ? (
+        <div className="text-center py-8">
+          <p className={`text-lg ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            {emptyMessage}
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {projects.map(project => renderProjectCard(project, isManagingProject))}
+        </div>
+      )}
+    </div>
+  );
+
+  const { managingProjects, contributingProjects } = getFilteredProjectsByRole();
+
   return (
     <Layout>
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
@@ -326,68 +434,26 @@ const MyProjects = () => {
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {filteredProjects.map((project) => (
-                    <div
-                      key={project.projectId}
-                      className={`${darkMode ? `bg-gray-800 border-purple-500/30` : `bg-white border-purple-300`} border overflow-hidden shadow-xl rounded-lg hover:shadow-lg ${darkMode ? `hover:shadow-purple-500/20` : `hover:shadow-purple-300/30`} transition-all duration-300 cursor-pointer`}
-                      onClick={() => handleProjectClick(project.projectId)}
-                    >
-                      <div className="px-6 py-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className={`text-lg font-semibold ${darkMode ? `text-purple-300` : `text-purple-700`}`}>{project.projectName}</h3>
-                        </div>
-                        <p className={`text-sm mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{project.description || ''}</p>
-                        <div className="mb-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>Due: {project.date ? project.date.slice(0, 10) : ''}</span>
-                          </div>
-                          <div className={`w-full rounded-full h-2 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}> 
-                            <div className={`bg-purple-500 h-2 rounded-full`} style={{width: `${projectProgress[project.projectId] || 0}%`}}></div>
-                          </div>
-                          <div className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Progress: {projectProgress[project.projectId] || 0}%</div>
-                        </div>
-                        {/* Action Icons */}
-                        <div className="flex justify-end space-x-2" onClick={e => e.stopPropagation()}>
-                          <button 
-                            onClick={() => handleView(project)}
-                            className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-purple-300' : 'hover:bg-gray-100 text-gray-600 hover:text-purple-600'}`}
-                            title="View Project"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button 
-                            onClick={() => handleEdit(project)}
-                            className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-cyan-300' : 'hover:bg-gray-100 text-gray-600 hover:text-cyan-600'}`}
-                            title="Edit Project"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button 
-                            onClick={() => handleArchive(project.projectId, project.projectName)}
-                            className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-yellow-300' : 'hover:bg-gray-100 text-gray-600 hover:text-yellow-600'}`}
-                            title="Archive Project"
-                          >
-                            <Archive className="w-4 h-4" />
-                          </button>
-                          <button 
-                            onClick={() => handleDelete(project.projectId)}
-                            className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-red-300' : 'hover:bg-gray-100 text-gray-600 hover:text-red-600'}`}
-                            title="Delete Project"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <>
+                  {currentUser?.role?.toLowerCase() === 'admin' ? (
+                    renderProjectSection('All Projects', managingProjects, 'No projects found.', true)
+                  ) : (
+                    <>
+                      {renderProjectSection('Managing Projects', managingProjects, 'You are not currently managing any projects.', true)}
+                      {renderProjectSection('Contributing Projects', contributingProjects, 'You are not currently contributing to any projects.', false)}
+                    </>
+                  )}
+                </>
               )}
 
               {/* Results Count */}
               <div className="mt-8 text-center">
                 <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Showing {filteredProjects.length} of {projects.length} projects
+                  {currentUser?.role?.toLowerCase() === 'admin' ? (
+                    `Showing ${filteredProjects.length} of ${projects.length} projects`
+                  ) : (
+                    `Showing ${managingProjects.length} managing projects and ${contributingProjects.length} contributing projects (${filteredProjects.length} total)`
+                  )}
                 </p>
               </div>
             </>

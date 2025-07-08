@@ -11,6 +11,7 @@ namespace PE_Group_Project.API.Data
         public DbSet<UserProject> UserProjects { get; set; }
         public DbSet<TaskComment> TaskComments { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<Models.Domain.File> Files { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

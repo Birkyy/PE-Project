@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using PE_Group_Project.API.Data;
 using PE_Group_Project.API.Services;
 
 namespace PE_Group_Project.API.Controllers
@@ -8,10 +10,12 @@ namespace PE_Group_Project.API.Controllers
     public class FileController : ControllerBase
     {
         private readonly LocalFileStorageService _fileService;
+        private readonly AppDBContext _context;
 
-        public FileController(LocalFileStorageService fileService)
+        public FileController(LocalFileStorageService fileService, AppDBContext context)
         {
             _fileService = fileService;
+            _context = context;
         }
 
         [HttpGet("list/task/{taskId}")]
