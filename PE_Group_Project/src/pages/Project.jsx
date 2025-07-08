@@ -20,6 +20,8 @@ import {
   Eye,
   ArrowLeft,
   Filter,
+  X,
+  AlertTriangle,
 } from "lucide-react";
 import Layout from "../components/Layout";
 import AddTaskModal from "./AddTaskModal";
@@ -147,6 +149,7 @@ function Project() {
   const [error, setError] = useState(null);
   const [projectFiles, setProjectFiles] = useState([]);
   const [deleteTaskModal, setDeleteTaskModal] = useState({ isOpen: false, taskId: null, taskName: "" });
+  const [deleteProjectModal, setDeleteProjectModal] = useState({ isOpen: false });
 
   // Separate states for view and edit modals
   const [viewTask, setViewTask] = useState(null);
@@ -479,6 +482,16 @@ function Project() {
     }
   };
 
+  const handleDeleteProject = async () => {
+    try {
+      await projectAPI.deleteProject(id);
+      navigate("/my-projects");
+    } catch (err) {
+      console.error("Error deleting project:", err);
+      alert("Failed to delete project. Please try again.");
+    }
+  };
+
   const renderTaskCard = (task) => {
     const isOverdue = isTaskOverdue(task);
     const taskId = task.projectTaskId || task.id;
@@ -754,16 +767,30 @@ function Project() {
                     {project.projectName || project.name}
                   </h1>
                   {canUserEditProject(currentUser, project) && (
-                    <button
-                      onClick={() => setIsEditProjectModalOpen(true)}
-                      className={`p-2 rounded-lg ${
-                        darkMode
-                          ? "hover:bg-gray-700 text-gray-400"
-                          : "hover:bg-gray-100 text-gray-600"
-                      }`}
-                    >
-                      <Edit className="w-5 h-5" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setIsEditProjectModalOpen(true)}
+                        className={`p-2 rounded-lg ${
+                          darkMode
+                            ? "hover:bg-gray-700 text-gray-400"
+                            : "hover:bg-gray-100 text-gray-600"
+                        }`}
+                        title="Edit Project"
+                      >
+                        <Edit className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => setDeleteProjectModal({ isOpen: true })}
+                        className={`p-2 rounded-lg ${
+                          darkMode
+                            ? "hover:bg-gray-700 text-gray-400 hover:text-red-400"
+                            : "hover:bg-gray-100 text-gray-600 hover:text-red-600"
+                        }`}
+                        title="Delete Project"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
                   )}
                 </div>
                 <div className="flex flex-wrap gap-3">
@@ -1079,6 +1106,117 @@ function Project() {
                 className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-all font-medium"
               >
                 Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Project Modal */}
+      {deleteProjectModal.isOpen && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setDeleteProjectModal({ isOpen: false })}
+          ></div>
+          
+          {/* Modal */}
+          <div className={`relative w-full max-w-md p-6 rounded-xl shadow-xl ${
+            darkMode 
+              ? "bg-gray-800" 
+              : "bg-white"
+          }`}>
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-full bg-red-500/10">
+                  <Trash2 className="w-5 h-5 text-red-500" />
+                </div>
+                <h3 className={`text-xl font-semibold ${
+                  darkMode ? "text-white" : "text-gray-900"
+                }`}>
+                  Delete Project
+                </h3>
+              </div>
+              <button
+                onClick={() => setDeleteProjectModal({ isOpen: false })}
+                className={`p-1 rounded-lg transition-colors ${
+                  darkMode
+                    ? "hover:bg-gray-700 text-gray-400"
+                    : "hover:bg-gray-100 text-gray-500"
+                }`}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Warning Message */}
+            <div className={`mb-6 p-4 rounded-lg ${
+              darkMode 
+                ? "bg-red-900/20 border border-red-800" 
+                : "bg-red-50 border border-red-100"
+            }`}>
+              <div className="flex gap-3">
+                <AlertTriangle className={`w-5 h-5 mt-0.5 ${
+                  darkMode ? "text-red-400" : "text-red-600"
+                }`} />
+                <div>
+                  <h4 className={`font-medium mb-1 ${
+                    darkMode ? "text-red-400" : "text-red-600"
+                  }`}>
+                    Warning: This action cannot be undone
+                  </h4>
+                  <p className={`text-sm ${
+                    darkMode ? "text-red-300" : "text-red-500"
+                  }`}>
+                    You are about to permanently delete this project and all associated tasks, comments, and files.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Project Info */}
+            <div className={`mb-6 p-4 rounded-lg ${
+              darkMode 
+                ? "bg-gray-900" 
+                : "bg-gray-50"
+            }`}>
+              <h4 className={`text-sm font-medium mb-2 ${
+                darkMode ? "text-gray-400" : "text-gray-600"
+              }`}>
+                Project to be deleted:
+              </h4>
+              <p className={`font-medium ${
+                darkMode ? "text-white" : "text-gray-900"
+              }`}>
+                Name: {project?.name || project?.projectName}
+              </p>
+            </div>
+
+            <p className={`mb-6 ${
+              darkMode ? "text-gray-300" : "text-gray-600"
+            }`}>
+              This will permanently remove the project and all its data from the system. Are you sure you want to continue?
+            </p>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setDeleteProjectModal({ isOpen: false })}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  darkMode
+                    ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteProject}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
+              >
+                Delete Project
               </button>
             </div>
           </div>

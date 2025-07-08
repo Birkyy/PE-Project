@@ -1,6 +1,20 @@
 import { useTheme } from '../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
-import { Trash2, Search, Calendar, Users, Save, X, ChevronDown, UserCheck, Plus, Archive, Eye, Edit } from 'lucide-react';
+import { 
+  Trash2, 
+  Search, 
+  Calendar, 
+  Users, 
+  Save, 
+  X, 
+  ChevronDown, 
+  UserCheck, 
+  Plus, 
+  Archive, 
+  Eye, 
+  Edit,
+  AlertTriangle 
+} from 'lucide-react';
 import Layout from '../components/Layout';
 import { useState, useRef, useEffect } from 'react';
 import { projectAPI, taskAPI } from '../API/apiService';
@@ -20,6 +34,7 @@ const MyProjects = () => {
   const [editProjectObj, setEditProjectObj] = useState(null);
   const [editProjectLoading, setEditProjectLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, projectId: null, projectName: '' });
   const [editForm, setEditForm] = useState({
     projectName: '',
     date: '',
@@ -158,18 +173,23 @@ const MyProjects = () => {
     }
   };
 
-  const handleDelete = async (projectId) => {
-    if (!window.confirm('Are you sure you want to delete this project?')) return;
+  const handleDelete = async () => {
     try {
       // Delete all tasks for this project first
-      const tasks = await taskAPI.getTasksByProjectId(projectId);
+      const tasks = await taskAPI.getTasksByProjectId(deleteModal.projectId);
       await Promise.all(tasks.map(task => taskAPI.deleteTask(task.projectTaskId)));
+      
       // Delete the project using API
-      await projectAPI.deleteProject(projectId);
+      await projectAPI.deleteProject(deleteModal.projectId);
+      
       // Remove from local state
-      setProjects((prev) => prev.filter((p) => p.projectId !== projectId));
-      setFilteredProjects((prev) => prev.filter((p) => p.projectId !== projectId));
-      console.log('Project and all its tasks deleted:', projectId);
+      setProjects((prev) => prev.filter((p) => p.projectId !== deleteModal.projectId));
+      setFilteredProjects((prev) => prev.filter((p) => p.projectId !== deleteModal.projectId));
+      
+      // Close the modal
+      setDeleteModal({ isOpen: false, projectId: null, projectName: '' });
+      
+      console.log('Project and all its tasks deleted:', deleteModal.projectId);
     } catch (err) {
       console.error('Error deleting project and its tasks:', err);
       alert('Failed to delete project and its tasks. Please try again.');
@@ -320,7 +340,7 @@ const MyProjects = () => {
               </button>
               {currentUser?.role?.toLowerCase() === 'admin' && (
                 <button 
-                  onClick={() => handleDelete(project.projectId)}
+                  onClick={() => setDeleteModal({ isOpen: true, projectId: project.projectId, projectName: project.projectName })}
                   className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-red-300' : 'hover:bg-gray-100 text-gray-600 hover:text-red-600'}`}
                   title="Delete Project"
                 >
@@ -541,6 +561,117 @@ const MyProjects = () => {
           project={editProjectObj}
           loading={editProjectLoading}
         />
+      )}
+
+      {/* Delete Project Modal */}
+      {deleteModal.isOpen && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setDeleteModal({ isOpen: false, projectId: null, projectName: '' })}
+          ></div>
+          
+          {/* Modal */}
+          <div className={`relative w-full max-w-md p-6 rounded-xl shadow-xl ${
+            darkMode 
+              ? "bg-gray-800" 
+              : "bg-white"
+          }`}>
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-full bg-red-500/10">
+                  <Trash2 className="w-5 h-5 text-red-500" />
+                </div>
+                <h3 className={`text-xl font-semibold ${
+                  darkMode ? "text-white" : "text-gray-900"
+                }`}>
+                  Delete Project
+                </h3>
+              </div>
+              <button
+                onClick={() => setDeleteModal({ isOpen: false, projectId: null, projectName: '' })}
+                className={`p-1 rounded-lg transition-colors ${
+                  darkMode
+                    ? "hover:bg-gray-700 text-gray-400"
+                    : "hover:bg-gray-100 text-gray-500"
+                }`}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Warning Message */}
+            <div className={`mb-6 p-4 rounded-lg ${
+              darkMode 
+                ? "bg-red-900/20 border border-red-800" 
+                : "bg-red-50 border border-red-100"
+            }`}>
+              <div className="flex gap-3">
+                <AlertTriangle className={`w-5 h-5 mt-0.5 ${
+                  darkMode ? "text-red-400" : "text-red-600"
+                }`} />
+                <div>
+                  <h4 className={`font-medium mb-1 ${
+                    darkMode ? "text-red-400" : "text-red-600"
+                  }`}>
+                    Warning: This action cannot be undone
+                  </h4>
+                  <p className={`text-sm ${
+                    darkMode ? "text-red-300" : "text-red-500"
+                  }`}>
+                    You are about to permanently delete this project and all associated tasks, comments, and files.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Project Info */}
+            <div className={`mb-6 p-4 rounded-lg ${
+              darkMode 
+                ? "bg-gray-900" 
+                : "bg-gray-50"
+            }`}>
+              <h4 className={`text-sm font-medium mb-2 ${
+                darkMode ? "text-gray-400" : "text-gray-600"
+              }`}>
+                Project to be deleted:
+              </h4>
+              <p className={`font-medium ${
+                darkMode ? "text-white" : "text-gray-900"
+              }`}>
+                Name: {deleteModal.projectName}
+              </p>
+            </div>
+
+            <p className={`mb-6 ${
+              darkMode ? "text-gray-300" : "text-gray-600"
+            }`}>
+              This will permanently remove the project and all its data from the system. Are you sure you want to continue?
+            </p>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setDeleteModal({ isOpen: false, projectId: null, projectName: '' })}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  darkMode
+                    ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
+              >
+                Delete Project
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </Layout>
   );
