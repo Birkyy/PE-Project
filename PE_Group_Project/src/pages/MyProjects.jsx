@@ -19,6 +19,7 @@ import Layout from '../components/Layout';
 import { useState, useRef, useEffect } from 'react';
 import { projectAPI, taskAPI } from '../API/apiService';
 import EditProjectModal from './EditProjectModal';
+import ArchiveConfirmModal from '../components/ArchiveConfirmModal';
 
 const MyProjects = () => {
   const { darkMode } = useTheme();
@@ -35,6 +36,7 @@ const MyProjects = () => {
   const [editProjectLoading, setEditProjectLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, projectId: null, projectName: '' });
+  const [archiveModal, setArchiveModal] = useState({ isOpen: false, projectId: null, projectName: '' });
   const [editForm, setEditForm] = useState({
     projectName: '',
     date: '',
@@ -197,17 +199,20 @@ const MyProjects = () => {
   };
 
   const handleArchive = async (projectId, projectName) => {
-    if (window.confirm(`Are you sure you want to archive "${projectName}"? It will be moved to the Archive section.`)) {
-      try {
-        await projectAPI.archiveProject(projectId, currentUser?.userId);
-        // Remove project from active projects list
-        setProjects(prevProjects => prevProjects.filter(project => project.projectId !== projectId));
-        setFilteredProjects(prevProjects => prevProjects.filter(project => project.projectId !== projectId));
-        alert(`"${projectName}" has been archived successfully!`);
-      } catch (err) {
-        console.error('Error archiving project:', err);
-        alert('Failed to archive project. Please try again.');
-      }
+    setArchiveModal({ isOpen: true, projectId, projectName });
+  };
+
+  const handleArchiveConfirm = async () => {
+    try {
+      await projectAPI.archiveProject(archiveModal.projectId, currentUser?.userId);
+      // Remove project from active projects list
+      setProjects(prevProjects => prevProjects.filter(project => project.projectId !== archiveModal.projectId));
+      setFilteredProjects(prevProjects => prevProjects.filter(project => project.projectId !== archiveModal.projectId));
+      // Close the modal
+      setArchiveModal({ isOpen: false, projectId: null, projectName: '' });
+    } catch (err) {
+      console.error('Error archiving project:', err);
+      alert('Failed to archive project. Please try again.');
     }
   };
 
@@ -673,6 +678,14 @@ const MyProjects = () => {
           </div>
         </div>
       )}
+
+      {/* Archive Confirmation Modal */}
+      <ArchiveConfirmModal
+        isOpen={archiveModal.isOpen}
+        onClose={() => setArchiveModal({ isOpen: false, projectId: null, projectName: '' })}
+        onConfirm={handleArchiveConfirm}
+        projectName={archiveModal.projectName}
+      />
     </Layout>
   );
 };

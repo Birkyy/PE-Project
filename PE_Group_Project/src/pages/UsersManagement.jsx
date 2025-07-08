@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useTheme } from "../context/ThemeContext";
 import Layout from "../components/Layout";
 import { useNavigate } from "react-router-dom";
+import NotificationToast from "../components/NotificationToast";
 import {
   Shield,
   Search,
@@ -53,15 +54,11 @@ const UsersManagement = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [lockedAccounts, setLockedAccounts] = useState([]);
-
+  
   // Delete modal and notification states
-  const [deleteModal, setDeleteModal] = useState({
-    isOpen: false,
-    userId: null,
-    userName: "",
-  });
-  const [notifications, setNotifications] = useState([]);
-
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, userId: null, userName: '' });
+  const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
+  
   const storedUser = localStorage.getItem("user");
   const user = storedUser ? JSON.parse(storedUser) : null;
 
@@ -142,6 +139,17 @@ const UsersManagement = () => {
     return locked;
   };
 
+  // Helper function to show notification
+  const showNotification = (message, type = 'success') => {
+    setNotification({ show: true, message, type });
+  };
+
+  // Helper function to hide notification
+  const hideNotification = () => {
+    setNotification({ show: false, message: '', type: 'success' });
+  };
+
+  // Update unlockAccount to use notifications
   const unlockAccount = (email) => {
     localStorage.removeItem(`accountLocked_${email}`);
     localStorage.removeItem(`lockTime_${email}`);
@@ -149,26 +157,7 @@ const UsersManagement = () => {
 
     // Update locked accounts list
     setLockedAccounts(getLockedAccounts());
-    setSuccess(`Account ${email} has been unlocked successfully!`);
-
-    // Clear success message after 3 seconds
-    setTimeout(() => setSuccess(""), 3000);
-  };
-
-  // Notification helper functions
-  const showNotification = (message, type = "info") => {
-    const id = Date.now();
-    const notification = { id, message, type };
-    setNotifications((prev) => [...prev, notification]);
-
-    // Auto-dismiss after 4 seconds
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, 4000);
-  };
-
-  const closeNotification = (id) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    showNotification(`Account ${email} has been unlocked successfully!`, 'success');
   };
 
   // Load users and locked accounts on component mount
@@ -214,6 +203,7 @@ const UsersManagement = () => {
     }));
   };
 
+  // Update handleCreateUser to use the new notification system
   const handleCreateUser = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -230,7 +220,7 @@ const UsersManagement = () => {
 
       const response = await userAPI.createUser(requestData);
 
-      setSuccess("User created successfully!");
+      showNotification("User created successfully!", 'success');
       setFormData({
         username: "",
         email: "",
@@ -241,10 +231,9 @@ const UsersManagement = () => {
       // Refresh users list
       await fetchUsers();
 
-      // Close modal after 2 seconds
+      // Close modal after 1.5 seconds
       setTimeout(() => {
         setShowCreateModal(false);
-        setSuccess("");
       }, 1500);
     } catch (err) {
       console.error("Create user error:", err);
@@ -255,14 +244,10 @@ const UsersManagement = () => {
           errorMessage = err.response.data;
         } else if (err.response.data.message) {
           errorMessage = err.response.data.message;
-        } else if (err.response.data.title) {
-          errorMessage = err.response.data.title;
         }
-      } else if (err.message) {
-        errorMessage = err.message;
       }
 
-      setError(errorMessage);
+      showNotification(errorMessage, 'error');
     } finally {
       setLoading(false);
     }
@@ -499,22 +484,25 @@ const UsersManagement = () => {
     setDeleteModal({ isOpen: true, userId: user.id, userName: user.name });
   };
 
-  // Handle confirmed user deletion
+  // Update handleDelete to use the new notification system
   const handleDeleteUser = async () => {
     if (!deleteModal.userId) return;
 
     try {
       await userAPI.deleteUser(deleteModal.userId);
+      
+      // Remove user from local state
       setUsers((prev) => prev.filter((user) => user.id !== deleteModal.userId));
-      showNotification(
-        `User "${deleteModal.userName}" has been deleted successfully.`,
-        "success"
-      );
-      setDeleteModal({ isOpen: false, userId: null, userName: "" });
+      
+      // Close modal
+      setDeleteModal({ isOpen: false, userId: null, userName: '' });
+      
+      // Show success notification
+      showNotification(`User "${deleteModal.userName}" has been deleted successfully`, 'success');
       console.log("User deleted:", deleteModal.userId);
     } catch (err) {
       console.error("Error deleting user:", err);
-      showNotification("Failed to delete user. Please try again.", "error");
+      showNotification('Failed to delete user. Please try again.', 'error');
     }
   };
 
@@ -1689,60 +1677,12 @@ const UsersManagement = () => {
       )}
 
       {/* Toast Notifications */}
-      {notifications.length > 0 && (
-        <div className="fixed top-4 right-4 z-50 space-y-3">
-          {notifications.map((notification) => (
-            <div
-              key={notification.id}
-              className={`max-w-sm w-full rounded-lg shadow-xl border transform transition-all duration-500 ease-in-out ${
-                darkMode
-                  ? "bg-gray-800 border-gray-700"
-                  : "bg-white border-gray-200"
-              } ${
-                notification.type === "success"
-                  ? "border-l-4 border-l-green-500"
-                  : notification.type === "error"
-                  ? "border-l-4 border-l-red-500"
-                  : "border-l-4 border-l-blue-500"
-              }`}
-            >
-              <div className="p-4">
-                <div className="flex items-start">
-                  <div className="flex-shrink-0">
-                    {notification.type === "success" ? (
-                      <CheckCircle className="h-5 w-5 text-green-500" />
-                    ) : notification.type === "error" ? (
-                      <XCircle className="h-5 w-5 text-red-500" />
-                    ) : (
-                      <CheckCircle className="h-5 w-5 text-blue-500" />
-                    )}
-                  </div>
-                  <div className="ml-3 w-0 flex-1">
-                    <p
-                      className={`text-sm font-medium ${
-                        darkMode ? "text-white" : "text-gray-900"
-                      }`}
-                    >
-                      {notification.message}
-                    </p>
-                  </div>
-                  <div className="ml-4 flex-shrink-0 flex">
-                    <button
-                      onClick={() => closeNotification(notification.id)}
-                      className={`inline-flex rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                        darkMode
-                          ? "text-gray-400 hover:text-gray-300 focus:ring-gray-500"
-                          : "text-gray-400 hover:text-gray-500 focus:ring-gray-400"
-                      }`}
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+      {notification.show && (
+        <NotificationToast
+          message={notification.message}
+          type={notification.type}
+          onClose={hideNotification}
+        />
       )}
     </Layout>
   );
