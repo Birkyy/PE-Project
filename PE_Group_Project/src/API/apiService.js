@@ -584,10 +584,10 @@ export const fileAPI = {
     }
   },
 
-  downloadFile: async (fileId) => {
+  downloadFile: async (filePath) => {
     try {
-      const response = await api.get(`/File/download/${fileId}`, {
-        responseType: "blob", // important to receive actual file data
+      const response = await api.get(`/File/download/${filePath}`, {
+        responseType: "blob",
       });
       return response;
     } catch (error) {
@@ -599,6 +599,16 @@ export const fileAPI = {
   deleteFile: async (taskId, fileName) => {
     try {
       const response = await api.delete(`/File/delete/task/${taskId}/${encodeURIComponent(fileName)}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error deleting file:", error);
+      throw error;
+    }
+  },
+
+  deleteFileById: async (fileId) => {
+    try {
+      const response = await api.delete(`/File/delete/${fileId}`);
       return response.data;
     } catch (error) {
       console.error("Error deleting file:", error);
