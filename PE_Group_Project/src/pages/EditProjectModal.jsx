@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "../context/ThemeContext";
 import { X, Upload, Trash2, File, Download } from "lucide-react";
+import ContributorSelector from "../components/ContributorSelector";
 import { userAPI, fileAPI } from "../API/apiService";
 
 function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
@@ -32,6 +33,38 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
   // Set form data when project changes and users are loaded
   useEffect(() => {
     if (project && allUsers.length > 0) {
+      // Convert contributor IDs to user objects
+      const contributorObjects = Array.isArray(project.contributors)
+        ? project.contributors.map(contributorId => {
+            const user = allUsers.find(u => 
+              (u.userId || u.UserId || u.id) === contributorId || 
+              String(u.userId || u.UserId || u.id) === String(contributorId)
+            );
+            if (user) {
+              return {
+                id: user.userId || user.UserId || user.id,
+                userId: user.userId || user.UserId || user.id,
+                UserId: user.userId || user.UserId || user.id,
+                username: user.username || user.Username,
+                Username: user.username || user.Username,
+                email: user.email || user.Email,
+                Email: user.email || user.Email
+              };
+            } else {
+              // Handle unknown users
+              return {
+                id: contributorId,
+                userId: contributorId,
+                UserId: contributorId,
+                username: "Unknown User",
+                Username: "Unknown User",
+                email: "",
+                Email: ""
+              };
+            }
+          }).filter(Boolean)
+        : [];
+
       setFormData({
         projectName: project.projectName || "",
         description: project.description,
@@ -40,9 +73,7 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
         date: project.date ? project.date.slice(0, 10) : "",
         files: project.attachments || [],
         projectManagerInCharge: toStringId(project.projectManagerInCharge),
-        contributors: Array.isArray(project.contributors)
-          ? project.contributors.map(toStringId)
-          : [],
+        contributors: contributorObjects,
       });
       setProjectReady(true);
     }
@@ -172,7 +203,9 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
       priorityLevel: formData.priorityLevel,
       date: formData.date,
       projectManagerInCharge: formData.projectManagerInCharge,
-      contributors: formData.contributors,
+      contributors: formData.contributors.map(contributor => 
+        contributor.userId || contributor.UserId || contributor.id
+      ),
       // Add attachments if needed
     };
     await onSubmit(payload);
@@ -675,43 +708,17 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
               >
                 Contributors
               </label>
-              <select
-                name="contributors"
-                multiple
-                value={formData.contributors}
-                onChange={(e) => {
-                  const selected = Array.from(
-                    e.target.selectedOptions,
-                    (option) => option.value
-                  );
-                  setFormData((prev) => ({ ...prev, contributors: selected }));
+              <ContributorSelector
+                availableUsers={userRoleUsers}
+                selectedContributors={formData.contributors}
+                onChange={(contributors) => {
+                  setFormData((prev) => ({ ...prev, contributors: contributors }));
                 }}
-                className={`w-full p-2 border rounded-lg ${
-                  darkMode
-                    ? "bg-gray-700 border-gray-600 text-white"
-                    : "bg-white border-gray-300 text-gray-900"
-                }`}
                 disabled={usersLoading}
-                size={Math.min(6, userRoleUsers.length)}
-              >
-                {formData.contributors.map((contributorId) =>
-                  !userRoleUsers.some(
-                    (u) => (u.userId || u.id || u.UserId) === contributorId
-                  ) ? (
-                    <option key={contributorId} value={contributorId}>
-                      Unknown User
-                    </option>
-                  ) : null
-                )}
-                {userRoleUsers.map((user) => (
-                  <option
-                    key={user.userId || user.UserId}
-                    value={user.userId || user.UserId}
-                  >
-                    {user.username || user.Username} ({user.email || user.Email})
-                  </option>
-                ))}
-              </select>
+                loading={usersLoading}
+                error={usersError}
+                placeholder="Search and select contributors..."
+              />
             </div>
 
             <button

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import Layout from "../components/Layout";
 import FileUpload from "../components/FileUpload";
+import ContributorSelector from "../components/ContributorSelector";
 import { projectAPI, userAPI, fileAPI } from "../API/apiService";
 
 const AddProject = () => {
@@ -161,7 +162,7 @@ const AddProject = () => {
           stringToGuid(formData.projectManagerInCharge) ||
           "00000000-0000-0000-0000-000000000000",
         Contributors: formData.contributors
-          .map((id) => stringToGuid(id))
+          .map((contributor) => stringToGuid(contributor.userId || contributor.UserId || contributor.id))
           .filter((id) => id !== null),
       };
 
@@ -446,55 +447,20 @@ const AddProject = () => {
                   <Users className="w-4 h-4 inline mr-2" />
                   Contributors
                 </label>
-                <select
-                  name="contributors"
-                  multiple
-                  value={formData.contributors}
-                  onChange={(e) => {
-                    const selected = Array.from(
-                      e.target.selectedOptions,
-                      (option) => option.value
-                    );
+                <ContributorSelector
+                  availableUsers={userRoleUsers}
+                  selectedContributors={formData.contributors}
+                  onChange={(contributors) => {
                     setFormData((prev) => ({
                       ...prev,
-                      contributors: selected,
+                      contributors: contributors,
                     }));
                   }}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 ${
-                    darkMode
-                      ? "bg-gray-700 border-gray-600 text-white"
-                      : "bg-white border-gray-300 text-gray-900"
-                  }`}
                   disabled={usersLoading}
-                  size={Math.min(6, userRoleUsers.length)}
-                >
-                  {userRoleUsers.map((user) => (
-                    <option
-                      key={user.userId || user.UserId}
-                      value={user.userId || user.UserId}
-                    >
-                      {user.username || user.Username} (
-                      {user.email || user.Email})
-                    </option>
-                  ))}
-                </select>
-                {usersLoading && (
-                  <p className="text-xs mt-1 text-gray-400">Loading users...</p>
-                )}
-                {usersError && (
-                  <p className="text-xs mt-1 text-red-400">{usersError}</p>
-                )}
-                {formData.contributors.length > 0 && (
-                  <div className="mt-2">
-                    <p
-                      className={`text-xs ${
-                        darkMode ? "text-green-400" : "text-green-600"
-                      }`}
-                    >
-                      Contributors: {formData.contributors.length} user(s) added
-                    </p>
-                  </div>
-                )}
+                  loading={usersLoading}
+                  error={usersError}
+                  placeholder="Search and select contributors..."
+                />
               </div>
 
               {/* Due Date and Priority Row */}
