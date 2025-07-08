@@ -36,7 +36,7 @@ const Header = ({ onToggleSidebar, darkMode }) => {
     // If admin, do not show Dashboard, show My Projects as first
     if (isUserAdmin()) {
       return [
-        { path: "/my-projects", label: "My Projects" },
+        { path: "/my-projects", label: "Projects" },
         { path: "/users-management", label: "Users Management" },
         { path: "/profile", label: "Profile" },
       ];
