@@ -4,6 +4,7 @@ import { useTheme } from '../context/ThemeContext';
 import Layout from '../components/Layout';
 import { Calendar, Users, Eye, RotateCcw, Trash2, Search } from 'lucide-react';
 import { projectAPI } from '../API/apiService';
+import RestoreConfirmModal from '../components/RestoreConfirmModal';
 
 const Archive = () => {
   const { darkMode } = useTheme();
@@ -13,6 +14,7 @@ const Archive = () => {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
+  const [restoreModal, setRestoreModal] = useState({ isOpen: false, projectId: null, projectName: '' });
 
   // Load current user data
   useEffect(() => {
@@ -49,14 +51,16 @@ const Archive = () => {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
-  const handleRestoreProject = async (projectId) => {
+  const handleRestoreProject = async (projectId, projectName, e) => {
+    e?.stopPropagation(); // Prevent project card click
+    setRestoreModal({ isOpen: true, projectId, projectName });
+  };
+
+  const handleRestoreConfirm = async () => {
     try {
-      await projectAPI.restoreProject(projectId, currentUser?.userId);
-      const projectToRestore = archivedProjects.find(p => p.projectId === projectId);
-      if (projectToRestore) {
-        setArchivedProjects(prev => prev.filter(p => p.projectId !== projectId));
-        alert(`"${projectToRestore.projectName}" has been restored to active projects!`);
-      }
+      await projectAPI.restoreProject(restoreModal.projectId, currentUser?.userId);
+      setArchivedProjects(prev => prev.filter(p => p.projectId !== restoreModal.projectId));
+      setRestoreModal({ isOpen: false, projectId: null, projectName: '' });
     } catch (err) {
       console.error('Error restoring project:', err);
       alert('Failed to restore project. Please try again.');
@@ -232,7 +236,7 @@ const Archive = () => {
                       <Eye className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => handleRestoreProject(project.projectId)}
+                      onClick={() => handleRestoreProject(project.projectId, project.projectName)}
                       className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-green-300' : 'hover:bg-gray-100 text-gray-600 hover:text-green-600'}`}
                       title="Restore Project"
                     >
@@ -253,6 +257,14 @@ const Archive = () => {
         )}
         </div>
       </div>
+
+      {/* Restore Confirmation Modal */}
+      <RestoreConfirmModal
+        isOpen={restoreModal.isOpen}
+        onClose={() => setRestoreModal({ isOpen: false, projectId: null, projectName: '' })}
+        onConfirm={handleRestoreConfirm}
+        projectName={restoreModal.projectName}
+      />
     </Layout>
   );
 };
