@@ -13,7 +13,7 @@ import {
   ListTodo,
   Edit,
   Trash2,
-  Search,
+
   MoveRight,
   ChevronRight,
   ChevronLeft,
@@ -130,7 +130,7 @@ function Project() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchQuery, setSearchQuery] = useState("");
+
   const [projectFiles, setProjectFiles] = useState([]);
 
   // Separate states for view and edit modals
@@ -458,29 +458,35 @@ function Project() {
           >
             {task.taskName || task.title}
           </h4>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 setEditTask(task);
                 setIsEditModalOpen(true);
               }}
-              className={`p-1 rounded ${
-                darkMode ? "hover:bg-gray-600" : "hover:bg-gray-100"
+              className={`p-2 rounded-md transition-all duration-200 ${
+                darkMode 
+                  ? "hover:bg-blue-600/20 hover:text-blue-400 text-blue-500" 
+                  : "hover:bg-blue-50 hover:text-blue-700 text-blue-600"
               }`}
+              title="Edit Task"
             >
-              <Edit className="w-4 h-4 text-blue-500" />
+              <Edit className="w-5 h-5" />
             </button>
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 handleDeleteTask(taskId);
               }}
-              className={`p-1 rounded ${
-                darkMode ? "hover:bg-gray-600" : "hover:bg-gray-100"
+              className={`p-2 rounded-md transition-all duration-200 ${
+                darkMode 
+                  ? "hover:bg-red-600/20 hover:text-red-400 text-red-500" 
+                  : "hover:bg-red-50 hover:text-red-700 text-red-600"
               }`}
+              title="Delete Task"
             >
-              <Trash2 className="w-4 h-4 text-red-500" />
+              <Trash2 className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -509,7 +515,7 @@ function Project() {
           </div>
 
           <div className="flex items-center gap-2 text-xs">
-            <Calendar className="w-3 h-3" />
+            <Calendar className={`w-4 h-4 ${darkMode ? "text-purple-400" : "text-purple-600"}`} />
             <span className={darkMode ? "text-gray-400" : "text-gray-500"}>
               Due: {formatDate(task.deadline)}
             </span>
@@ -517,7 +523,7 @@ function Project() {
         </div>
 
         <div className="mt-3 flex items-center justify-between">
-          <div className="flex gap-1">
+          <div className="flex gap-2">
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -527,15 +533,16 @@ function Project() {
                 }
               }}
               disabled={task.status === statusList[0].key}
-              className={`p-1 rounded ${
+              className={`p-2 rounded-md transition-all duration-200 ${
                 task.status === statusList[0].key
                   ? "opacity-50 cursor-not-allowed"
                   : darkMode
-                  ? "hover:bg-gray-600"
-                  : "hover:bg-gray-100"
+                  ? "hover:bg-orange-600/20 hover:text-orange-400 text-orange-500"
+                  : "hover:bg-orange-50 hover:text-orange-700 text-orange-600"
               }`}
+              title={`Move to ${getPreviousStatus(task.status)}`}
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-5 h-5" />
             </button>
             <button
               onClick={(e) => {
@@ -546,15 +553,16 @@ function Project() {
                 }
               }}
               disabled={task.status === statusList[statusList.length - 1].key}
-              className={`p-1 rounded ${
+              className={`p-2 rounded-md transition-all duration-200 ${
                 task.status === statusList[statusList.length - 1].key
                   ? "opacity-50 cursor-not-allowed"
                   : darkMode
-                  ? "hover:bg-gray-600"
-                  : "hover:bg-gray-100"
+                  ? "hover:bg-green-600/20 hover:text-green-400 text-green-500"
+                  : "hover:bg-green-50 hover:text-green-700 text-green-600"
               }`}
+              title={`Move to ${getNextStatus(task.status)}`}
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -752,29 +760,7 @@ function Project() {
               )}
             </div>
 
-            {/* Search Bar */}
-            <div className="max-w-md mb-6">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search
-                    className={`h-5 w-5 ${
-                      darkMode ? "text-gray-400" : "text-gray-500"
-                    }`}
-                  />
-                </div>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search tasks..."
-                  className={`block w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${
-                    darkMode
-                      ? "bg-gray-800 border-gray-700 text-white placeholder-gray-400"
-                      : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
-                  }`}
-                />
-              </div>
-            </div>
+
           </div>
 
           {/* Project Details Grid */}

@@ -160,14 +160,20 @@ const UsersManagement = () => {
   }, []);
 
   // Filter users based on search term
-  const filteredUsers = users.filter(
-    (user) =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.position.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = users.filter((user) => {
+    if (!searchTerm) return true;
+    
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      (user.name && user.name.toLowerCase().includes(searchLower)) ||
+      (user.username && user.username.toLowerCase().includes(searchLower)) ||
+      (user.email && user.email.toLowerCase().includes(searchLower)) ||
+      (user.role && user.role.toLowerCase().includes(searchLower)) ||
+      (user.nationality && user.nationality.toLowerCase().includes(searchLower)) ||
+      (user.phoneNumber && user.phoneNumber.toLowerCase().includes(searchLower)) ||
+      (user.status && user.status.toLowerCase().includes(searchLower))
+    );
+  });
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
