@@ -1,6 +1,6 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { useTheme } from "../context/ThemeContext";
-import { Send, Paperclip, X, MessageSquare } from "lucide-react";
+import { Send, MessageSquare } from "lucide-react";
 import Comment from "./Comment";
 
 const CommentList = ({
@@ -13,118 +13,28 @@ const CommentList = ({
 }) => {
   const { darkMode } = useTheme();
   const [newCommentText, setNewCommentText] = useState("");
-  const [newCommentAttachments, setNewCommentAttachments] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const fileInputRef = useRef(null);
-
-  const formatFileSize = (bytes) => {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-  };
-
-  const getFileIcon = (fileName) => {
-    const extension = fileName.split(".").pop().toLowerCase();
-    const imageExts = ["jpg", "jpeg", "png", "gif", "bmp", "webp", "svg"];
-    const videoExts = ["mp4", "avi", "mov", "wmv", "flv", "webm"];
-    const audioExts = ["mp3", "wav", "flac", "aac", "ogg"];
-    const docExts = ["pdf", "doc", "docx", "txt", "rtf"];
-
-    if (imageExts.includes(extension)) return "🖼️";
-    if (videoExts.includes(extension)) return "🎥";
-    if (audioExts.includes(extension)) return "🎵";
-    if (docExts.includes(extension)) return "📄";
-    return "📎";
-  };
-
-  const handleFileSelect = (event) => {
-    const files = Array.from(event.target.files);
-    const newAttachments = files.map((file) => ({
-      id: Date.now() + Math.random(),
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      file: file,
-      uploadedAt: new Date().toISOString(),
-    }));
-
-    setNewCommentAttachments((prev) => [...prev, ...newAttachments]);
-    event.target.value = "";
-  };
-
-  const handleRemoveAttachment = (attachmentId) => {
-    setNewCommentAttachments((prev) =>
-      prev.filter((att) => att.id !== attachmentId)
-    );
-  };
 
   const handleSubmitComment = async () => {
-    // Allow submission if there's either comment text OR file attachments
-    if (!newCommentText.trim() && newCommentAttachments.length === 0) {
+    if (!newCommentText.trim()) {
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // If there are file attachments, upload them first
-      let uploadedFiles = [];
-      if (newCommentAttachments.length > 0) {
-        for (const attachment of newCommentAttachments) {
-          try {
-            const formData = new FormData();
-            formData.append("file", attachment.file);
-
-            const uploadResponse = await fetch(
-              `http://localhost:5022/api/File/upload/task/${taskId}`,
-              {
-                method: "POST",
-                body: formData,
-              }
-            );
-
-            if (!uploadResponse.ok) {
-              throw new Error(
-                `File upload failed: ${uploadResponse.statusText}`
-              );
-            }
-
-            const uploadResult = await uploadResponse.json();
-            uploadedFiles.push({
-              name: attachment.name,
-              url: uploadResult.url,
-              size: attachment.size,
-            });
-          } catch (uploadError) {
-            throw new Error(
-              `Failed to upload ${attachment.name}: ${uploadError.message}`
-            );
-          }
-        }
-      }
-
       const commentData = {
         projectTaskId: taskId,
-        comment: newCommentText.trim() || "File attachment", // Use default text if no comment
+        comment: newCommentText.trim(),
         userId: currentUser?.userId || currentUser?.id,
-        attachments: uploadedFiles.map((file) => ({
-          fileName: file.name,
-          fileUrl: file.url,
-          fileSize: file.size,
-          contentType: file.type || "application/octet-stream",
-        })),
       };
 
       console.log("Submitting comment with data:", commentData);
 
       await onAddComment(taskId, commentData);
-
       setNewCommentText("");
-      setNewCommentAttachments([]); // Clear attachments
     } catch (error) {
-      // You might want to show an error message to the user here
+      console.error("Error submitting comment:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -172,168 +82,53 @@ const CommentList = ({
       >
         <div className="space-y-3">
           {/* Comment Input */}
-          <textarea
-            value={newCommentText}
-            onChange={(e) => setNewCommentText(e.target.value)}
-            onKeyDown={handleKeyPress}
-            placeholder="Add a comment... (Ctrl+Enter to submit)"
-            className={`w-full p-3 rounded-lg border resize-none ${
-              darkMode
-                ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
-                : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500"
-            } focus:outline-none focus:ring-1 focus:ring-blue-500`}
-            rows={3}
-          />
-
-          {/* File Attachments Section */}
-          <div className="space-y-2">
-            {/* Attach Files Button */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isSubmitting}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors ${
-                  darkMode
-                    ? "bg-gray-700 hover:bg-gray-600 text-gray-300 disabled:bg-gray-800 disabled:text-gray-500"
-                    : "bg-gray-100 hover:bg-gray-200 text-gray-700 disabled:bg-gray-50 disabled:text-gray-400"
-                } disabled:cursor-not-allowed`}
-              >
-                <Paperclip className="w-4 h-4" />
-                Attach Files
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                onChange={handleFileSelect}
-                className="hidden"
-                accept="*/*"
-              />
-            </div>
-
-            {/* Show selected attachments */}
-            {newCommentAttachments.length > 0 && (
-              <div className="space-y-2">
-                <div
-                  className={`text-xs font-medium flex items-center gap-1 ${
-                    darkMode ? "text-gray-400" : "text-gray-600"
-                  }`}
-                >
-                  <Paperclip className="w-3 h-3" />
-                  Files to attach ({newCommentAttachments.length}):
-                </div>
-                <div className="space-y-1">
-                  {newCommentAttachments.map((attachment) => (
-                    <div
-                      key={attachment.id}
-                      className={`flex items-center justify-between p-2 rounded-lg border ${
-                        darkMode
-                          ? "bg-gray-700/50 border-gray-600"
-                          : "bg-gray-50 border-gray-300"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <span
-                          className={`${
-                            darkMode ? "text-blue-400" : "text-blue-600"
-                          }`}
-                        >
-                          {getFileIcon(attachment.name)}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <span
-                            className={`text-sm font-medium truncate block ${
-                              darkMode ? "text-gray-300" : "text-gray-700"
-                            }`}
-                          >
-                            {attachment.name}
-                          </span>
-                          <span
-                            className={`text-xs ${
-                              darkMode ? "text-gray-400" : "text-gray-500"
-                            }`}
-                          >
-                            {formatFileSize(attachment.size)}
-                          </span>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => handleRemoveAttachment(attachment.id)}
-                        disabled={isSubmitting}
-                        className={`p-1 rounded-full transition-colors ${
-                          darkMode
-                            ? "hover:bg-red-600/20 text-red-400 disabled:text-gray-600"
-                            : "hover:bg-red-100 text-red-500 disabled:text-gray-400"
-                        } disabled:cursor-not-allowed`}
-                        title="Remove file"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Submit Button */}
-          <div className="flex justify-between items-center">
-            <div
-              className={`text-xs ${
-                darkMode ? "text-gray-400" : "text-gray-500"
-              }`}
-            >
-              Tip: Press Ctrl+Enter to submit quickly
-            </div>
+          <div className="flex gap-2">
+            <textarea
+              value={newCommentText}
+              onChange={(e) => setNewCommentText(e.target.value)}
+              onKeyDown={handleKeyPress}
+              placeholder="Add a comment... (Ctrl+Enter to submit)"
+              className={`flex-1 p-3 rounded-lg border resize-none ${
+                darkMode
+                  ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
+                  : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500"
+              } focus:outline-none focus:ring-1 focus:ring-blue-500`}
+              rows={3}
+            />
             <button
               onClick={handleSubmitComment}
-              disabled={
-                (!newCommentText.trim() &&
-                  newCommentAttachments.length === 0) ||
-                isSubmitting
-              }
-              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                (!newCommentText.trim() &&
-                  newCommentAttachments.length === 0) ||
-                isSubmitting
-                  ? darkMode
-                    ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  : darkMode
-                  ? "bg-blue-600 hover:bg-blue-700 text-white"
-                  : "bg-blue-600 hover:bg-blue-700 text-white"
-              }`}
+              disabled={isSubmitting || !newCommentText.trim()}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                darkMode
+                  ? "bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-700 disabled:text-gray-500"
+                  : "bg-blue-500 hover:bg-blue-600 text-white disabled:bg-gray-200 disabled:text-gray-400"
+              } disabled:cursor-not-allowed`}
             >
-              <Send className="w-4 h-4" />
-              {isSubmitting ? "Adding..." : "Add Comment"}
+              <Send className="w-5 h-5" />
             </button>
           </div>
         </div>
       </div>
 
       {/* Comments List */}
-      <div className="space-y-3">
-        {sortedComments.length === 0 ? (
-          <div
-            className={`text-center py-8 ${
+      <div className="space-y-4">
+        {sortedComments.map((comment) => (
+          <Comment
+            key={comment.taskCommentId}
+            comment={comment}
+            currentUser={currentUser}
+            onEdit={onEditComment}
+            onDelete={onDeleteComment}
+          />
+        ))}
+        {sortedComments.length === 0 && (
+          <p
+            className={`text-center py-4 ${
               darkMode ? "text-gray-400" : "text-gray-500"
             }`}
           >
-            <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p>No comments yet. Be the first to comment!</p>
-          </div>
-        ) : (
-          sortedComments.map((comment) => (
-            <Comment
-              key={comment.taskCommentId || comment.id}
-              comment={comment}
-              currentUser={currentUser}
-              onEdit={onEditComment}
-              onDelete={onDeleteComment}
-              canEdit={true}
-              canDelete={true}
-            />
-          ))
+            No comments yet. Be the first to comment!
+          </p>
         )}
       </div>
     </div>
