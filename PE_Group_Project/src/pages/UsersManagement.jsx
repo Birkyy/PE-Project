@@ -59,6 +59,10 @@ const UsersManagement = () => {
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, userId: null, userName: '' });
   const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
   
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const usersPerPage = 10;
+  
   const storedUser = localStorage.getItem("user");
   const user = storedUser ? JSON.parse(storedUser) : null;
 
@@ -186,6 +190,34 @@ const UsersManagement = () => {
         .includes(searchTerm.toLowerCase()) ||
       (user.position || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+  const startIndex = (currentPage - 1) * usersPerPage;
+  const endIndex = startIndex + usersPerPage;
+  const currentUsers = filteredUsers.slice(startIndex, endIndex);
+
+  // Reset to page 1 when search term changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  // Pagination handlers
+  const goToPage = (page) => {
+    setCurrentPage(page);
+  };
+
+  const goToPrevious = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToNext = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -794,7 +826,7 @@ const UsersManagement = () => {
                         </div>
                       </td>
                     </tr>
-                  ) : filteredUsers.length === 0 ? (
+                  ) : currentUsers.length === 0 ? (
                     <tr>
                       <td colSpan={3} className="px-6 py-12 text-center">
                         <p
@@ -809,7 +841,7 @@ const UsersManagement = () => {
                       </td>
                     </tr>
                   ) : (
-                    filteredUsers.map((user) => (
+                    currentUsers.map((user) => (
                       <tr
                         key={user.username}
                         className={darkMode ? "bg-gray-800" : "bg-white"}
@@ -876,40 +908,69 @@ const UsersManagement = () => {
           </div>
 
           {/* Pagination */}
-          <div className="mt-6 flex items-center justify-between">
-            <div
-              className={`text-sm ${
-                darkMode ? "text-gray-400" : "text-gray-600"
-              }`}
-            >
-              Showing 1 to {filteredUsers.length} of {filteredUsers.length}{" "}
-              results
-              {searchTerm && ` (filtered from ${users.length} total users)`}
-            </div>
-            <div className="flex space-x-2">
-              <button
-                className={`px-3 py-1 rounded transition-all duration-300 ${
-                  darkMode
-                    ? "text-gray-400 border border-gray-600 hover:text-white hover:bg-gray-700/50"
-                    : "text-gray-600 border border-gray-300 hover:text-gray-900 hover:bg-gray-100"
+          {filteredUsers.length > 0 && (
+            <div className="mt-6 flex items-center justify-between">
+              <div
+                className={`text-sm ${
+                  darkMode ? "text-gray-400" : "text-gray-600"
                 }`}
               >
-                Previous
-              </button>
-              <button className="px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition-all duration-300">
-                1
-              </button>
-              <button
-                className={`px-3 py-1 rounded transition-all duration-300 ${
-                  darkMode
-                    ? "text-gray-400 border border-gray-600 hover:text-white hover:bg-gray-700/50"
-                    : "text-gray-600 border border-gray-300 hover:text-gray-900 hover:bg-gray-100"
-                }`}
-              >
-                Next
-              </button>
+                Showing {startIndex + 1} to {Math.min(endIndex, filteredUsers.length)} of {filteredUsers.length}{" "}
+                results
+                {searchTerm && ` (filtered from ${users.length} total users)`}
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  onClick={goToPrevious}
+                  disabled={currentPage === 1}
+                  className={`px-3 py-1 rounded transition-all duration-300 ${
+                    currentPage === 1
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                  } ${
+                    darkMode
+                      ? "text-gray-400 border border-gray-600 hover:text-white hover:bg-gray-700/50"
+                      : "text-gray-600 border border-gray-300 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
+                >
+                  Previous
+                </button>
+                
+                {/* Page Numbers */}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => goToPage(page)}
+                    className={`px-3 py-1 rounded transition-all duration-300 ${
+                      currentPage === page
+                        ? "bg-purple-600 text-white hover:bg-purple-700"
+                        : darkMode
+                        ? "text-gray-400 border border-gray-600 hover:text-white hover:bg-gray-700/50"
+                        : "text-gray-600 border border-gray-300 hover:text-gray-900 hover:bg-gray-100"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+                
+                <button
+                  onClick={goToNext}
+                  disabled={currentPage === totalPages}
+                  className={`px-3 py-1 rounded transition-all duration-300 ${
+                    currentPage === totalPages
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                  } ${
+                    darkMode
+                      ? "text-gray-400 border border-gray-600 hover:text-white hover:bg-gray-700/50"
+                      : "text-gray-600 border border-gray-300 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
+                >
+                  Next
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 

@@ -511,17 +511,7 @@ const MyProjects = () => {
             </>
           )}
 
-          {/* Create New Project Button */}
-          {isUserAdmin() && (
-            <div className="mt-8 text-center">
-              <button 
-                onClick={handleAddProject}
-                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-cyan-600 text-white rounded-lg hover:from-purple-700 hover:to-cyan-700 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/25 focus:outline-none focus:ring-2 focus:ring-purple-400/50"
-              >
-                + Create New Project
-              </button>
-            </div>
-          )}
+
         </div>
       </div>
 
