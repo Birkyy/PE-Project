@@ -13,7 +13,6 @@ import {
   ListTodo,
   Edit,
   Trash2,
-  Search,
   MoveRight,
   ChevronRight,
   ChevronLeft,
@@ -89,6 +88,12 @@ const getAssignedPersonName = (picGuid) => {
   return assignedNames[picGuid] || "Loading...";
 };
 
+// Helper to normalize the PIC field on a task
+const normalizeTaskPIC = (task) => ({
+  ...task,
+  PIC: task.PIC || task.pic || task.Pic || task.picId || task.picID
+});
+
 // Helper function to determine user's role in the project
 const getUserProjectRole = (currentUser, project) => {
   if (!currentUser || !project) return null;
@@ -125,6 +130,16 @@ const canUserEditProject = (currentUser, project) => {
   return userRole === 'admin' || userRole === 'manager';
 };
 
+// Helper function to check if a user is assigned to a task (PIC)
+const isUserAssignedToTask = (user, task) => {
+  if (!user || !task) return false;
+  const userId = user.userId || user.id || user.UserId;
+  // Debug log
+  console.log('Checking assignment:', { PIC: task.PIC, userId });
+  if (!task.PIC || !userId) return false;
+  return String(task.PIC).toLowerCase() === String(userId).toLowerCase();
+};
+
 function Project() {
   const { darkMode } = useTheme();
   const { id } = useParams();
@@ -133,7 +148,6 @@ function Project() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchQuery, setSearchQuery] = useState("");
   const [projectFiles, setProjectFiles] = useState([]);
 
   // Separate states for view and edit modals
@@ -209,7 +223,12 @@ function Project() {
   const fetchTasks = async () => {
     try {
       const tasksData = await taskAPI.getTasksByProjectId(id);
-      setTasks(tasksData || []);
+      // Normalize PIC field
+      const normalizedTasks = (tasksData || []).map(task => ({
+        ...task,
+        PIC: task.PIC || task.pic || task.Pic || task.picId || task.picID // add more variants if needed
+      }));
+      setTasks(normalizedTasks);
     } catch (err) {
       console.error("Error fetching tasks:", err);
       // Don't set error here as project might still load
@@ -253,7 +272,7 @@ function Project() {
   const handleEditTask = async (updatedTask) => {
     try {
       const taskId = updatedTask.projectTaskId || updatedTask.id;
-      const editedTask = await taskAPI.updateTask(taskId, updatedTask);
+      const editedTask = normalizeTaskPIC(await taskAPI.updateTask(taskId, updatedTask));
       setTasks((prevTasks) =>
         prevTasks.map((task) =>
           (task.projectTaskId || task.id) === taskId ? editedTask : task
@@ -293,10 +312,10 @@ function Project() {
   const handleChangeStatus = async (task, newStatus) => {
     try {
       const taskId = task.projectTaskId || task.id;
-      const updatedTask = await taskAPI.updateTask(taskId, {
+      const updatedTask = normalizeTaskPIC(await taskAPI.updateTask(taskId, {
         ...task,
         status: newStatus,
-      });
+      }));
       setTasks(
         tasks.map((t) =>
           (t.projectTaskId || t.id) === taskId ? updatedTask : t
@@ -471,6 +490,9 @@ function Project() {
   const renderTaskCard = (task) => {
     const isOverdue = isTaskOverdue(task);
     const taskId = task.projectTaskId || task.id;
+    const userId = currentUser?.userId || currentUser?.id || currentUser?.UserId;
+    const isAssignedToCurrentUser = isUserAssignedToTask(currentUser, task);
+    const userRole = getUserProjectRole(currentUser, project);
 
     return (
       <div
@@ -492,7 +514,9 @@ function Project() {
             {task.taskName || task.title}
           </h4>
           <div className="flex items-center gap-1">
-            <button
+            {(userRole === 'admin' || userRole === 'manager') && (
+              <>
+                <button
               onClick={(e) => {
                 e.stopPropagation();
                 setEditTask(task);
@@ -515,6 +539,8 @@ function Project() {
             >
               <Trash2 className="w-4 h-4 text-red-500" />
             </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -608,7 +634,9 @@ function Project() {
 
         <div className="mt-3 flex items-center justify-between">
           <div className="flex gap-1">
-            <button
+            {isAssignedToCurrentUser && (
+              <>
+                <button
               onClick={(e) => {
                 e.stopPropagation();
                 const prevStatus = getPreviousStatus(task.status);
@@ -650,6 +678,8 @@ function Project() {
                   : "text-cyan-600 dark:text-cyan-400"
               }`} />
             </button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -846,29 +876,7 @@ function Project() {
               )}
             </div>
 
-            {/* Search Bar */}
-            <div className="max-w-md mb-6">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search
-                    className={`h-5 w-5 ${
-                      darkMode ? "text-gray-400" : "text-gray-500"
-                    }`}
-                  />
-                </div>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search tasks..."
-                  className={`block w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${
-                    darkMode
-                      ? "bg-gray-800 border-gray-700 text-white placeholder-gray-400"
-                      : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
-                  }`}
-                />
-              </div>
-            </div>
+
           </div>
 
           {/* Project Details Grid */}

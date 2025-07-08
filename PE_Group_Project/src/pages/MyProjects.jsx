@@ -185,6 +185,9 @@ const MyProjects = () => {
     if (!deleteModal.projectId) return;
     
     try {
+      // Delete all tasks for this project first
+      const tasks = await taskAPI.getTasksByProjectId(projectId);
+      await Promise.all(tasks.map(task => taskAPI.deleteTask(task.projectTaskId)));
       // Delete the project using API
       await projectAPI.deleteProject(deleteModal.projectId);
       
@@ -198,6 +201,14 @@ const MyProjects = () => {
     } catch (err) {
       console.error('Error deleting project:', err);
       showNotification('Failed to delete project. Please try again.', 'error');
+     /*  await projectAPI.deleteProject(projectId);
+      // Remove from local state
+      setProjects((prev) => prev.filter((p) => p.projectId !== projectId));
+      setFilteredProjects((prev) => prev.filter((p) => p.projectId !== projectId));
+      console.log('Project and all its tasks deleted:', projectId);
+    } catch (err) {
+      console.error('Error deleting project and its tasks:', err);
+      alert('Failed to delete project and its tasks. Please try again.'); */
     }
   };
 
@@ -351,13 +362,16 @@ const MyProjects = () => {
               >
                 <Archive className="w-4 h-4" />
               </button>
-              <button 
-                onClick={() => openDeleteModal(project)}
-                className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-red-300' : 'hover:bg-gray-100 text-gray-600 hover:text-red-600'}`}
-                title="Delete Project"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+
+              {currentUser?.role?.toLowerCase() === 'admin' && (
+                <button 
+                  onClick={() => openDeleteModal(project)}
+                  className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-red-300' : 'hover:bg-gray-100 text-gray-600 hover:text-red-600'}`}
+                  title="Delete Project"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
             </>
           )}
         </div>
