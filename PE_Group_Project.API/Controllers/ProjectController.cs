@@ -469,6 +469,10 @@ namespace PE_Group_Project.API.Controllers
             var userProjects = _context.UserProjects.Where(up => up.ProjectId == id).ToList();
             _context.UserProjects.RemoveRange(userProjects);
 
+            // Remove all tasks associated with this project
+            var projectTasks = _context.ProjectTasks.Where(t => t.ProjectId == id).ToList();
+            _context.ProjectTasks.RemoveRange(projectTasks);
+
             _context.Projects.Remove(project);
             _context.SaveChanges();
             return NoContent();

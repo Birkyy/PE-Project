@@ -4,6 +4,7 @@ import { Trash2, Search, Calendar, Users, Save, X, ChevronDown, UserCheck, Plus,
 import Layout from '../components/Layout';
 import { useState, useRef, useEffect } from 'react';
 import { projectAPI, taskAPI } from '../API/apiService';
+import { userAPI } from '../API/apiService';
 import EditProjectModal from './EditProjectModal';
 
 const MyProjects = () => {
@@ -34,6 +35,7 @@ const MyProjects = () => {
   const dropdownRef = useRef(null);
   const leaderDropdownRef = useRef(null);
   const [projectProgress, setProjectProgress] = useState({});
+  const [viewProjectUsernames, setViewProjectUsernames] = useState({ manager: '', contributors: [] });
 
   // Load current user data
   useEffect(() => {
@@ -108,8 +110,33 @@ const MyProjects = () => {
     }
   };
 
-  const handleView = (project) => {
+  const handleView = async (project) => {
     setViewProject(project);
+    // Fetch manager username
+    let managerName = '';
+    let contributorNames = [];
+    try {
+      if (project.projectManagerInCharge) {
+        const manager = await userAPI.getUserById(project.projectManagerInCharge);
+        managerName = manager.username || manager.email || project.projectManagerInCharge;
+      }
+      if (Array.isArray(project.contributors) && project.contributors.length > 0) {
+        const contributorPromises = project.contributors.map(async (id) => {
+          try {
+            const user = await userAPI.getUserById(id);
+            return user.username || user.email || id;
+          } catch {
+            return id;
+          }
+        });
+        contributorNames = await Promise.all(contributorPromises);
+      }
+    } catch (e) {
+      // fallback: show IDs if error
+      managerName = project.projectManagerInCharge;
+      contributorNames = Array.isArray(project.contributors) ? project.contributors : [];
+    }
+    setViewProjectUsernames({ manager: managerName, contributors: contributorNames });
   };
 
   const handleEdit = async (project) => {
@@ -503,12 +530,12 @@ const MyProjects = () => {
               {/* Project Manager */}
               <div>
                 <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Project Manager</label>
-                <div className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}>{viewProject.projectManagerInCharge}</div>
+                <div className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}>{viewProjectUsernames.manager}</div>
               </div>
               {/* Contributors */}
               <div>
                 <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Contributors</label>
-                <div className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}>{Array.isArray(viewProject.contributors) ? viewProject.contributors.join(', ') : ''}</div>
+                <div className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}>{viewProjectUsernames.contributors.join(', ')}</div>
               </div>
               {/* Date and Priority */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

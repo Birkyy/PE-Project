@@ -40,6 +40,22 @@ namespace PE_Group_Project.API.Data
                 .WithMany(u => u.Notifications)
                 .HasForeignKey(n => n.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Cascade delete: Deleting a ProjectTask deletes its TaskComments
+            modelBuilder
+                .Entity<TaskComment>()
+                .HasOne<TaskComment>()
+                .WithMany()
+                .HasForeignKey(tc => tc.ProjectTaskId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Cascade delete: Deleting a TaskComment deletes its CommentAttachments
+            modelBuilder
+                .Entity<CommentAttachment>()
+                .HasOne(ca => ca.TaskComment)
+                .WithMany(tc => tc.Attachments)
+                .HasForeignKey(ca => ca.TaskCommentId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

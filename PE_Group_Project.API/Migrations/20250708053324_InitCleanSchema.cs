@@ -11,8 +11,6 @@ namespace PE_Group_Project.API.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "Blobs");
 
             migrationBuilder.AddColumn<string>(
                 name: "Status",

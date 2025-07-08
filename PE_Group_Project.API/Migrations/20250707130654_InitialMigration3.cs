@@ -39,12 +39,5 @@ namespace PE_Group_Project.API.Migrations
                 table: "Blobs",
                 column: "ProjectTaskId");
         }
-
-        /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.DropTable(
-                name: "Blobs");
-        }
     }
 }
