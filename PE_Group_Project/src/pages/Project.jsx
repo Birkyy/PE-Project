@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
 import {
@@ -146,6 +146,7 @@ function Project() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [projectFiles, setProjectFiles] = useState([]);
+  const [deleteTaskModal, setDeleteTaskModal] = useState({ isOpen: false, taskId: null, taskName: "" });
 
   // Separate states for view and edit modals
   const [viewTask, setViewTask] = useState(null);
@@ -270,6 +271,7 @@ function Project() {
     try {
       await taskAPI.deleteTask(taskId);
       setTasks(tasks.filter((t) => (t.projectTaskId || t.id) !== taskId));
+      setDeleteTaskModal({ isOpen: false, taskId: null, taskName: "" });
     } catch (err) {
       console.error("Error deleting task:", err);
       alert("Failed to delete task. Please try again.");
@@ -521,7 +523,11 @@ function Project() {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleDeleteTask(taskId);
+                    setDeleteTaskModal({ 
+                      isOpen: true, 
+                      taskId: taskId,
+                      taskName: task.taskName || task.title
+                    });
                   }}
                   className={`p-1 rounded ${
                     darkMode ? "hover:bg-gray-600" : "hover:bg-gray-100"
@@ -1012,6 +1018,72 @@ function Project() {
         onSubmit={handleEditProject}
         project={project}
       />
+
+      {/* Delete Task Confirmation Modal */}
+      {deleteTaskModal.isOpen && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setDeleteTaskModal({ isOpen: false, taskId: null, taskName: "" })}
+          ></div>
+          
+          {/* Modal */}
+          <div className={`relative w-full max-w-md p-6 rounded-2xl shadow-xl transform transition-all ${
+            darkMode 
+              ? "bg-gray-800 border-2 border-gray-700" 
+              : "bg-white border-2 border-gray-200"
+          }`}>
+            <div className="flex items-center gap-4 mb-4">
+              <div className={`p-2 rounded-full ${
+                darkMode 
+                  ? "bg-red-500/20" 
+                  : "bg-red-100"
+              }`}>
+                <AlertCircle className={`w-6 h-6 ${
+                  darkMode 
+                    ? "text-red-400" 
+                    : "text-red-600"
+                }`} />
+              </div>
+              <h3 className={`text-xl font-semibold ${
+                darkMode 
+                  ? "text-white" 
+                  : "text-gray-900"
+              }`}>
+                Delete Task
+              </h3>
+            </div>
+            
+            <p className={`mb-6 ${
+              darkMode 
+                ? "text-gray-300" 
+                : "text-gray-600"
+            }`}>
+              Are you sure you want to delete the task "{deleteTaskModal.taskName}"? This action cannot be undone.
+            </p>
+            
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setDeleteTaskModal({ isOpen: false, taskId: null, taskName: "" })}
+                className={`px-4 py-2 rounded-lg border-2 font-medium transition-colors ${
+                  darkMode
+                    ? "border-gray-600 text-gray-300 hover:bg-gray-700"
+                    : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteTask(deleteTaskModal.taskId)}
+                className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-all font-medium"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }
