@@ -461,6 +461,7 @@ function Project() {
     const taskId = task.projectTaskId || task.id;
     const userId = currentUser?.userId || currentUser?.id || currentUser?.UserId;
     const isAssignedToCurrentUser = isUserAssignedToTask(currentUser, task);
+    const userRole = getUserProjectRole(currentUser, project);
 
     return (
       <div
@@ -482,29 +483,33 @@ function Project() {
             {task.taskName || task.title}
           </h4>
           <div className="flex items-center gap-1">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setEditTask(task);
-                setIsEditModalOpen(true);
-              }}
-              className={`p-1 rounded ${
-                darkMode ? "hover:bg-gray-600" : "hover:bg-gray-100"
-              }`}
-            >
-              <Edit className="w-4 h-4 text-blue-500" />
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDeleteTask(taskId);
-              }}
-              className={`p-1 rounded ${
-                darkMode ? "hover:bg-gray-600" : "hover:bg-gray-100"
-              }`}
-            >
-              <Trash2 className="w-4 h-4 text-red-500" />
-            </button>
+            {(userRole === 'admin' || userRole === 'manager') && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditTask(task);
+                    setIsEditModalOpen(true);
+                  }}
+                  className={`p-1 rounded ${
+                    darkMode ? "hover:bg-gray-600" : "hover:bg-gray-100"
+                  }`}
+                >
+                  <Edit className="w-4 h-4 text-blue-500" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteTask(taskId);
+                  }}
+                  className={`p-1 rounded ${
+                    darkMode ? "hover:bg-gray-600" : "hover:bg-gray-100"
+                  }`}
+                >
+                  <Trash2 className="w-4 h-4 text-red-500" />
+                </button>
+              </>
+            )}
           </div>
         </div>
 
