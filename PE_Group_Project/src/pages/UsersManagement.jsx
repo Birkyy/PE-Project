@@ -100,7 +100,6 @@ const UsersManagement = () => {
         gender: user.gender,
         nationality: user.nationality,
         phoneNumber: user.phoneNumber,
-        status: user.status,
         role: user.role,
       }));
 
@@ -777,14 +776,6 @@ const UsersManagement = () => {
                         darkMode ? "text-gray-300" : "text-gray-500"
                       } uppercase tracking-wider`}
                     >
-                      Status
-                    </th>
-                    <th
-                      scope="col"
-                      className={`px-6 py-3 text-left text-xs font-medium ${
-                        darkMode ? "text-gray-300" : "text-gray-500"
-                      } uppercase tracking-wider`}
-                    >
                       Actions
                     </th>
                   </tr>
@@ -846,21 +837,6 @@ const UsersManagement = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           <span className={getRoleBadgeColor(user.role)}>
                             {user.role}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              user.status === "Active"
-                                ? darkMode
-                                  ? "bg-green-500/20 text-green-300"
-                                  : "bg-green-100 text-green-800"
-                                : darkMode
-                                ? "bg-red-500/20 text-red-300"
-                                : "bg-red-100 text-red-800"
-                            }`}
-                          >
-                            {user.status}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
