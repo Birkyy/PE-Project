@@ -122,12 +122,6 @@ const canUserEditProject = (currentUser, project) => {
   return userRole === 'admin' || userRole === 'manager';
 };
 
-// Helper function to check if user can edit/delete tasks
-const canUserEditTasks = (currentUser, project) => {
-  const userRole = getUserProjectRole(currentUser, project);
-  return userRole === 'admin' || userRole === 'manager';
-};
-
 function Project() {
   const { darkMode } = useTheme();
   const { id } = useParams();
@@ -464,33 +458,31 @@ function Project() {
           >
             {task.taskName || task.title}
           </h4>
-          {canUserEditTasks(currentUser, project) && (
-            <div className="flex items-center gap-1">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setEditTask(task);
-                  setIsEditModalOpen(true);
-                }}
-                className={`p-1 rounded ${
-                  darkMode ? "hover:bg-gray-600" : "hover:bg-gray-100"
-                }`}
-              >
-                <Edit className="w-4 h-4 text-blue-500" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeleteTask(taskId);
-                }}
-                className={`p-1 rounded ${
-                  darkMode ? "hover:bg-gray-600" : "hover:bg-gray-100"
-                }`}
-              >
-                <Trash2 className="w-4 h-4 text-red-500" />
-              </button>
-            </div>
-          )}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setEditTask(task);
+                setIsEditModalOpen(true);
+              }}
+              className={`p-1 rounded ${
+                darkMode ? "hover:bg-gray-600" : "hover:bg-gray-100"
+              }`}
+            >
+              <Edit className="w-4 h-4 text-blue-500" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteTask(taskId);
+              }}
+              className={`p-1 rounded ${
+                darkMode ? "hover:bg-gray-600" : "hover:bg-gray-100"
+              }`}
+            >
+              <Trash2 className="w-4 h-4 text-red-500" />
+            </button>
+          </div>
         </div>
 
         <p
