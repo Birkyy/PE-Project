@@ -350,6 +350,16 @@ export const userAPI = {
       throw error;
     }
   },
+
+  deleteUser: async (id) => {
+    try {
+      const response = await api.delete(`/User/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      throw error;
+    }
+  }
 };
 
 export const commentAPI = {

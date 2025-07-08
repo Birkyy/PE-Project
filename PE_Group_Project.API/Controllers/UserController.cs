@@ -200,7 +200,7 @@ namespace PE_Group_Project.API.Controllers
 
         [HttpPut]
         [Route("{id:guid}")]
-        public IActionResult UpdateUser(
+        public async Task<IActionResult> UpdateUser(
             [FromRoute] Guid id,
             [FromBody] UpdateUserRequestDTO updateUserRequestDTO
         )
@@ -252,7 +252,7 @@ namespace PE_Group_Project.API.Controllers
                 user.Nationality = updateUserRequestDTO.Nationality;
                 user.PhoneNumber = updateUserRequestDTO.PhoneNumber;
 
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
 
                 var userDTO = new UserDTO
                 {
@@ -271,6 +271,22 @@ namespace PE_Group_Project.API.Controllers
             {
                 return BadRequest($"Failed to update user: {ex.Message}");
             }
+        }
+
+        [HttpDelete]
+        [Route("{id:guid}")]
+        public async Task<IActionResult> DeleteUser([FromRoute] Guid id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+            {
+                return NotFound("User not found.");
+            }
+
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "User deleted successfully." });
         }
     }
 }
