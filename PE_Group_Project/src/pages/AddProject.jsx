@@ -47,6 +47,7 @@ const AddProject = () => {
   const [usersLoading, setUsersLoading] = useState(true);
   const [usersError, setUsersError] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [projectFiles, setProjectFiles] = useState([]);
 
   // Load current user data and check permissions
   useEffect(() => {
@@ -188,6 +189,19 @@ const AddProject = () => {
               );
             }
           }
+        }
+      }
+
+      // After uploading attachments, before navigating away
+      if (createdProject?.projectId) {
+        try {
+          const files = await fileAPI.getFilesByProjectId(
+            createdProject.projectId
+          );
+          setProjectFiles(files);
+          // Optionally, show these files to the user before navigating away
+        } catch (err) {
+          console.error("Failed to fetch project files:", err);
         }
       }
 
@@ -609,6 +623,26 @@ const AddProject = () => {
                   Cancel
                 </button>
               </div>
+
+              {projectFiles.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="font-semibold mb-2">Uploaded Files:</h4>
+                  <ul className="list-disc pl-5">
+                    {projectFiles.map((file) => (
+                      <li key={file.fileId || file.name}>
+                        <a
+                          href={file.url || file.downloadUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 underline"
+                        >
+                          {file.fileName || file.name}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </form>
           </div>
         </div>

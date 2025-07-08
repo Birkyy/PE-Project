@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "../context/ThemeContext";
-import { X, Upload, Trash2, File } from "lucide-react";
+import { X, Upload, Trash2, File, Download } from "lucide-react";
 import { userAPI, fileAPI } from "../API/apiService";
 
 function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
@@ -162,7 +162,7 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     // Map formData to backend DTO field names
     const payload = {
@@ -175,7 +175,25 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
       contributors: formData.contributors,
       // Add attachments if needed
     };
-    onSubmit(payload);
+    await onSubmit(payload);
+
+    // Upload new files after saving changes
+    if (project && project.projectId && formData.files.length > 0) {
+      for (const fileObj of formData.files) {
+        if (fileObj.file) {
+          try {
+            await fileAPI.uploadProjectFile(fileObj.file, project.projectId);
+          } catch (err) {
+            // Optionally show error
+          }
+        }
+      }
+      // Refresh file list
+      const filesList = await fileAPI.getFilesByProjectId(project.projectId);
+      setProjectFiles(filesList || []);
+      // Optionally clear the files from formData after upload
+      setFormData((prev) => ({ ...prev, files: [] }));
+    }
   };
 
   const handleProjectFileUpload = async (e) => {
@@ -195,21 +213,53 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
     setUploading(false);
   };
 
-  const handleDownload = (file) => {
-    if (file.url) {
-      window.open(file.url, "_blank");
+  const handleDownload = async (file) => {
+    try {
+      const fileId = file.fileId || file.Id || file.id;
+      if (!fileId) {
+        alert("File ID not found.");
+        return;
+      }
+      const response = await fileAPI.downloadFile(fileId);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", file.fileName || file.name);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert("Failed to download file.");
+      console.error(err);
     }
   };
 
   const handleDelete = async (file) => {
     if (!window.confirm("Are you sure you want to delete this file?")) return;
     try {
-      await fileAPI.deleteProjectFile(project.projectId, file.name);
+      const fileId = file.fileId || file.Id || file.id;
+      if (!fileId) {
+        alert("File ID not found.");
+        return;
+      }
+      await fileAPI.deleteFileById(fileId);
       const filesList = await fileAPI.getFilesByProjectId(project.projectId);
       setProjectFiles(filesList || []);
     } catch (err) {
-      // Optionally show error
+      alert("Failed to delete file.");
+      console.error(err);
     }
+  };
+
+  // Helper to get user display name or fallback
+  const getUserDisplayName = (userId) => {
+    const user = allUsers.find(
+      (u) => (u.userId || u.id || u.UserId) === userId
+    );
+    return user
+      ? `${user.username || user.Username} (${user.email || user.Email})`
+      : "Unknown User";
   };
 
   if (!isOpen || usersLoading || !projectReady) return null;
@@ -412,6 +462,7 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
               >
                 Attachments
               </label>
+
               <div
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
@@ -510,9 +561,63 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
                   ))}
                 </div>
               )}
+
+              {/* Project Attachments List (existing files) */}
+              {projectFiles.length > 0 && (
+                <div className="mt-4 mb-2">
+                  <label
+                    className={`block mb-1 ${
+                      darkMode ? "text-gray-300" : "text-gray-700"
+                    }`}
+                  >
+                    Project Attachments
+                  </label>
+                  <ul className="space-y-1">
+                    {projectFiles.map((file) => (
+                      <li
+                        key={file.Id || file.fileId || file.id || file.name}
+                        className="flex items-center justify-between"
+                      >
+                        <span
+                          className={`truncate ${
+                            darkMode ? "text-gray-300" : "text-gray-700"
+                          }`}
+                        >
+                          {file.fileName || file.name}
+                        </span>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleDownload(file)}
+                            aria-label="Download"
+                            className={`p-1 rounded-full ${
+                              darkMode
+                                ? "hover:bg-blue-700 text-blue-400"
+                                : "hover:bg-blue-100 text-blue-600"
+                            }`}
+                          >
+                            <Download className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(file)}
+                            aria-label="Delete"
+                            className={`p-1 rounded-full ${
+                              darkMode
+                                ? "hover:bg-red-700 text-red-400"
+                                : "hover:bg-red-100 text-red-600"
+                            }`}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
 
-            {/* Project Manager */}
             <div>
               <label
                 className={`block mb-1 ${
@@ -538,6 +643,17 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
                 disabled={usersLoading}
               >
                 <option value="">Select a project manager</option>
+                {/* If the current value is not in allUsers, show Unknown User */}
+                {formData.projectManagerInCharge &&
+                  !allUsers.some(
+                    (u) =>
+                      (u.userId || u.id || u.UserId) ===
+                      formData.projectManagerInCharge
+                  ) && (
+                    <option value={formData.projectManagerInCharge}>
+                      Unknown User
+                    </option>
+                  )}
                 {allUsers.map((user) => (
                   <option
                     key={user.userId || user.UserId}
@@ -548,15 +664,8 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
                   </option>
                 ))}
               </select>
-              {usersLoading && (
-                <p className="text-xs mt-1 text-gray-400">Loading users...</p>
-              )}
-              {usersError && (
-                <p className="text-xs mt-1 text-red-400">{usersError}</p>
-              )}
             </div>
 
-            {/* Contributors */}
             <div>
               <label
                 className={`block mb-1 ${
@@ -584,6 +693,16 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
                 disabled={usersLoading}
                 size={Math.min(6, allUsers.length)}
               >
+                {/* Show Unknown User for any contributor not in allUsers */}
+                {formData.contributors.map((contributorId) =>
+                  !allUsers.some(
+                    (u) => (u.userId || u.id || u.UserId) === contributorId
+                  ) ? (
+                    <option key={contributorId} value={contributorId}>
+                      Unknown User
+                    </option>
+                  ) : null
+                )}
                 {allUsers.map((user) => (
                   <option
                     key={user.userId || user.UserId}
@@ -594,48 +713,16 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
                   </option>
                 ))}
               </select>
-              {usersLoading && (
-                <p className="text-xs mt-1 text-gray-400">Loading users...</p>
-              )}
-              {usersError && (
-                <p className="text-xs mt-1 text-red-400">{usersError}</p>
-              )}
-              {formData.contributors && formData.contributors.length > 0 && (
-                <div className="mt-2">
-                  <p
-                    className={`text-xs ${
-                      darkMode ? "text-green-400" : "text-green-600"
-                    }`}
-                  >
-                    Contributors: {formData.contributors.length} user(s) added
-                  </p>
-                </div>
-              )}
             </div>
 
-            <div className="flex justify-end gap-3 mt-6">
-              <button
-                type="button"
-                onClick={onClose}
-                className={`px-4 py-2 rounded-lg ${
-                  darkMode
-                    ? "bg-gray-700 hover:bg-gray-600 text-gray-300"
-                    : "bg-gray-200 hover:bg-gray-300 text-gray-700"
-                }`}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className={`px-4 py-2 rounded-lg ${
-                  darkMode
-                    ? "bg-blue-600 hover:bg-blue-700 text-white"
-                    : "bg-blue-500 hover:bg-blue-600 text-white"
-                }`}
-              >
-                Save Changes
-              </button>
-            </div>
+            <button
+              type="submit"
+              className={`w-full p-2 rounded-lg ${
+                darkMode ? "bg-blue-600 text-white" : "bg-blue-500 text-white"
+              }`}
+            >
+              Save Changes
+            </button>
           </form>
         </div>
       </div>

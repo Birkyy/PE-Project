@@ -19,6 +19,25 @@ namespace PE_Group_Project.API.Controllers
             _context = context;
         }
 
+        [HttpGet("list/project/{projectId}")]
+        public async Task<IActionResult> GetProjectFiles(Guid projectId)
+        {
+            var files = await _context
+                .Files.Where(f => f.RelatedId == projectId && f.Category == "project")
+                .Select(f => new
+                {
+                    f.Id,
+                    f.Name,
+                    f.Url,
+                    f.Size,
+                    f.Type,
+                    f.UploadedAt,
+                })
+                .ToListAsync();
+
+            return Ok(files);
+        }
+
         [HttpGet("list/task/{taskId}")]
         public async Task<IActionResult> GetTaskFiles(Guid taskId)
         {
@@ -183,25 +202,6 @@ namespace PE_Group_Project.API.Controllers
             {
                 return NotFound($"File {fileName} not found");
             }
-        }
-
-        [HttpGet("list/project/{projectId}")]
-        public async Task<IActionResult> ListProjectFiles(Guid projectId)
-        {
-            var files = await _context
-                .Files.Where(f => f.RelatedId == projectId && f.Category == "project")
-                .Select(f => new
-                {
-                    f.Id,
-                    f.Name,
-                    f.Url,
-                    f.Size,
-                    f.Type,
-                    f.UploadedAt,
-                })
-                .ToListAsync();
-
-            return Ok(files);
         }
 
         [HttpDelete("delete/{fileId}")]
