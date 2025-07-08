@@ -86,6 +86,12 @@ const getAssignedPersonName = (picGuid) => {
   return assignedNames[picGuid] || "Loading...";
 };
 
+// Helper to normalize the PIC field on a task
+const normalizeTaskPIC = (task) => ({
+  ...task,
+  PIC: task.PIC || task.pic || task.Pic || task.picId || task.picID
+});
+
 // Helper function to determine user's role in the project
 const getUserProjectRole = (currentUser, project) => {
   if (!currentUser || !project) return null;
@@ -120,6 +126,16 @@ const canUserAddTasks = (currentUser, project) => {
 const canUserEditProject = (currentUser, project) => {
   const userRole = getUserProjectRole(currentUser, project);
   return userRole === 'admin' || userRole === 'manager';
+};
+
+// Helper function to check if a user is assigned to a task (PIC)
+const isUserAssignedToTask = (user, task) => {
+  if (!user || !task) return false;
+  const userId = user.userId || user.id || user.UserId;
+  // Debug log
+  console.log('Checking assignment:', { PIC: task.PIC, userId });
+  if (!task.PIC || !userId) return false;
+  return String(task.PIC).toLowerCase() === String(userId).toLowerCase();
 };
 
 function Project() {
@@ -189,7 +205,12 @@ function Project() {
   const fetchTasks = async () => {
     try {
       const tasksData = await taskAPI.getTasksByProjectId(id);
-      setTasks(tasksData || []);
+      // Normalize PIC field
+      const normalizedTasks = (tasksData || []).map(task => ({
+        ...task,
+        PIC: task.PIC || task.pic || task.Pic || task.picId || task.picID // add more variants if needed
+      }));
+      setTasks(normalizedTasks);
     } catch (err) {
       console.error("Error fetching tasks:", err);
       // Don't set error here as project might still load
@@ -233,7 +254,7 @@ function Project() {
   const handleEditTask = async (updatedTask) => {
     try {
       const taskId = updatedTask.projectTaskId || updatedTask.id;
-      const editedTask = await taskAPI.updateTask(taskId, updatedTask);
+      const editedTask = normalizeTaskPIC(await taskAPI.updateTask(taskId, updatedTask));
       setTasks((prevTasks) =>
         prevTasks.map((task) =>
           (task.projectTaskId || task.id) === taskId ? editedTask : task
@@ -260,10 +281,10 @@ function Project() {
   const handleChangeStatus = async (task, newStatus) => {
     try {
       const taskId = task.projectTaskId || task.id;
-      const updatedTask = await taskAPI.updateTask(taskId, {
+      const updatedTask = normalizeTaskPIC(await taskAPI.updateTask(taskId, {
         ...task,
         status: newStatus,
-      });
+      }));
       setTasks(
         tasks.map((t) =>
           (t.projectTaskId || t.id) === taskId ? updatedTask : t
@@ -438,6 +459,8 @@ function Project() {
   const renderTaskCard = (task) => {
     const isOverdue = isTaskOverdue(task);
     const taskId = task.projectTaskId || task.id;
+    const userId = currentUser?.userId || currentUser?.id || currentUser?.UserId;
+    const isAssignedToCurrentUser = isUserAssignedToTask(currentUser, task);
 
     return (
       <div
@@ -518,44 +541,48 @@ function Project() {
 
         <div className="mt-3 flex items-center justify-between">
           <div className="flex gap-1">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                const prevStatus = getPreviousStatus(task.status);
-                if (prevStatus !== task.status) {
-                  handleChangeStatus(task, prevStatus);
-                }
-              }}
-              disabled={task.status === statusList[0].key}
-              className={`p-1 rounded ${
-                task.status === statusList[0].key
-                  ? "opacity-50 cursor-not-allowed"
-                  : darkMode
-                  ? "hover:bg-gray-600"
-                  : "hover:bg-gray-100"
-              }`}
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                const nextStatus = getNextStatus(task.status);
-                if (nextStatus !== task.status) {
-                  handleChangeStatus(task, nextStatus);
-                }
-              }}
-              disabled={task.status === statusList[statusList.length - 1].key}
-              className={`p-1 rounded ${
-                task.status === statusList[statusList.length - 1].key
-                  ? "opacity-50 cursor-not-allowed"
-                  : darkMode
-                  ? "hover:bg-gray-600"
-                  : "hover:bg-gray-100"
-              }`}
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
+            {isAssignedToCurrentUser && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const prevStatus = getPreviousStatus(task.status);
+                    if (prevStatus !== task.status) {
+                      handleChangeStatus(task, prevStatus);
+                    }
+                  }}
+                  disabled={task.status === statusList[0].key}
+                  className={`p-1 rounded ${
+                    task.status === statusList[0].key
+                      ? "opacity-50 cursor-not-allowed"
+                      : darkMode
+                      ? "hover:bg-gray-600"
+                      : "hover:bg-gray-100"
+                  }`}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const nextStatus = getNextStatus(task.status);
+                    if (nextStatus !== task.status) {
+                      handleChangeStatus(task, nextStatus);
+                    }
+                  }}
+                  disabled={task.status === statusList[statusList.length - 1].key}
+                  className={`p-1 rounded ${
+                    task.status === statusList[statusList.length - 1].key
+                      ? "opacity-50 cursor-not-allowed"
+                      : darkMode
+                      ? "hover:bg-gray-600"
+                      : "hover:bg-gray-100"
+                  }`}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
