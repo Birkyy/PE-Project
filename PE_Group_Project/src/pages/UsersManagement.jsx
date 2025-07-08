@@ -53,11 +53,15 @@ const UsersManagement = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [lockedAccounts, setLockedAccounts] = useState([]);
-  
+
   // Delete modal and notification states
-  const [deleteModal, setDeleteModal] = useState({ isOpen: false, userId: null, userName: '' });
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    userId: null,
+    userName: "",
+  });
   const [notifications, setNotifications] = useState([]);
-  
+
   const storedUser = localStorage.getItem("user");
   const user = storedUser ? JSON.parse(storedUser) : null;
 
@@ -70,7 +74,7 @@ const UsersManagement = () => {
     }
 
     // Check if user is admin, if not redirect to dashboard
-    if (user?.role?.toLowerCase() !== 'admin') {
+    if (user?.role?.toLowerCase() !== "admin") {
       alert("Access denied. Only administrators can access user management.");
       navigate("/home");
       return;
@@ -152,19 +156,19 @@ const UsersManagement = () => {
   };
 
   // Notification helper functions
-  const showNotification = (message, type = 'info') => {
+  const showNotification = (message, type = "info") => {
     const id = Date.now();
     const notification = { id, message, type };
-    setNotifications(prev => [...prev, notification]);
-    
+    setNotifications((prev) => [...prev, notification]);
+
     // Auto-dismiss after 4 seconds
     setTimeout(() => {
-      setNotifications(prev => prev.filter(n => n.id !== id));
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
     }, 4000);
   };
 
   const closeNotification = (id) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 
   // Load users and locked accounts on component mount
@@ -185,11 +189,13 @@ const UsersManagement = () => {
   // Filter users based on search term
   const filteredUsers = users.filter(
     (user) =>
-      (user.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (user.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (user.role || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (user.department || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (user.position || '').toLowerCase().includes(searchTerm.toLowerCase())
+      (user.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.email || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.role || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.department || "")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      (user.position || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleInputChange = (e) => {
@@ -496,18 +502,19 @@ const UsersManagement = () => {
   // Handle confirmed user deletion
   const handleDeleteUser = async () => {
     if (!deleteModal.userId) return;
-    
+
     try {
-      // Note: Add userAPI.deleteUser(deleteModal.userId) when API endpoint is available
-      // For now, just remove from local state
+      await userAPI.deleteUser(deleteModal.userId);
       setUsers((prev) => prev.filter((user) => user.id !== deleteModal.userId));
-      
-      showNotification(`User "${deleteModal.userName}" has been deleted successfully.`, 'success');
-      setDeleteModal({ isOpen: false, userId: null, userName: '' });
-      console.log('User deleted:', deleteModal.userId);
+      showNotification(
+        `User "${deleteModal.userName}" has been deleted successfully.`,
+        "success"
+      );
+      setDeleteModal({ isOpen: false, userId: null, userName: "" });
+      console.log("User deleted:", deleteModal.userId);
     } catch (err) {
-      console.error('Error deleting user:', err);
-      showNotification('Failed to delete user. Please try again.', 'error');
+      console.error("Error deleting user:", err);
+      showNotification("Failed to delete user. Please try again.", "error");
     }
   };
 
@@ -534,7 +541,7 @@ const UsersManagement = () => {
         "Gender",
         "Nationality",
         "Phone Number",
-        "Role"
+        "Role",
       ];
 
       // Convert users data to CSV format
@@ -546,7 +553,7 @@ const UsersManagement = () => {
         user.gender || "",
         user.nationality || "",
         user.phoneNumber || "",
-        user.role || ""
+        user.role || "",
       ]);
 
       // Combine headers and data
@@ -1552,31 +1559,37 @@ const UsersManagement = () => {
       {deleteModal.isOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50">
           {/* Backdrop */}
-          <div 
+          <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setDeleteModal({ isOpen: false, userId: null, userName: '' })}
+            onClick={() =>
+              setDeleteModal({ isOpen: false, userId: null, userName: "" })
+            }
           ></div>
-          
+
           {/* Modal */}
-          <div className={`relative w-full max-w-md p-6 rounded-xl shadow-xl ${
-            darkMode 
-              ? "bg-gray-800" 
-              : "bg-white"
-          }`}>
+          <div
+            className={`relative w-full max-w-md p-6 rounded-xl shadow-xl ${
+              darkMode ? "bg-gray-800" : "bg-white"
+            }`}
+          >
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-full bg-red-500/10">
                   <Trash2 className="w-5 h-5 text-red-500" />
                 </div>
-                <h3 className={`text-xl font-semibold ${
-                  darkMode ? "text-white" : "text-gray-900"
-                }`}>
+                <h3
+                  className={`text-xl font-semibold ${
+                    darkMode ? "text-white" : "text-gray-900"
+                  }`}
+                >
                   Delete User
                 </h3>
               </div>
               <button
-                onClick={() => setDeleteModal({ isOpen: false, userId: null, userName: '' })}
+                onClick={() =>
+                  setDeleteModal({ isOpen: false, userId: null, userName: "" })
+                }
                 className={`p-1 rounded-lg transition-colors ${
                   darkMode
                     ? "hover:bg-gray-700 text-gray-400"
@@ -1588,58 +1601,74 @@ const UsersManagement = () => {
             </div>
 
             {/* Warning Message */}
-            <div className={`mb-6 p-4 rounded-lg ${
-              darkMode 
-                ? "bg-red-900/20 border border-red-800" 
-                : "bg-red-50 border border-red-100"
-            }`}>
+            <div
+              className={`mb-6 p-4 rounded-lg ${
+                darkMode
+                  ? "bg-red-900/20 border border-red-800"
+                  : "bg-red-50 border border-red-100"
+              }`}
+            >
               <div className="flex gap-3">
-                <AlertTriangle className={`w-5 h-5 mt-0.5 ${
-                  darkMode ? "text-red-400" : "text-red-600"
-                }`} />
-                <div>
-                  <h4 className={`font-medium mb-1 ${
+                <AlertTriangle
+                  className={`w-5 h-5 mt-0.5 ${
                     darkMode ? "text-red-400" : "text-red-600"
-                  }`}>
+                  }`}
+                />
+                <div>
+                  <h4
+                    className={`font-medium mb-1 ${
+                      darkMode ? "text-red-400" : "text-red-600"
+                    }`}
+                  >
                     Warning: This action cannot be undone
                   </h4>
-                  <p className={`text-sm ${
-                    darkMode ? "text-red-300" : "text-red-500"
-                  }`}>
-                    You are about to permanently delete this user account and all associated data.
+                  <p
+                    className={`text-sm ${
+                      darkMode ? "text-red-300" : "text-red-500"
+                    }`}
+                  >
+                    You are about to permanently delete this user account and
+                    all associated data.
                   </p>
                 </div>
               </div>
             </div>
 
             {/* User Info */}
-            <div className={`mb-6 p-4 rounded-lg ${
-              darkMode 
-                ? "bg-gray-900" 
-                : "bg-gray-50"
-            }`}>
-              <h4 className={`text-sm font-medium mb-2 ${
-                darkMode ? "text-gray-400" : "text-gray-600"
-              }`}>
+            <div
+              className={`mb-6 p-4 rounded-lg ${
+                darkMode ? "bg-gray-900" : "bg-gray-50"
+              }`}
+            >
+              <h4
+                className={`text-sm font-medium mb-2 ${
+                  darkMode ? "text-gray-400" : "text-gray-600"
+                }`}
+              >
                 User to be deleted:
               </h4>
-              <p className={`font-medium ${
-                darkMode ? "text-white" : "text-gray-900"
-              }`}>
+              <p
+                className={`font-medium ${
+                  darkMode ? "text-white" : "text-gray-900"
+                }`}
+              >
                 Name: {deleteModal.userName}
               </p>
             </div>
 
-            <p className={`mb-6 ${
-              darkMode ? "text-gray-300" : "text-gray-600"
-            }`}>
-              This will permanently remove the user from the system. Are you sure you want to continue?
+            <p
+              className={`mb-6 ${darkMode ? "text-gray-300" : "text-gray-600"}`}
+            >
+              This will permanently remove the user from the system. Are you
+              sure you want to continue?
             </p>
 
             {/* Actions */}
             <div className="flex justify-end gap-3">
               <button
-                onClick={() => setDeleteModal({ isOpen: false, userId: null, userName: '' })}
+                onClick={() =>
+                  setDeleteModal({ isOpen: false, userId: null, userName: "" })
+                }
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   darkMode
                     ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
@@ -1667,29 +1696,33 @@ const UsersManagement = () => {
               key={notification.id}
               className={`max-w-sm w-full rounded-lg shadow-xl border transform transition-all duration-500 ease-in-out ${
                 darkMode
-                  ? 'bg-gray-800 border-gray-700'
-                  : 'bg-white border-gray-200'
+                  ? "bg-gray-800 border-gray-700"
+                  : "bg-white border-gray-200"
               } ${
-                notification.type === 'success'
-                  ? 'border-l-4 border-l-green-500'
-                  : notification.type === 'error'
-                  ? 'border-l-4 border-l-red-500'
-                  : 'border-l-4 border-l-blue-500'
+                notification.type === "success"
+                  ? "border-l-4 border-l-green-500"
+                  : notification.type === "error"
+                  ? "border-l-4 border-l-red-500"
+                  : "border-l-4 border-l-blue-500"
               }`}
             >
               <div className="p-4">
                 <div className="flex items-start">
                   <div className="flex-shrink-0">
-                    {notification.type === 'success' ? (
+                    {notification.type === "success" ? (
                       <CheckCircle className="h-5 w-5 text-green-500" />
-                    ) : notification.type === 'error' ? (
+                    ) : notification.type === "error" ? (
                       <XCircle className="h-5 w-5 text-red-500" />
                     ) : (
                       <CheckCircle className="h-5 w-5 text-blue-500" />
                     )}
                   </div>
                   <div className="ml-3 w-0 flex-1">
-                    <p className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                    <p
+                      className={`text-sm font-medium ${
+                        darkMode ? "text-white" : "text-gray-900"
+                      }`}
+                    >
                       {notification.message}
                     </p>
                   </div>
@@ -1698,8 +1731,8 @@ const UsersManagement = () => {
                       onClick={() => closeNotification(notification.id)}
                       className={`inline-flex rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${
                         darkMode
-                          ? 'text-gray-400 hover:text-gray-300 focus:ring-gray-500'
-                          : 'text-gray-400 hover:text-gray-500 focus:ring-gray-400'
+                          ? "text-gray-400 hover:text-gray-300 focus:ring-gray-500"
+                          : "text-gray-400 hover:text-gray-500 focus:ring-gray-400"
                       }`}
                     >
                       <X className="h-4 w-4" />
