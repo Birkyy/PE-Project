@@ -301,7 +301,7 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
   if (!isOpen || usersLoading || !projectReady) return null;
   if (loading) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm transition-all duration-300">
         <div
           className={`w-full max-w-2xl mx-auto ${
             darkMode
@@ -321,7 +321,7 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen p-4">
-        <div className="fixed inset-0 bg-black opacity-50"></div>
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm"></div>
 
         <div
           className={`relative w-full max-w-2xl p-6 rounded-lg shadow-lg ${

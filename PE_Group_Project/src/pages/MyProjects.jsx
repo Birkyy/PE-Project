@@ -508,7 +508,7 @@ const MyProjects = () => {
 
       {/* View Project Modal */}
       {viewProject && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm transition-all duration-300">
           <div className={`w-full max-w-2xl mx-auto ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-lg shadow-xl p-6 space-y-6 overflow-y-auto max-h-[80vh]`}>
             <h2 className={`text-3xl font-extrabold mb-4 text-center ${darkMode ? 'bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent' : 'text-gray-900'}`}>Project Details</h2>
             <div className="space-y-6">

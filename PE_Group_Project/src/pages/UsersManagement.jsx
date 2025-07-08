@@ -915,7 +915,7 @@ const UsersManagement = () => {
 
       {/* Create User Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm transition-all duration-300 flex items-center justify-center p-4 z-50">
           <div
             className={`${
               darkMode
@@ -1096,7 +1096,7 @@ const UsersManagement = () => {
 
       {/* Edit User Modal */}
       {showEditModal && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm transition-all duration-300 flex items-center justify-center p-4 z-50">
           <div
             className={`${
               darkMode
@@ -1292,7 +1292,7 @@ const UsersManagement = () => {
 
       {/* View User Modal */}
       {showViewModal && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm transition-all duration-300 flex items-center justify-center p-4 z-50">
           <div
             className={`${
               darkMode
