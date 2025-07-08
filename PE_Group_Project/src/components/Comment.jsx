@@ -98,17 +98,17 @@ const Comment = ({
 
   return (
     <div
-      className={`p-6 rounded-xl border-2 shadow-lg ${
+      className={`p-7 rounded-2xl border-2 shadow-xl ${
         darkMode 
-          ? "bg-gray-800 border-gray-600 shadow-gray-900/20" 
-          : "bg-white border-gray-300 shadow-gray-200/50"
-      } space-y-4 hover:shadow-xl transition-all duration-200`}
+          ? "bg-gray-800 border-gray-500 shadow-gray-900/30 hover:border-gray-400" 
+          : "bg-white border-gray-400 shadow-gray-300/60 hover:border-gray-500"
+      } space-y-5 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1`}
     >
       {/* Header */}
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-3">
-          <div className={`text-base font-semibold ${
-            darkMode ? "text-white" : "text-gray-900"
+          <div className={`text-lg font-bold ${
+            darkMode ? "text-blue-300" : "text-blue-700"
           }`}>
             {comment.username || comment.userId}
           </div>
@@ -194,8 +194,10 @@ const Comment = ({
             (comment.comment !== "File attachment" ||
               !comment.attachments ||
               comment.attachments.length === 0) && (
-              <div className={`text-base leading-relaxed p-4 rounded-lg ${
-                darkMode ? "bg-gray-700/30 text-gray-200" : "bg-gray-50 text-gray-800"
+              <div className={`text-lg leading-relaxed p-5 rounded-xl border-l-4 font-medium ${
+                darkMode 
+                  ? "bg-gray-700/50 text-white border-l-blue-400 shadow-lg" 
+                  : "bg-white text-gray-900 border-l-blue-500 shadow-md border border-gray-200"
               }`}>
                 {comment.comment}
               </div>
@@ -269,8 +271,10 @@ const Comment = ({
         </div>
       )}
 
-      <div className={`text-sm font-medium ${
-        darkMode ? "text-gray-400" : "text-gray-600"
+      <div className={`text-sm font-semibold px-3 py-1 rounded-lg inline-block ${
+        darkMode 
+          ? "text-gray-300 bg-gray-700/50" 
+          : "text-gray-700 bg-gray-100"
       }`}>
         {formatDate(comment.createdAt)}
       </div>
