@@ -74,6 +74,9 @@ const AddProject = () => {
   // Filter users for project leader based on leader search term (empty array for now)
   const filteredLeaderUsers = [];
 
+  // Filter out admin users for dropdowns
+  const nonAdminUsers = allUsers.filter(user => user.role?.toLowerCase() !== 'admin');
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -401,7 +404,7 @@ const AddProject = () => {
                   disabled={usersLoading}
                 >
                   <option value="">Select a project manager</option>
-                  {allUsers.map((user) => (
+                  {nonAdminUsers.map((user) => (
                     <option
                       key={user.userId || user.UserId}
                       value={user.userId || user.UserId}
@@ -429,8 +432,49 @@ const AddProject = () => {
                   <Users className="w-4 h-4 inline mr-2" />
                   Contributors
                 </label>
+<<<<<<< Updated upstream
                 
                 {/* Selected Contributors Tags */}
+=======
+                <select
+                  name="contributors"
+                  multiple
+                  value={formData.contributors}
+                  onChange={(e) => {
+                    const selected = Array.from(
+                      e.target.selectedOptions,
+                      (option) => option.value
+                    );
+                    setFormData((prev) => ({
+                      ...prev,
+                      contributors: selected,
+                    }));
+                  }}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 ${
+                    darkMode
+                      ? "bg-gray-700 border-gray-600 text-white"
+                      : "bg-white border-gray-300 text-gray-900"
+                  }`}
+                  disabled={usersLoading}
+                  size={Math.min(6, nonAdminUsers.length)}
+                >
+                  {nonAdminUsers.map((user) => (
+                    <option
+                      key={user.userId || user.UserId}
+                      value={user.userId || user.UserId}
+                    >
+                      {user.username || user.Username} (
+                      {user.email || user.Email})
+                    </option>
+                  ))}
+                </select>
+                {usersLoading && (
+                  <p className="text-xs mt-1 text-gray-400">Loading users...</p>
+                )}
+                {usersError && (
+                  <p className="text-xs mt-1 text-red-400">{usersError}</p>
+                )}
+>>>>>>> Stashed changes
                 {formData.contributors.length > 0 && (
                   <div className="mb-3">
                     <div className="flex flex-wrap gap-2">

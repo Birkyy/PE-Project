@@ -213,6 +213,9 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
     }
   };
 
+  // Filter out admin users for dropdowns
+  const nonAdminUsers = allUsers.filter(user => user.role?.toLowerCase() !== 'admin');
+
   if (!isOpen || usersLoading || !projectReady) return null;
   if (loading) {
     return (
@@ -539,7 +542,7 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
                 disabled={usersLoading}
               >
                 <option value="">Select a project manager</option>
-                {allUsers.map((user) => (
+                {nonAdminUsers.map((user) => (
                   <option
                     key={user.userId || user.UserId}
                     value={user.userId || user.UserId}
@@ -566,6 +569,7 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
               >
                 Contributors
               </label>
+<<<<<<< Updated upstream
               
               {/* Selected Contributors Tags */}
               {formData.contributors.length > 0 && (
@@ -618,6 +622,51 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
                     darkMode ? "text-green-400" : "text-green-600"
                   }`}>
                     {formData.contributors.length} contributor(s) selected
+=======
+              <select
+                name="contributors"
+                multiple
+                value={formData.contributors}
+                onChange={(e) => {
+                  const selected = Array.from(
+                    e.target.selectedOptions,
+                    (option) => option.value
+                  );
+                  setFormData((prev) => ({ ...prev, contributors: selected }));
+                }}
+                className={`w-full p-2 border rounded-lg ${
+                  darkMode
+                    ? "bg-gray-700 border-gray-600 text-white"
+                    : "bg-white border-gray-300 text-gray-900"
+                }`}
+                disabled={usersLoading}
+                size={Math.min(6, nonAdminUsers.length)}
+              >
+                {nonAdminUsers.map((user) => (
+                  <option
+                    key={user.userId || user.UserId}
+                    value={user.userId || user.UserId}
+                  >
+                    {user.username || user.Username} ({user.email || user.Email}
+                    )
+                  </option>
+                ))}
+              </select>
+              {usersLoading && (
+                <p className="text-xs mt-1 text-gray-400">Loading users...</p>
+              )}
+              {usersError && (
+                <p className="text-xs mt-1 text-red-400">{usersError}</p>
+              )}
+              {formData.contributors && formData.contributors.length > 0 && (
+                <div className="mt-2">
+                  <p
+                    className={`text-xs ${
+                      darkMode ? "text-green-400" : "text-green-600"
+                    }`}
+                  >
+                    Contributors: {formData.contributors.length} user(s) added
+>>>>>>> Stashed changes
                   </p>
                 </div>
               )}
