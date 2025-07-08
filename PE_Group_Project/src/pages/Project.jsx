@@ -577,16 +577,16 @@ function Project() {
             )}
           </div>
 
-          <div className="flex items-center gap-2 text-xs">
-            <Calendar className="w-3 h-3" />
-            <span className={darkMode ? "text-gray-400" : "text-gray-500"}>
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Calendar className={`w-4 h-4 ${darkMode ? "text-blue-400" : "text-blue-500"}`} />
+            <span className={`${darkMode ? "text-gray-200" : "text-gray-700"} font-semibold`}>
               Due: {formatDate(task.deadline)}
             </span>
           </div>
         </div>
 
         <div className="mt-3 flex items-center justify-between">
-          <div className="flex gap-1">
+          <div className="flex gap-2">
             {canChangeStatus && (
               <>
                 <button
@@ -598,15 +598,16 @@ function Project() {
                     }
                   }}
                   disabled={task.status === statusList[0].key}
-                  className={`p-1 rounded ${
+                  className={`p-2 rounded-lg border transition-all duration-200 ${
                     task.status === statusList[0].key
                       ? "opacity-50 cursor-not-allowed"
                       : darkMode
-                      ? "hover:bg-gray-600"
-                      : "hover:bg-gray-100"
+                      ? "bg-gray-600 hover:bg-gray-500 border-gray-500 text-white shadow-md"
+                      : "bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-700 shadow-md hover:shadow-lg"
                   }`}
+                  title="Move to previous status"
                 >
-                  <ChevronLeft className="w-4 h-4" />
+                  <ChevronLeft className="w-5 h-5" />
                 </button>
                 <button
                   onClick={(e) => {
@@ -617,15 +618,16 @@ function Project() {
                     }
                   }}
                   disabled={task.status === statusList[statusList.length - 1].key}
-                  className={`p-1 rounded ${
+                  className={`p-2 rounded-lg border transition-all duration-200 ${
                     task.status === statusList[statusList.length - 1].key
                       ? "opacity-50 cursor-not-allowed"
                       : darkMode
-                      ? "hover:bg-gray-600"
-                      : "hover:bg-gray-100"
+                      ? "bg-gray-600 hover:bg-gray-500 border-gray-500 text-white shadow-md"
+                      : "bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-700 shadow-md hover:shadow-lg"
                   }`}
+                  title="Move to next status"
                 >
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight className="w-5 h-5" />
                 </button>
               </>
             )}
