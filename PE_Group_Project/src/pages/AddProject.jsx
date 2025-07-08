@@ -75,6 +75,9 @@ const AddProject = () => {
   // Filter users for project leader based on leader search term (empty array for now)
   const filteredLeaderUsers = [];
 
+  // Filter users for dropdowns: only show users with role 'user'
+  const userRoleUsers = allUsers.filter(u => (u.role || u.Role || '').toLowerCase() === 'user');
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -415,7 +418,7 @@ const AddProject = () => {
                   disabled={usersLoading}
                 >
                   <option value="">Select a project manager</option>
-                  {allUsers.map((user) => (
+                  {userRoleUsers.map((user) => (
                     <option
                       key={user.userId || user.UserId}
                       value={user.userId || user.UserId}
@@ -463,9 +466,9 @@ const AddProject = () => {
                       : "bg-white border-gray-300 text-gray-900"
                   }`}
                   disabled={usersLoading}
-                  size={Math.min(6, allUsers.length)}
+                  size={Math.min(6, userRoleUsers.length)}
                 >
-                  {allUsers.map((user) => (
+                  {userRoleUsers.map((user) => (
                     <option
                       key={user.userId || user.UserId}
                       value={user.userId || user.UserId}

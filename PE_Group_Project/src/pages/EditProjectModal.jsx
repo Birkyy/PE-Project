@@ -262,6 +262,9 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
       : "Unknown User";
   };
 
+  // Filter users for dropdowns: only show users with role 'user'
+  const userRoleUsers = allUsers.filter(u => (u.role || u.Role || '').toLowerCase() === 'user');
+
   if (!isOpen || usersLoading || !projectReady) return null;
   if (loading) {
     return (
@@ -643,9 +646,8 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
                 disabled={usersLoading}
               >
                 <option value="">Select a project manager</option>
-                {/* If the current value is not in allUsers, show Unknown User */}
                 {formData.projectManagerInCharge &&
-                  !allUsers.some(
+                  !userRoleUsers.some(
                     (u) =>
                       (u.userId || u.id || u.UserId) ===
                       formData.projectManagerInCharge
@@ -654,13 +656,12 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
                       Unknown User
                     </option>
                   )}
-                {allUsers.map((user) => (
+                {userRoleUsers.map((user) => (
                   <option
                     key={user.userId || user.UserId}
                     value={user.userId || user.UserId}
                   >
-                    {user.username || user.Username} ({user.email || user.Email}
-                    )
+                    {user.username || user.Username} ({user.email || user.Email})
                   </option>
                 ))}
               </select>
@@ -691,11 +692,10 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
                     : "bg-white border-gray-300 text-gray-900"
                 }`}
                 disabled={usersLoading}
-                size={Math.min(6, allUsers.length)}
+                size={Math.min(6, userRoleUsers.length)}
               >
-                {/* Show Unknown User for any contributor not in allUsers */}
                 {formData.contributors.map((contributorId) =>
-                  !allUsers.some(
+                  !userRoleUsers.some(
                     (u) => (u.userId || u.id || u.UserId) === contributorId
                   ) ? (
                     <option key={contributorId} value={contributorId}>
@@ -703,13 +703,12 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
                     </option>
                   ) : null
                 )}
-                {allUsers.map((user) => (
+                {userRoleUsers.map((user) => (
                   <option
                     key={user.userId || user.UserId}
                     value={user.userId || user.UserId}
                   >
-                    {user.username || user.Username} ({user.email || user.Email}
-                    )
+                    {user.username || user.Username} ({user.email || user.Email})
                   </option>
                 ))}
               </select>

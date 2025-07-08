@@ -444,7 +444,7 @@ const EditTaskModal = ({ isOpen, task, onClose, onSubmit, contributors }) => {
                   loading ? "opacity-50 cursor-not-allowed" : ""
                 }`}
               >
-                <option value="">Select contributor</option>
+                <option value="">Select Person In Charge</option>
                 {/* If the current value is not in contributorOptions, show Unknown User */}
                 {taskData.assignedTo &&
                   !contributorOptions.some(
