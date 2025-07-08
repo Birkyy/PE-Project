@@ -112,8 +112,20 @@ const getUserProjectRole = (currentUser, project) => {
 
 // Helper function to check if user can add tasks
 const canUserAddTasks = (currentUser, project) => {
-  const role = getUserProjectRole(currentUser, project);
-  return role === "admin" || role === "manager";
+  const userRole = getUserProjectRole(currentUser, project);
+  return userRole === 'admin' || userRole === 'manager';
+};
+
+// Helper function to check if user can edit project
+const canUserEditProject = (currentUser, project) => {
+  const userRole = getUserProjectRole(currentUser, project);
+  return userRole === 'admin' || userRole === 'manager';
+};
+
+// Helper function to check if user can edit/delete tasks
+const canUserEditTasks = (currentUser, project) => {
+  const userRole = getUserProjectRole(currentUser, project);
+  return userRole === 'admin' || userRole === 'manager';
 };
 
 function Project() {
@@ -452,31 +464,33 @@ function Project() {
           >
             {task.taskName || task.title}
           </h4>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setEditTask(task);
-                setIsEditModalOpen(true);
-              }}
-              className={`p-1 rounded ${
-                darkMode ? "hover:bg-gray-600" : "hover:bg-gray-100"
-              }`}
-            >
-              <Edit className="w-4 h-4 text-blue-500" />
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDeleteTask(taskId);
-              }}
-              className={`p-1 rounded ${
-                darkMode ? "hover:bg-gray-600" : "hover:bg-gray-100"
-              }`}
-            >
-              <Trash2 className="w-4 h-4 text-red-500" />
-            </button>
-          </div>
+          {canUserEditTasks(currentUser, project) && (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditTask(task);
+                  setIsEditModalOpen(true);
+                }}
+                className={`p-1 rounded ${
+                  darkMode ? "hover:bg-gray-600" : "hover:bg-gray-100"
+                }`}
+              >
+                <Edit className="w-4 h-4 text-blue-500" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteTask(taskId);
+                }}
+                className={`p-1 rounded ${
+                  darkMode ? "hover:bg-gray-600" : "hover:bg-gray-100"
+                }`}
+              >
+                <Trash2 className="w-4 h-4 text-red-500" />
+              </button>
+            </div>
+          )}
         </div>
 
         <p
@@ -688,16 +702,18 @@ function Project() {
                   >
                     {project.projectName || project.name}
                   </h1>
-                  <button
-                    onClick={() => setIsEditProjectModalOpen(true)}
-                    className={`p-2 rounded-lg ${
-                      darkMode
-                        ? "hover:bg-gray-700 text-gray-400"
-                        : "hover:bg-gray-100 text-gray-600"
-                    }`}
-                  >
-                    <Edit className="w-5 h-5" />
-                  </button>
+                  {canUserEditProject(currentUser, project) && (
+                    <button
+                      onClick={() => setIsEditProjectModalOpen(true)}
+                      className={`p-2 rounded-lg ${
+                        darkMode
+                          ? "hover:bg-gray-700 text-gray-400"
+                          : "hover:bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      <Edit className="w-5 h-5" />
+                    </button>
+                  )}
                 </div>
                 <div className="flex flex-wrap gap-3">
                   <span

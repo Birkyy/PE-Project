@@ -94,6 +94,12 @@ const canUserAddTasks = (currentUser, project) => {
   return role === 'admin' || role === 'manager';
 };
 
+// Helper function to check if user can edit/delete tasks
+const canUserEditTasks = (currentUser, project) => {
+  const role = getUserProjectRole(currentUser, project);
+  return role === 'admin' || role === 'manager';
+};
+
 const MyTask = () => {
   const { projectName } = useParams();
   const { darkMode } = useTheme();
@@ -794,28 +800,32 @@ const MyTask = () => {
           >
             <Eye size={16} />
           </button>
-          <button
-            onClick={() => openEditModal(task)}
-            className={`p-2 rounded-lg ${
-              darkMode
-                ? "hover:bg-gray-700 text-gray-400"
-                : "hover:bg-gray-100 text-gray-600"
-            }`}
-            title="Edit Task"
-          >
-            <Edit size={16} />
-          </button>
-          <button
-            onClick={() => handleDeleteTask(task.id)}
-            className={`p-2 rounded-lg ${
-              darkMode
-                ? "hover:bg-gray-700 text-gray-400"
-                : "hover:bg-gray-100 text-gray-600"
-            }`}
-            title="Delete Task"
-          >
-            <Trash2 size={16} />
-          </button>
+          {canUserEditTasks(currentUser, currentProject) && (
+            <>
+              <button
+                onClick={() => openEditModal(task)}
+                className={`p-2 rounded-lg ${
+                  darkMode
+                    ? "hover:bg-gray-700 text-gray-400"
+                    : "hover:bg-gray-100 text-gray-600"
+                }`}
+                title="Edit Task"
+              >
+                <Edit size={16} />
+              </button>
+              <button
+                onClick={() => handleDeleteTask(task.id)}
+                className={`p-2 rounded-lg ${
+                  darkMode
+                    ? "hover:bg-gray-700 text-gray-400"
+                    : "hover:bg-gray-100 text-gray-600"
+                }`}
+                title="Delete Task"
+              >
+                <Trash2 size={16} />
+              </button>
+            </>
+          )}
         </div>
 
         {/* File Attachments */}
