@@ -1,6 +1,6 @@
 import { useTheme } from '../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
-import { Trash2, Search, Calendar, Users, Save, X, ChevronDown, UserCheck, Plus, Archive, Eye, Edit } from 'lucide-react';
+import { Trash2, Search, Calendar, Users, Save, X, ChevronDown, UserCheck, Plus, Archive, Eye, Edit, CheckCircle, XCircle } from 'lucide-react';
 import Layout from '../components/Layout';
 import { useState, useRef, useEffect } from 'react';
 import { projectAPI, taskAPI } from '../API/apiService';
@@ -34,6 +34,23 @@ const MyProjects = () => {
   const dropdownRef = useRef(null);
   const leaderDropdownRef = useRef(null);
   const [projectProgress, setProjectProgress] = useState({});
+
+  // Modal states for beautiful popups
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, projectId: null, projectName: '' });
+  const [archiveModal, setArchiveModal] = useState({ isOpen: false, projectId: null, projectName: '' });
+  
+  // Notification state
+  const [notification, setNotification] = useState(null);
+
+  // Notification functions
+  const showNotification = (message, type = 'info') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 4000); // Auto dismiss after 4 seconds
+  };
+
+  const closeNotification = () => {
+    setNotification(null);
+  };
 
   // Load current user data
   useEffect(() => {
@@ -158,34 +175,52 @@ const MyProjects = () => {
     }
   };
 
-  const handleDelete = async (projectId) => {
-    if (!window.confirm('Are you sure you want to delete this project?')) return;
+  // Open delete confirmation modal
+  const openDeleteModal = (project) => {
+    setDeleteModal({ isOpen: true, projectId: project.projectId, projectName: project.projectName });
+  };
+
+  // Handle confirmed project deletion
+  const handleDelete = async () => {
+    if (!deleteModal.projectId) return;
+    
     try {
       // Delete the project using API
-      await projectAPI.deleteProject(projectId);
+      await projectAPI.deleteProject(deleteModal.projectId);
       
       // Remove from local state
-      setProjects((prev) => prev.filter((p) => p.projectId !== projectId));
-      setFilteredProjects((prev) => prev.filter((p) => p.projectId !== projectId));
-      console.log('Project deleted:', projectId);
+      setProjects((prev) => prev.filter((p) => p.projectId !== deleteModal.projectId));
+      setFilteredProjects((prev) => prev.filter((p) => p.projectId !== deleteModal.projectId));
+      
+      showNotification(`Project "${deleteModal.projectName}" has been deleted successfully.`, 'success');
+      setDeleteModal({ isOpen: false, projectId: null, projectName: '' });
+      console.log('Project deleted:', deleteModal.projectId);
     } catch (err) {
       console.error('Error deleting project:', err);
-      alert('Failed to delete project. Please try again.');
+      showNotification('Failed to delete project. Please try again.', 'error');
     }
   };
 
-  const handleArchive = async (projectId, projectName) => {
-    if (window.confirm(`Are you sure you want to archive "${projectName}"? It will be moved to the Archive section.`)) {
-      try {
-        await projectAPI.archiveProject(projectId, currentUser?.userId);
-        // Remove project from active projects list
-        setProjects(prevProjects => prevProjects.filter(project => project.projectId !== projectId));
-        setFilteredProjects(prevProjects => prevProjects.filter(project => project.projectId !== projectId));
-        alert(`"${projectName}" has been archived successfully!`);
-      } catch (err) {
-        console.error('Error archiving project:', err);
-        alert('Failed to archive project. Please try again.');
-      }
+  // Open archive confirmation modal
+  const openArchiveModal = (project) => {
+    setArchiveModal({ isOpen: true, projectId: project.projectId, projectName: project.projectName });
+  };
+
+  // Handle confirmed project archiving
+  const handleArchive = async () => {
+    if (!archiveModal.projectId) return;
+    
+    try {
+      await projectAPI.archiveProject(archiveModal.projectId, currentUser?.userId);
+      // Remove project from active projects list
+      setProjects(prevProjects => prevProjects.filter(project => project.projectId !== archiveModal.projectId));
+      setFilteredProjects(prevProjects => prevProjects.filter(project => project.projectId !== archiveModal.projectId));
+      
+      showNotification(`"${archiveModal.projectName}" has been archived successfully!`, 'success');
+      setArchiveModal({ isOpen: false, projectId: null, projectName: '' });
+    } catch (err) {
+      console.error('Error archiving project:', err);
+      showNotification('Failed to archive project. Please try again.', 'error');
     }
   };
 
@@ -310,14 +345,14 @@ const MyProjects = () => {
                 <Edit className="w-4 h-4" />
               </button>
               <button 
-                onClick={() => handleArchive(project.projectId, project.projectName)}
+                onClick={() => openArchiveModal(project)}
                 className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-yellow-300' : 'hover:bg-gray-100 text-gray-600 hover:text-yellow-600'}`}
                 title="Archive Project"
               >
                 <Archive className="w-4 h-4" />
               </button>
               <button 
-                onClick={() => handleDelete(project.projectId)}
+                onClick={() => openDeleteModal(project)}
                 className={`p-2 rounded-full transition-colors duration-200 ${darkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-red-300' : 'hover:bg-gray-100 text-gray-600 hover:text-red-600'}`}
                 title="Delete Project"
               >
@@ -537,6 +572,168 @@ const MyProjects = () => {
           project={editProjectObj}
           loading={editProjectLoading}
         />
+      )}
+
+      {/* Custom Delete Project Modal */}
+      {deleteModal.isOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className={`rounded-2xl shadow-2xl border max-w-md w-full transform transition-all ${
+            darkMode 
+              ? "bg-gray-800 border-gray-700" 
+              : "bg-white border-gray-200"
+          }`}>
+            {/* Header */}
+            <div className="flex items-center gap-3 p-6 border-b border-red-200 dark:border-red-800">
+              <div className="flex-shrink-0 w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                <Trash2 className="w-5 h-5 text-red-600 dark:text-red-400" />
+              </div>
+              <div>
+                <h3 className={`text-lg font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>
+                  Delete Project
+                </h3>
+                <p className="text-sm text-red-600 dark:text-red-400">
+                  This action cannot be undone
+                </p>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              <p className={`text-sm mb-4 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                Are you sure you want to permanently delete the project:
+              </p>
+              <div className={`p-3 rounded-lg border-l-4 border-red-500 ${
+                darkMode ? "bg-red-900/20" : "bg-red-50"
+              }`}>
+                <p className={`font-medium ${darkMode ? "text-white" : "text-gray-900"}`}>
+                  {deleteModal.projectName}
+                </p>
+              </div>
+              <p className={`text-xs mt-3 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                ⚠️ All project data, tasks, and comments will be permanently removed.
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => setDeleteModal({ isOpen: false, projectId: null, projectName: '' })}
+                className={`flex-1 px-4 py-2.5 rounded-lg font-medium transition-all duration-200 ${
+                  darkMode
+                    ? "bg-gray-700 hover:bg-gray-600 text-gray-300"
+                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+              >
+                Delete Project
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Archive Project Modal */}
+      {archiveModal.isOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className={`rounded-2xl shadow-2xl border max-w-md w-full transform transition-all ${
+            darkMode 
+              ? "bg-gray-800 border-gray-700" 
+              : "bg-white border-gray-200"
+          }`}>
+            {/* Header */}
+            <div className="flex items-center gap-3 p-6 border-b border-yellow-200 dark:border-yellow-800">
+              <div className="flex-shrink-0 w-10 h-10 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center">
+                <Archive className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+              </div>
+              <div>
+                <h3 className={`text-lg font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>
+                  Archive Project
+                </h3>
+                <p className="text-sm text-yellow-600 dark:text-yellow-400">
+                  Move to archive section
+                </p>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              <p className={`text-sm mb-4 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                Are you sure you want to archive the project:
+              </p>
+              <div className={`p-3 rounded-lg border-l-4 border-yellow-500 ${
+                darkMode ? "bg-yellow-900/20" : "bg-yellow-50"
+              }`}>
+                <p className={`font-medium ${darkMode ? "text-white" : "text-gray-900"}`}>
+                  {archiveModal.projectName}
+                </p>
+              </div>
+              <p className={`text-xs mt-3 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                📁 The project will be moved to the Archive section and can be restored later.
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => setArchiveModal({ isOpen: false, projectId: null, projectName: '' })}
+                className={`flex-1 px-4 py-2.5 rounded-lg font-medium transition-all duration-200 ${
+                  darkMode
+                    ? "bg-gray-700 hover:bg-gray-600 text-gray-300"
+                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleArchive}
+                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+              >
+                Archive Project
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {notification && (
+        <div className="fixed top-4 right-4 z-50">
+          <div className={`rounded-lg p-6 shadow-2xl border max-w-sm transform transition-all ${
+            darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+          }`}>
+            <div className="flex items-start gap-3">
+              <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                notification.type === 'success' 
+                  ? 'bg-green-100 dark:bg-green-900/30' 
+                  : notification.type === 'error'
+                  ? 'bg-red-100 dark:bg-red-900/30'
+                  : 'bg-blue-100 dark:bg-blue-900/30'
+              }`}>
+                {notification.type === 'success' && <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />}
+                {notification.type === 'error' && <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />}
+                {notification.type === 'info' && <CheckCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className={`text-sm font-medium ${darkMode ? "text-white" : "text-gray-900"}`}>
+                  {notification.message}
+                </p>
+              </div>
+              <button
+                onClick={closeNotification}
+                className={`flex-shrink-0 p-1 rounded-full transition-colors ${
+                  darkMode ? "hover:bg-gray-700 text-gray-400" : "hover:bg-gray-100 text-gray-500"
+                }`}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </Layout>
   );

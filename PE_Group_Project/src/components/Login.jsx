@@ -118,23 +118,7 @@ const Login = () => {
     }
   };
 
-  const handleSkip = () => {
-    // Set demo user data for skip functionality
-    const demoUser = {
-      userId: '86580A7F-9A01-40DD-BE70-E95509CA3184', // Demo GUID
-      username: 'admin1',
-      email: 'admin@gmail.com',
-      role: 'Admin' // Set as Admin to see all projects
-    };
-    
-    localStorage.setItem('token', 'demo-token');
-    localStorage.setItem('user', JSON.stringify(demoUser));
-    if (demoUser.role && demoUser.role.toLowerCase() === 'admin') {
-      navigate('/my-projects');
-    } else {
-      navigate('/home');
-    }
-  };
+
 
   const handleForgotPassword = (e) => {
     e.preventDefault();
@@ -252,20 +236,7 @@ const Login = () => {
                   </Link>
                 </span>
               </div>
-              
-              {/* Demo Instructions */}
-              <div className="border-t border-gray-700 pt-4 space-y-2">
-                <p className="text-xs text-gray-500">
-                  Test Account Locking: Use any email and try wrong passwords 5 times
-                </p>
-                <button
-                  type="button"
-                  onClick={handleSkip}
-                  className="w-full py-2 px-4 text-sm text-gray-400 hover:text-white hover:bg-gray-700/50 border border-gray-600 rounded-md transition-all duration-300 hover:border-purple-500/50"
-                >
-                  🚀 Skip for now (Demo Mode)
-                </button>
-              </div>
+
             </div>
           </form>
         </div>

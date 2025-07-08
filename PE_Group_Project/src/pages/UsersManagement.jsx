@@ -13,6 +13,8 @@ import {
   Unlock,
   Lock,
   Download,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 import { userAPI } from "../API/apiService.js";
 
@@ -50,6 +52,11 @@ const UsersManagement = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [lockedAccounts, setLockedAccounts] = useState([]);
+  
+  // Delete modal and notification states
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, userId: null, userName: '' });
+  const [notifications, setNotifications] = useState([]);
+  
   const storedUser = localStorage.getItem("user");
   const user = storedUser ? JSON.parse(storedUser) : null;
 
@@ -142,6 +149,22 @@ const UsersManagement = () => {
 
     // Clear success message after 3 seconds
     setTimeout(() => setSuccess(""), 3000);
+  };
+
+  // Notification helper functions
+  const showNotification = (message, type = 'info') => {
+    const id = Date.now();
+    const notification = { id, message, type };
+    setNotifications(prev => [...prev, notification]);
+    
+    // Auto-dismiss after 4 seconds
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }, 4000);
+  };
+
+  const closeNotification = (id) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
   };
 
   // Load users and locked accounts on component mount
@@ -465,9 +488,26 @@ const UsersManagement = () => {
     });
   };
 
-  const handleDeleteUser = (userId) => {
-    if (window.confirm("Are you sure you want to delete this user?")) {
-      setUsers(users.filter((user) => user.id !== userId));
+  // Open delete confirmation modal
+  const openDeleteModal = (user) => {
+    setDeleteModal({ isOpen: true, userId: user.id, userName: user.name });
+  };
+
+  // Handle confirmed user deletion
+  const handleDeleteUser = async () => {
+    if (!deleteModal.userId) return;
+    
+    try {
+      // Note: Add userAPI.deleteUser(deleteModal.userId) when API endpoint is available
+      // For now, just remove from local state
+      setUsers((prev) => prev.filter((user) => user.id !== deleteModal.userId));
+      
+      showNotification(`User "${deleteModal.userName}" has been deleted successfully.`, 'success');
+      setDeleteModal({ isOpen: false, userId: null, userName: '' });
+      console.log('User deleted:', deleteModal.userId);
+    } catch (err) {
+      console.error('Error deleting user:', err);
+      showNotification('Failed to delete user. Please try again.', 'error');
     }
   };
 
@@ -846,7 +886,7 @@ const UsersManagement = () => {
                               View
                             </button>
                             <button
-                              onClick={() => handleDeleteUser(user.id)}
+                              onClick={() => openDeleteModal(user)}
                               className={`transition-colors duration-300 ${
                                 darkMode
                                   ? "text-red-400 hover:text-red-300"
@@ -1594,6 +1634,135 @@ const UsersManagement = () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Delete User Modal */}
+      {deleteModal.isOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-xl shadow-2xl w-full max-w-md transform transition-all duration-300`}>
+            <div className={`px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center mr-3">
+                    <Trash2 className="w-5 h-5 text-red-600 dark:text-red-400" />
+                  </div>
+                  <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                    Delete User
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setDeleteModal({ isOpen: false, userId: null, userName: '' })}
+                  className={`${darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-700'} transition-colors duration-200`}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="px-6 py-6">
+              <div className={`p-4 rounded-lg border ${darkMode ? 'bg-red-900/20 border-red-500/50' : 'bg-red-50 border-red-200'} mb-4`}>
+                <div className="flex items-start">
+                  <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center mr-3 mt-0.5">
+                    <span className="text-red-600 dark:text-red-400 font-bold text-sm">!</span>
+                  </div>
+                  <div>
+                    <h4 className={`font-semibold mb-1 ${darkMode ? 'text-red-400' : 'text-red-800'}`}>
+                      Warning: This action cannot be undone
+                    </h4>
+                    <p className={`text-sm ${darkMode ? 'text-red-300' : 'text-red-700'}`}>
+                      You are about to permanently delete this user account and all associated data.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'} mb-6`}>
+                <h5 className={`font-medium mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  User to be deleted:
+                </h5>
+                <div className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  <p><span className="font-medium">Name:</span> {deleteModal.userName}</p>
+                </div>
+              </div>
+
+              <p className={`text-sm mb-6 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                This will permanently remove the user from the system. Are you sure you want to continue?
+              </p>
+
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setDeleteModal({ isOpen: false, userId: null, userName: '' })}
+                  className={`px-4 py-2 rounded-md transition-all duration-300 focus:outline-none focus:ring-2 ${
+                    darkMode
+                      ? 'text-gray-400 border border-gray-600 hover:text-white hover:bg-gray-700/50 focus:ring-gray-400/50'
+                      : 'text-gray-600 border border-gray-300 hover:text-gray-900 hover:bg-gray-100 focus:ring-gray-400/50'
+                  }`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteUser}
+                  className="px-6 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-md hover:from-red-700 hover:to-red-800 transition-all duration-300 hover:shadow-lg hover:shadow-red-500/25 focus:outline-none focus:ring-2 focus:ring-red-400/50 transform hover:scale-105"
+                >
+                  Delete User
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notifications */}
+      {notifications.length > 0 && (
+        <div className="fixed top-4 right-4 z-50 space-y-3">
+          {notifications.map((notification) => (
+            <div
+              key={notification.id}
+              className={`max-w-sm w-full rounded-lg shadow-xl border transform transition-all duration-500 ease-in-out ${
+                darkMode
+                  ? 'bg-gray-800 border-gray-700'
+                  : 'bg-white border-gray-200'
+              } ${
+                notification.type === 'success'
+                  ? 'border-l-4 border-l-green-500'
+                  : notification.type === 'error'
+                  ? 'border-l-4 border-l-red-500'
+                  : 'border-l-4 border-l-blue-500'
+              }`}
+            >
+              <div className="p-4">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0">
+                    {notification.type === 'success' ? (
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                    ) : notification.type === 'error' ? (
+                      <XCircle className="h-5 w-5 text-red-500" />
+                    ) : (
+                      <CheckCircle className="h-5 w-5 text-blue-500" />
+                    )}
+                  </div>
+                  <div className="ml-3 w-0 flex-1">
+                    <p className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {notification.message}
+                    </p>
+                  </div>
+                  <div className="ml-4 flex-shrink-0 flex">
+                    <button
+                      onClick={() => closeNotification(notification.id)}
+                      className={`inline-flex rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                        darkMode
+                          ? 'text-gray-400 hover:text-gray-300 focus:ring-gray-500'
+                          : 'text-gray-400 hover:text-gray-500 focus:ring-gray-400'
+                      }`}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </Layout>

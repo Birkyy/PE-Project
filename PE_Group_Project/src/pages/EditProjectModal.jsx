@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "../context/ThemeContext";
-import { X, Upload, Trash2, File } from "lucide-react";
+import { X, Upload, Trash2, File, Search, UserCheck, Users } from "lucide-react";
 import { userAPI, fileAPI } from "../API/apiService";
 
 function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
@@ -23,6 +23,7 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
   const [projectReady, setProjectReady] = useState(false);
   const [projectFiles, setProjectFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Ensure IDs are always strings for dropdown compatibility
   function toStringId(id) {
@@ -565,52 +566,188 @@ function EditProjectModal({ isOpen, onClose, onSubmit, project, loading }) {
               >
                 Contributors
               </label>
-              <select
-                name="contributors"
-                multiple
-                value={formData.contributors}
-                onChange={(e) => {
-                  const selected = Array.from(
-                    e.target.selectedOptions,
-                    (option) => option.value
-                  );
-                  setFormData((prev) => ({ ...prev, contributors: selected }));
-                }}
-                className={`w-full p-2 border rounded-lg ${
-                  darkMode
-                    ? "bg-gray-700 border-gray-600 text-white"
-                    : "bg-white border-gray-300 text-gray-900"
-                }`}
-                disabled={usersLoading}
-                size={Math.min(6, allUsers.length)}
-              >
-                {allUsers.map((user) => (
-                  <option
-                    key={user.userId || user.UserId}
-                    value={user.userId || user.UserId}
-                  >
-                    {user.username || user.Username} ({user.email || user.Email}
-                    )
-                  </option>
-                ))}
-              </select>
-              {usersLoading && (
-                <p className="text-xs mt-1 text-gray-400">Loading users...</p>
-              )}
-              {usersError && (
-                <p className="text-xs mt-1 text-red-400">{usersError}</p>
-              )}
-              {formData.contributors && formData.contributors.length > 0 && (
-                <div className="mt-2">
-                  <p
-                    className={`text-xs ${
-                      darkMode ? "text-green-400" : "text-green-600"
-                    }`}
-                  >
-                    Contributors: {formData.contributors.length} user(s) added
+              
+              {/* Selected Contributors Tags */}
+              {formData.contributors.length > 0 && (
+                <div className="mb-3">
+                  <div className="flex flex-wrap gap-2">
+                    {formData.contributors.map((contributorId) => {
+                      const user = allUsers.find(u => (u.userId || u.UserId) === contributorId);
+                      const userName = user ? (user.username || user.Username) : contributorId;
+                      const userEmail = user ? (user.email || user.Email) : '';
+                      
+                      return (
+                        <div
+                          key={contributorId}
+                          className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all duration-200 ${
+                            darkMode
+                              ? "bg-purple-900/30 border-purple-700 text-purple-300"
+                              : "bg-purple-50 border-purple-200 text-purple-700"
+                          }`}
+                        >
+                          <div className={`w-2 h-2 rounded-full ${
+                            darkMode ? "bg-purple-400" : "bg-purple-500"
+                          }`}></div>
+                          <span className="text-sm font-medium">{userName}</span>
+                          {userEmail && (
+                            <span className={`text-xs ${
+                              darkMode ? "text-purple-400" : "text-purple-600"
+                            }`}>
+                              ({userEmail})
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormData((prev) => ({
+                                ...prev,
+                                contributors: prev.contributors.filter(id => id !== contributorId)
+                              }));
+                            }}
+                            className={`ml-1 hover:bg-red-100 hover:text-red-600 rounded-full p-0.5 transition-colors ${
+                              darkMode ? "hover:bg-red-900/30 hover:text-red-400" : ""
+                            }`}
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className={`text-xs mt-2 ${
+                    darkMode ? "text-green-400" : "text-green-600"
+                  }`}>
+                    {formData.contributors.length} contributor(s) selected
                   </p>
                 </div>
               )}
+
+              {/* Search and Add Contributors */}
+              <div className={`border rounded-lg ${
+                darkMode ? "border-gray-600 bg-gray-700" : "border-gray-300 bg-white"
+              }`}>
+                {/* Search Input */}
+                <div className="p-3 border-b border-gray-200 dark:border-gray-600">
+                  <div className="relative">
+                    <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
+                      darkMode ? "text-gray-400" : "text-gray-500"
+                    }`} />
+                    <input
+                      type="text"
+                      placeholder="Search contributors..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className={`w-full pl-9 pr-3 py-2 border-0 bg-transparent focus:ring-0 focus:outline-none ${
+                        darkMode ? "text-white placeholder-gray-400" : "text-gray-900 placeholder-gray-500"
+                      }`}
+                    />
+                  </div>
+                </div>
+
+                {/* Available Contributors Grid */}
+                <div className="p-3">
+                  {usersLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500"></div>
+                      <span className={`ml-2 text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+                        Loading users...
+                      </span>
+                    </div>
+                  ) : usersError ? (
+                    <div className="text-center py-4">
+                      <p className="text-sm text-red-500">{usersError}</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto">
+                      {allUsers
+                        .filter(user => {
+                          const userId = user.userId || user.UserId;
+                          const userName = (user.username || user.Username || '').toLowerCase();
+                          const userEmail = (user.email || user.Email || '').toLowerCase();
+                          const search = searchTerm.toLowerCase();
+                          
+                          // Don't show already selected contributors
+                          if (formData.contributors.includes(userId)) return false;
+                          
+                          // Filter by search term
+                          if (searchTerm && !userName.includes(search) && !userEmail.includes(search)) return false;
+                          
+                          return true;
+                        })
+                        .map((user) => {
+                          const userId = user.userId || user.UserId;
+                          const userName = user.username || user.Username;
+                          const userEmail = user.email || user.Email;
+                          
+                          return (
+                            <div
+                              key={userId}
+                              onClick={() => {
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  contributors: [...prev.contributors, userId]
+                                }));
+                                setSearchTerm('');
+                              }}
+                              className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 border ${
+                                darkMode
+                                  ? "hover:bg-gray-600 border-transparent hover:border-purple-500"
+                                  : "hover:bg-gray-50 border-transparent hover:border-purple-300"
+                              }`}
+                            >
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                                darkMode
+                                  ? "bg-purple-900/50 text-purple-300"
+                                  : "bg-purple-100 text-purple-700"
+                              }`}>
+                                {userName ? userName.charAt(0).toUpperCase() : 'U'}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className={`text-sm font-medium truncate ${
+                                  darkMode ? "text-white" : "text-gray-900"
+                                }`}>
+                                  {userName}
+                                </p>
+                                <p className={`text-xs truncate ${
+                                  darkMode ? "text-gray-400" : "text-gray-500"
+                                }`}>
+                                  {userEmail}
+                                </p>
+                              </div>
+                              <UserCheck className={`w-4 h-4 ${
+                                darkMode ? "text-gray-400" : "text-gray-500"
+                              }`} />
+                            </div>
+                          );
+                        })}
+                      
+                      {/* No Results Message */}
+                      {allUsers.filter(user => {
+                        const userId = user.userId || user.UserId;
+                        const userName = (user.username || user.Username || '').toLowerCase();
+                        const userEmail = (user.email || user.Email || '').toLowerCase();
+                        const search = searchTerm.toLowerCase();
+                        
+                        if (formData.contributors.includes(userId)) return false;
+                        if (searchTerm && !userName.includes(search) && !userEmail.includes(search)) return false;
+                        
+                        return true;
+                      }).length === 0 && (
+                        <div className="text-center py-8">
+                          <Users className={`w-12 h-12 mx-auto mb-3 ${
+                            darkMode ? "text-gray-600" : "text-gray-400"
+                          }`} />
+                          <p className={`text-sm ${
+                            darkMode ? "text-gray-400" : "text-gray-500"
+                          }`}>
+                            {searchTerm ? 'No users found matching your search' : 'All available users have been selected'}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="flex justify-end gap-3 mt-6">
