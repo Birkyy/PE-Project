@@ -127,7 +127,11 @@ const AddProjectModal = ({ isOpen, onClose, onSubmit, loading }) => {
           stringToGuid(formData.projectManagerInCharge) ||
           "00000000-0000-0000-0000-000000000000",
         Contributors: formData.contributors
-          .map((contributor) => stringToGuid(contributor.userId || contributor.UserId || contributor.id))
+          .map((contributor) =>
+            stringToGuid(
+              contributor.userId || contributor.UserId || contributor.id
+            )
+          )
           .filter((id) => id !== null),
       };
 
@@ -138,17 +142,23 @@ const AddProjectModal = ({ isOpen, onClose, onSubmit, loading }) => {
 
       console.log("Project created:", createdProject);
 
-      // Handle file uploads if any
+      // Handle file uploads if any (upload in parallel after project is created)
       if (formData.attachments.length > 0 && createdProject.projectId) {
-        for (const fileObj of formData.attachments) {
-          if (fileObj.file) {
-            try {
-              await fileAPI.uploadProjectFile(fileObj.file, createdProject.projectId);
-            } catch (err) {
-              console.error("Error uploading file:", err);
+        await Promise.all(
+          formData.attachments.map(async (fileObj) => {
+            console.log("Uploading file object:", fileObj);
+            if (fileObj.originalFile) {
+              try {
+                await fileAPI.uploadProjectFile(
+                  fileObj.originalFile,
+                  createdProject.projectId
+                );
+              } catch (err) {
+                console.error("Error uploading file:", err);
+              }
             }
-          }
-        }
+          })
+        );
       }
 
       // Call the onSubmit callback with the created project
@@ -158,13 +168,12 @@ const AddProjectModal = ({ isOpen, onClose, onSubmit, loading }) => {
 
       // Close the modal
       onClose();
-      
     } catch (err) {
       console.error("Error creating project:", err);
       setError(
         err.response?.data?.message ||
-        err.message ||
-        "Failed to create project. Please try again."
+          err.message ||
+          "Failed to create project. Please try again."
       );
     } finally {
       setIsSubmitting(false);
@@ -316,8 +325,8 @@ const AddProjectModal = ({ isOpen, onClose, onSubmit, loading }) => {
                     key={user.userId || user.UserId}
                     value={user.userId || user.UserId}
                   >
-                    {user.username || user.Username} (
-                    {user.email || user.Email})
+                    {user.username || user.Username} ({user.email || user.Email}
+                    )
                   </option>
                 ))}
               </select>
@@ -371,7 +380,7 @@ const AddProjectModal = ({ isOpen, onClose, onSubmit, loading }) => {
                   name="date"
                   value={formData.date}
                   onChange={handleInputChange}
-                  min={new Date().toISOString().split('T')[0]}
+                  min={new Date().toISOString().split("T")[0]}
                   className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all duration-300 ${
                     darkMode
                       ? "bg-gray-700 border-gray-600 text-white focus:border-purple-400"
@@ -510,4 +519,4 @@ const AddProjectModal = ({ isOpen, onClose, onSubmit, loading }) => {
   );
 };
 
-export default AddProjectModal; 
+export default AddProjectModal;
