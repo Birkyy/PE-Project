@@ -33,18 +33,20 @@ const Header = ({ onToggleSidebar, darkMode }) => {
 
   // Define navigation items based on user role
   const getNavItems = () => {
-    const baseItems = [
+    // If admin, do not show Dashboard, show My Projects as first
+    if (isUserAdmin()) {
+      return [
+        { path: "/my-projects", label: "My Projects" },
+        { path: "/users-management", label: "Users Management" },
+        { path: "/profile", label: "Profile" },
+      ];
+    }
+    // For non-admins, show Dashboard as first
+    return [
       { path: "/home", label: "Dashboard" },
       { path: "/my-projects", label: "My Projects" },
       { path: "/profile", label: "Profile" },
     ];
-
-    // Add Users Management only for admin users
-    if (isUserAdmin()) {
-      baseItems.splice(2, 0, { path: "/users-management", label: "Users Management" });
-    }
-
-    return baseItems;
   };
 
   const navItems = getNavItems();

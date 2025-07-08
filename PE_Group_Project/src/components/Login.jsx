@@ -91,7 +91,11 @@ const Login = () => {
       localStorage.setItem('user', JSON.stringify(response));
       
       // Navigate to dashboard after successful login
-      navigate('/home');
+      if (response.role && response.role.toLowerCase() === 'admin') {
+        navigate('/my-projects');
+      } else {
+        navigate('/home');
+      }
     } catch (error) {
       // Handle failed login attempt
       const currentAttempts = getFailedAttempts(formData.email);
@@ -125,7 +129,11 @@ const Login = () => {
     
     localStorage.setItem('token', 'demo-token');
     localStorage.setItem('user', JSON.stringify(demoUser));
-    navigate('/home');
+    if (demoUser.role && demoUser.role.toLowerCase() === 'admin') {
+      navigate('/my-projects');
+    } else {
+      navigate('/home');
+    }
   };
 
   const handleForgotPassword = (e) => {
