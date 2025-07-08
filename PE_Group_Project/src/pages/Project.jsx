@@ -13,6 +13,7 @@ import {
   ListTodo,
   Edit,
   Trash2,
+  Search,
   MoveRight,
   ChevronRight,
   ChevronLeft,
@@ -20,9 +21,6 @@ import {
   Eye,
   ArrowLeft,
   Filter,
-  X,
-  CheckCircle,
-  XCircle,
 } from "lucide-react";
 import Layout from "../components/Layout";
 import AddTaskModal from "./AddTaskModal";
@@ -148,6 +146,7 @@ function Project() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [projectFiles, setProjectFiles] = useState([]);
 
   // Separate states for view and edit modals
@@ -158,23 +157,6 @@ function Project() {
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
   const [isEditProjectModalOpen, setIsEditProjectModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
-
-  // Delete modal states
-  const [showDeleteTaskModal, setShowDeleteTaskModal] = useState(false);
-  const [taskToDelete, setTaskToDelete] = useState(null);
-  
-  // Notification states
-  const [notification, setNotification] = useState(null);
-
-  // Notification functions
-  const showNotification = (message, type = 'info') => {
-    setNotification({ message, type });
-    setTimeout(() => setNotification(null), 4000); // Auto dismiss after 4 seconds
-  };
-
-  const closeNotification = () => {
-    setNotification(null);
-  };
 
   // Load current user data
   useEffect(() => {
@@ -286,26 +268,13 @@ function Project() {
     }
   };
 
-  // Show delete confirmation modal
-  const openDeleteTaskModal = (task) => {
-    setTaskToDelete(task);
-    setShowDeleteTaskModal(true);
-  };
-
-  // Handle confirmed task deletion
-  const handleDeleteTask = async () => {
-    if (!taskToDelete) return;
-    
+  const handleDeleteTask = async (taskId) => {
     try {
-      const taskId = taskToDelete.projectTaskId || taskToDelete.id;
       await taskAPI.deleteTask(taskId);
       setTasks(tasks.filter((t) => (t.projectTaskId || t.id) !== taskId));
-      showNotification(`Task "${taskToDelete.taskName || taskToDelete.title}" has been deleted successfully.`, 'success');
-      setShowDeleteTaskModal(false);
-      setTaskToDelete(null);
     } catch (err) {
       console.error("Error deleting task:", err);
-      showNotification("Failed to delete task. Please try again.", 'error');
+      alert("Failed to delete task. Please try again.");
     }
   };
 
@@ -517,28 +486,28 @@ function Project() {
             {(userRole === 'admin' || userRole === 'manager') && (
               <>
                 <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setEditTask(task);
-                setIsEditModalOpen(true);
-              }}
-              className={`p-1 rounded ${
-                darkMode ? "hover:bg-gray-600" : "hover:bg-gray-100"
-              }`}
-            >
-              <Edit className="w-4 h-4 text-blue-500" />
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                openDeleteTaskModal(task);
-              }}
-              className={`p-1 rounded ${
-                darkMode ? "hover:bg-gray-600" : "hover:bg-gray-100"
-              }`}
-            >
-              <Trash2 className="w-4 h-4 text-red-500" />
-            </button>
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditTask(task);
+                    setIsEditModalOpen(true);
+                  }}
+                  className={`p-1 rounded ${
+                    darkMode ? "hover:bg-gray-600" : "hover:bg-gray-100"
+                  }`}
+                >
+                  <Edit className="w-4 h-4 text-blue-500" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteTask(taskId);
+                  }}
+                  className={`p-1 rounded ${
+                    darkMode ? "hover:bg-gray-600" : "hover:bg-gray-100"
+                  }`}
+                >
+                  <Trash2 className="w-4 h-4 text-red-500" />
+                </button>
               </>
             )}
           </div>
@@ -567,68 +536,11 @@ function Project() {
             )}
           </div>
 
-          <div className={`flex items-center gap-2 p-2 rounded-lg mt-2 ${
-            isOverdue
-              ? darkMode
-                ? 'bg-red-900/20 border border-red-500/30'
-                : 'bg-red-50 border border-red-200'
-              : new Date(task.deadline) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // Within next 7 days
-              ? darkMode
-                ? 'bg-yellow-900/20 border border-yellow-500/30'
-                : 'bg-yellow-50 border border-yellow-200'
-              : darkMode
-              ? 'bg-gray-800/50 border border-gray-700'
-              : 'bg-gray-50 border border-gray-200'
-          }`}>
-            <Calendar className={`w-4 h-4 ${
-              isOverdue
-                ? 'text-red-500'
-                : new Date(task.deadline) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-                ? 'text-yellow-500'
-                : darkMode
-                ? 'text-gray-400'
-                : 'text-gray-500'
-            }`} />
-            <div className="flex flex-col">
-              <span className={`text-xs font-medium ${
-                isOverdue
-                  ? 'text-red-500'
-                  : new Date(task.deadline) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-                  ? darkMode
-                    ? 'text-yellow-400'
-                    : 'text-yellow-700'
-                  : darkMode
-                  ? 'text-gray-300'
-                  : 'text-gray-600'
-              }`}>
-                Due Date
-              </span>
-              <span className={`text-sm font-semibold ${
-                isOverdue
-                  ? 'text-red-500'
-                  : new Date(task.deadline) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-                  ? darkMode
-                    ? 'text-yellow-300'
-                    : 'text-yellow-800'
-                  : darkMode
-                  ? 'text-white'
-                  : 'text-gray-900'
-              }`}>
-                {formatDate(task.deadline)}
-              </span>
-            </div>
-            {isOverdue && (
-              <div className="ml-auto flex items-center gap-1 px-2 py-1 rounded-full bg-red-500/10">
-                <Clock className="w-3 h-3 text-red-500" />
-                <span className="text-xs font-medium text-red-500">Overdue</span>
-              </div>
-            )}
-            {!isOverdue && new Date(task.deadline) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) && (
-              <div className="ml-auto flex items-center gap-1 px-2 py-1 rounded-full bg-yellow-500/10">
-                <AlertCircle className="w-3 h-3 text-yellow-500" />
-                <span className="text-xs font-medium text-yellow-500">Due Soon</span>
-              </div>
-            )}
+          <div className="flex items-center gap-2 text-xs">
+            <Calendar className="w-3 h-3" />
+            <span className={darkMode ? "text-gray-400" : "text-gray-500"}>
+              Due: {formatDate(task.deadline)}
+            </span>
           </div>
         </div>
 
@@ -637,47 +549,43 @@ function Project() {
             {isAssignedToCurrentUser && (
               <>
                 <button
-              onClick={(e) => {
-                e.stopPropagation();
-                const prevStatus = getPreviousStatus(task.status);
-                if (prevStatus !== task.status) {
-                  handleChangeStatus(task, prevStatus);
-                }
-              }}
-              disabled={task.status === statusList[0].key}
-              className={`p-1.5 rounded-full transition-all duration-200 ${
-                task.status === statusList[0].key
-                  ? "opacity-40 cursor-not-allowed bg-gray-100 dark:bg-gray-700"
-                  : "bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-800/50 hover:scale-110"
-              }`}
-            >
-              <ChevronLeft className={`w-4 h-4 ${
-                task.status === statusList[0].key
-                  ? "text-gray-400 dark:text-gray-500"
-                  : "text-purple-600 dark:text-purple-400"
-              }`} />
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                const nextStatus = getNextStatus(task.status);
-                if (nextStatus !== task.status) {
-                  handleChangeStatus(task, nextStatus);
-                }
-              }}
-              disabled={task.status === statusList[statusList.length - 1].key}
-              className={`p-1.5 rounded-full transition-all duration-200 ${
-                task.status === statusList[statusList.length - 1].key
-                  ? "opacity-40 cursor-not-allowed bg-gray-100 dark:bg-gray-700"
-                  : "bg-cyan-100 hover:bg-cyan-200 dark:bg-cyan-900/30 dark:hover:bg-cyan-800/50 hover:scale-110"
-              }`}
-            >
-              <ChevronRight className={`w-4 h-4 ${
-                task.status === statusList[statusList.length - 1].key
-                  ? "text-gray-400 dark:text-gray-500"
-                  : "text-cyan-600 dark:text-cyan-400"
-              }`} />
-            </button>
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const prevStatus = getPreviousStatus(task.status);
+                    if (prevStatus !== task.status) {
+                      handleChangeStatus(task, prevStatus);
+                    }
+                  }}
+                  disabled={task.status === statusList[0].key}
+                  className={`p-1 rounded ${
+                    task.status === statusList[0].key
+                      ? "opacity-50 cursor-not-allowed"
+                      : darkMode
+                      ? "hover:bg-gray-600"
+                      : "hover:bg-gray-100"
+                  }`}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const nextStatus = getNextStatus(task.status);
+                    if (nextStatus !== task.status) {
+                      handleChangeStatus(task, nextStatus);
+                    }
+                  }}
+                  disabled={task.status === statusList[statusList.length - 1].key}
+                  className={`p-1 rounded ${
+                    task.status === statusList[statusList.length - 1].key
+                      ? "opacity-50 cursor-not-allowed"
+                      : darkMode
+                      ? "hover:bg-gray-600"
+                      : "hover:bg-gray-100"
+                  }`}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
               </>
             )}
           </div>
@@ -876,7 +784,29 @@ function Project() {
               )}
             </div>
 
-
+            {/* Search Bar */}
+            <div className="max-w-md mb-6">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search
+                    className={`h-5 w-5 ${
+                      darkMode ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  />
+                </div>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search tasks..."
+                  className={`block w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${
+                    darkMode
+                      ? "bg-gray-800 border-gray-700 text-white placeholder-gray-400"
+                      : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
+                  }`}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Project Details Grid */}
@@ -1094,115 +1024,6 @@ function Project() {
         onSubmit={handleEditProject}
         project={project}
       />
-
-      {/* Custom Delete Task Modal */}
-      {showDeleteTaskModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className={`rounded-2xl shadow-2xl border max-w-md w-full transform transition-all ${
-            darkMode 
-              ? "bg-gray-800 border-gray-700" 
-              : "bg-white border-gray-200"
-          }`}>
-            {/* Header */}
-            <div className="flex items-center gap-3 p-6 border-b border-red-200 dark:border-red-800">
-              <div className="flex-shrink-0 w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
-                <Trash2 className="w-5 h-5 text-red-600 dark:text-red-400" />
-              </div>
-              <div>
-                <h3 className={`text-lg font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>
-                  Delete Task
-                </h3>
-                <p className="text-sm text-red-600 dark:text-red-400">
-                  This action cannot be undone
-                </p>
-              </div>
-            </div>
-
-            {/* Content */}
-            <div className="p-6">
-              <p className={`text-sm mb-4 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-                Are you sure you want to permanently delete the task:
-              </p>
-              <div className={`p-3 rounded-lg border-l-4 border-red-500 ${
-                darkMode ? "bg-red-900/20" : "bg-red-50"
-              }`}>
-                <p className={`font-medium ${darkMode ? "text-white" : "text-gray-900"}`}>
-                  {taskToDelete?.taskName || taskToDelete?.title || "Untitled Task"}
-                </p>
-                {(taskToDelete?.description) && (
-                  <p className={`text-sm mt-1 ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
-                    {taskToDelete.description.length > 100 
-                      ? `${taskToDelete.description.substring(0, 100)}...` 
-                      : taskToDelete.description}
-                  </p>
-                )}
-              </div>
-              <p className={`text-xs mt-3 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
-                ⚠️ All task data, comments, and attachments will be permanently removed.
-              </p>
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
-              <button
-                onClick={() => {
-                  setShowDeleteTaskModal(false);
-                  setTaskToDelete(null);
-                }}
-                className={`flex-1 px-4 py-2.5 rounded-lg font-medium transition-all duration-200 ${
-                  darkMode
-                    ? "bg-gray-700 hover:bg-gray-600 text-gray-300"
-                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                }`}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteTask}
-                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
-              >
-                Delete Task
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Toast Notification */}
-      {notification && (
-        <div className="fixed top-4 right-4 z-50">
-          <div className={`rounded-lg p-6 shadow-2xl border max-w-sm transform transition-all ${
-            darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-          }`}>
-            <div className="flex items-start gap-3">
-              <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                notification.type === 'success' 
-                  ? 'bg-green-100 dark:bg-green-900/30' 
-                  : notification.type === 'error'
-                  ? 'bg-red-100 dark:bg-red-900/30'
-                  : 'bg-blue-100 dark:bg-blue-900/30'
-              }`}>
-                {notification.type === 'success' && <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />}
-                {notification.type === 'error' && <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />}
-                {notification.type === 'info' && <CheckCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className={`text-sm font-medium ${darkMode ? "text-white" : "text-gray-900"}`}>
-                  {notification.message}
-                </p>
-              </div>
-              <button
-                onClick={closeNotification}
-                className={`flex-shrink-0 p-1 rounded-full transition-colors ${
-                  darkMode ? "hover:bg-gray-700 text-gray-400" : "hover:bg-gray-100 text-gray-500"
-                }`}
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </Layout>
   );
 }
