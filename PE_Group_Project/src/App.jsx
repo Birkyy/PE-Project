@@ -5,7 +5,7 @@ import Register from './components/Register';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import MyProjects from './pages/MyProjects';
-import AddProject from './pages/AddProject';
+
 import Project from './pages/Project';
 import UsersManagement from './pages/UsersManagement';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -45,11 +45,7 @@ function App() {
                 <Project />
               </ProtectedRoute>
             } />
-            <Route path="/add-project" element={
-              <ProtectedRoute>
-                <AddProject />
-              </ProtectedRoute>
-            } />
+
             <Route path="/users-management" element={
               <ProtectedRoute>
                 <UsersManagement />

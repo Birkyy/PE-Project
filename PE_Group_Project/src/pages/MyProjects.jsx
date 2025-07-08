@@ -19,6 +19,7 @@ import Layout from '../components/Layout';
 import { useState, useRef, useEffect } from 'react';
 import { projectAPI, taskAPI } from '../API/apiService';
 import EditProjectModal from './EditProjectModal';
+import AddProjectModal from '../components/AddProjectModal';
 import ArchiveConfirmModal from '../components/ArchiveConfirmModal';
 
 const MyProjects = () => {
@@ -37,6 +38,7 @@ const MyProjects = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, projectId: null, projectName: '' });
   const [archiveModal, setArchiveModal] = useState({ isOpen: false, projectId: null, projectName: '' });
+  const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
   const [editForm, setEditForm] = useState({
     projectName: '',
     date: '',
@@ -221,7 +223,24 @@ const MyProjects = () => {
   };
 
   const handleAddProject = () => {
-    navigate('/add-project');
+    setIsAddProjectModalOpen(true);
+  };
+
+  const handleAddProjectSubmit = async (newProject) => {
+    try {
+      // Add the new project to local state
+      setProjects(prev => [...prev, newProject]);
+      setFilteredProjects(prev => [...prev, newProject]);
+      
+      // Refresh projects to get the latest data
+      await fetchProjects();
+      
+      console.log('Project created:', newProject);
+    } catch (err) {
+      console.error('Error after creating project:', err);
+      // Still refresh to get accurate data
+      await fetchProjects();
+    }
   };
 
   const closeModal = () => {
@@ -496,7 +515,7 @@ const MyProjects = () => {
           {isUserAdmin() && (
             <div className="mt-8 text-center">
               <button 
-                onClick={() => navigate('/add-project')}
+                onClick={handleAddProject}
                 className="px-6 py-3 bg-gradient-to-r from-purple-600 to-cyan-600 text-white rounded-lg hover:from-purple-700 hover:to-cyan-700 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/25 focus:outline-none focus:ring-2 focus:ring-purple-400/50"
               >
                 + Create New Project
@@ -685,6 +704,13 @@ const MyProjects = () => {
         onClose={() => setArchiveModal({ isOpen: false, projectId: null, projectName: '' })}
         onConfirm={handleArchiveConfirm}
         projectName={archiveModal.projectName}
+      />
+
+      {/* Add Project Modal */}
+      <AddProjectModal
+        isOpen={isAddProjectModalOpen}
+        onClose={() => setIsAddProjectModalOpen(false)}
+        onSubmit={handleAddProjectSubmit}
       />
     </Layout>
   );
