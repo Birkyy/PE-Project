@@ -184,11 +184,11 @@ const UsersManagement = () => {
   // Filter users based on search term
   const filteredUsers = users.filter(
     (user) =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.position.toLowerCase().includes(searchTerm.toLowerCase())
+      (user.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.role || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.department || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.position || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleInputChange = (e) => {
@@ -533,8 +533,7 @@ const UsersManagement = () => {
         "Gender",
         "Nationality",
         "Phone Number",
-        "Role",
-        "Status",
+        "Role"
       ];
 
       // Convert users data to CSV format
@@ -546,8 +545,7 @@ const UsersManagement = () => {
         user.gender || "",
         user.nationality || "",
         user.phoneNumber || "",
-        user.role || "",
-        user.status || "",
+        user.role || ""
       ]);
 
       // Combine headers and data
@@ -787,7 +785,7 @@ const UsersManagement = () => {
                 >
                   {loading && users.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-6 py-12 text-center">
+                      <td colSpan={3} className="px-6 py-12 text-center">
                         <div className="flex flex-col items-center">
                           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mb-4"></div>
                           <p
@@ -802,7 +800,7 @@ const UsersManagement = () => {
                     </tr>
                   ) : filteredUsers.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-6 py-12 text-center">
+                      <td colSpan={3} className="px-6 py-12 text-center">
                         <p
                           className={`text-sm ${
                             darkMode ? "text-gray-400" : "text-gray-600"

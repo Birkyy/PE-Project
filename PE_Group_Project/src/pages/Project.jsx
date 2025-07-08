@@ -118,13 +118,13 @@ const getUserProjectRole = (currentUser, project) => {
 // Helper function to check if user can add tasks
 const canUserAddTasks = (currentUser, project) => {
   const userRole = getUserProjectRole(currentUser, project);
-  return userRole === 'admin' || userRole === 'manager';
+  return userRole === "admin" || userRole === "manager";
 };
 
 // Helper function to check if user can edit project
 const canUserEditProject = (currentUser, project) => {
   const userRole = getUserProjectRole(currentUser, project);
-  return userRole === 'admin' || userRole === 'manager';
+  return userRole === "admin" || userRole === "manager";
 };
 
 // Helper function to check if a user is assigned to a task (PIC)
@@ -350,9 +350,32 @@ function Project() {
     }
   };
 
-  const handleDownload = (file) => {
-    // Implement file download logic
-    console.log("Downloading:", file.name);
+  const getFilePathFromUrl = (url) => {
+    const uploadsIndex = url.indexOf("/uploads/");
+    if (uploadsIndex === -1) return null;
+    return url.substring(uploadsIndex + "/uploads/".length);
+  };
+
+  const handleDownload = async (file) => {
+    try {
+      const filePath = getFilePathFromUrl(file.url);
+      if (!filePath) {
+        alert("File path not found.");
+        return;
+      }
+      const response = await fileAPI.downloadFile(filePath);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", file.fileName || file.name);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert("Failed to download file.");
+      console.error(err);
+    }
   };
 
   const handleEditProject = async (updatedProject) => {
@@ -901,17 +924,6 @@ function Project() {
                           title="Download"
                         >
                           <Download className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => window.open(file.url, "_blank")}
-                          className={`p-2 rounded-lg ${
-                            darkMode
-                              ? "hover:bg-gray-600 text-gray-400"
-                              : "hover:bg-gray-200 text-gray-600"
-                          }`}
-                          title="Open in new tab"
-                        >
-                          <ExternalLink className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
