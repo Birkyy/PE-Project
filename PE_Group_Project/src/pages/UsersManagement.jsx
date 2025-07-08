@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "../context/ThemeContext";
 import Layout from "../components/Layout";
+import { useNavigate } from "react-router-dom";
 import {
   Shield,
   Search,
@@ -17,6 +18,7 @@ import { userAPI } from "../API/apiService.js";
 
 const UsersManagement = () => {
   const { darkMode } = useTheme();
+  const navigate = useNavigate();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
@@ -50,6 +52,22 @@ const UsersManagement = () => {
   const [lockedAccounts, setLockedAccounts] = useState([]);
   const storedUser = localStorage.getItem("user");
   const user = storedUser ? JSON.parse(storedUser) : null;
+
+  // Check user permissions on component mount
+  useEffect(() => {
+    if (!user) {
+      // No user found, redirect to login
+      navigate("/login");
+      return;
+    }
+
+    // Check if user is admin, if not redirect to dashboard
+    if (user?.role?.toLowerCase() !== 'admin') {
+      alert("Access denied. Only administrators can access user management.");
+      navigate("/home");
+      return;
+    }
+  }, [user, navigate]);
 
   // Fetch users from API
   const fetchUsers = async () => {
@@ -359,7 +377,7 @@ const UsersManagement = () => {
 
       // Try to fetch full user details from API
       try {
-        const response = await api.get(`/user/${user.email}`);
+        const response = await userAPI.getUserById(user.id);
         const userData = response.data;
 
         setSelectedUser({

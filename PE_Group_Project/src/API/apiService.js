@@ -115,6 +115,42 @@ export const projectAPI = {
       throw error;
     }
   },
+
+  // Get archived projects
+  getArchivedProjects: async (userId = null) => {
+    try {
+      const params = userId ? { userId } : {};
+      const response = await api.get('/Project/archived', { params });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching archived projects:', error);
+      throw error;
+    }
+  },
+
+  // Archive project
+  archiveProject: async (id, userId = null) => {
+    try {
+      const params = userId ? { userId } : {};
+      const response = await api.put(`/Project/${id}/archive`, {}, { params });
+      return response.data;
+    } catch (error) {
+      console.error('Error archiving project:', error);
+      throw error;
+    }
+  },
+
+  // Restore project
+  restoreProject: async (id, userId = null) => {
+    try {
+      const params = userId ? { userId } : {};
+      const response = await api.put(`/Project/${id}/restore`, {}, { params });
+      return response.data;
+    } catch (error) {
+      console.error('Error restoring project:', error);
+      throw error;
+    }
+  },
 };
 
 // Task API calls

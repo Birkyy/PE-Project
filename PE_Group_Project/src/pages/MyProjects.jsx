@@ -43,6 +43,11 @@ const MyProjects = () => {
     }
   }, []);
 
+  // Helper function to check if user is admin
+  const isUserAdmin = () => {
+    return currentUser?.role?.toLowerCase() === 'admin';
+  };
+
   // Fetch all projects on component mount
   useEffect(() => {
     if (currentUser) {
@@ -169,14 +174,18 @@ const MyProjects = () => {
     }
   };
 
-  const handleArchive = (projectId, projectName) => {
+  const handleArchive = async (projectId, projectName) => {
     if (window.confirm(`Are you sure you want to archive "${projectName}"? It will be moved to the Archive section.`)) {
-      console.log(`Archiving project ${projectId}: ${projectName}`);
-      // Remove project from active projects list
-      setProjects(prevProjects => prevProjects.filter(project => project.projectId !== projectId));
-      setFilteredProjects(prevProjects => prevProjects.filter(project => project.projectId !== projectId));
-      // In a real app, this would make an API call to archive the project
-      alert(`"${projectName}" has been archived successfully!`);
+      try {
+        await projectAPI.archiveProject(projectId, currentUser?.userId);
+        // Remove project from active projects list
+        setProjects(prevProjects => prevProjects.filter(project => project.projectId !== projectId));
+        setFilteredProjects(prevProjects => prevProjects.filter(project => project.projectId !== projectId));
+        alert(`"${projectName}" has been archived successfully!`);
+      } catch (err) {
+        console.error('Error archiving project:', err);
+        alert('Failed to archive project. Please try again.');
+      }
     }
   };
 
@@ -365,17 +374,19 @@ const MyProjects = () => {
                 My Projects
               </h2>
               <div className="flex-1 flex justify-end">
-                <button
-                  onClick={handleAddProject}
-                  className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                    darkMode
-                      ? 'text-white bg-purple-600 hover:bg-purple-700 focus:ring-purple-500 hover:shadow-lg hover:shadow-purple-500/25'
-                      : 'text-white bg-purple-600 hover:bg-purple-700 focus:ring-purple-500 hover:shadow-lg hover:shadow-purple-300/30'
-                  }`}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Project
-                </button>
+                {isUserAdmin() && (
+                  <button
+                    onClick={handleAddProject}
+                    className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                      darkMode
+                        ? 'text-white bg-purple-600 hover:bg-purple-700 focus:ring-purple-500 hover:shadow-lg hover:shadow-purple-500/25'
+                        : 'text-white bg-purple-600 hover:bg-purple-700 focus:ring-purple-500 hover:shadow-lg hover:shadow-purple-300/30'
+                    }`}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Project
+                  </button>
+                )}
               </div>
             </div>
             {/* Search Bar */}
@@ -460,14 +471,16 @@ const MyProjects = () => {
           )}
 
           {/* Create New Project Button */}
-          <div className="mt-8 text-center">
-            <button 
-              onClick={() => navigate('/add-project')}
-              className="px-6 py-3 bg-gradient-to-r from-purple-600 to-cyan-600 text-white rounded-lg hover:from-purple-700 hover:to-cyan-700 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/25 focus:outline-none focus:ring-2 focus:ring-purple-400/50"
-            >
-              + Create New Project
-            </button>
-          </div>
+          {isUserAdmin() && (
+            <div className="mt-8 text-center">
+              <button 
+                onClick={() => navigate('/add-project')}
+                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-cyan-600 text-white rounded-lg hover:from-purple-700 hover:to-cyan-700 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/25 focus:outline-none focus:ring-2 focus:ring-purple-400/50"
+              >
+                + Create New Project
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

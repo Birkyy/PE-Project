@@ -80,6 +80,36 @@ const getAssignedPersonName = (picGuid) => {
   return assignedNames[picGuid] || "Loading...";
 };
 
+// Helper function to determine user's role in the project
+const getUserProjectRole = (currentUser, project) => {
+  if (!currentUser || !project) return null;
+  
+  const userId = currentUser?.userId || currentUser?.id || currentUser?.UserId;
+  
+  // Check if user is admin
+  if (currentUser?.role?.toLowerCase() === 'admin') {
+    return 'admin';
+  }
+  
+  // Check if user is project manager
+  if (project.projectManagerInCharge === userId) {
+    return 'manager';
+  }
+  
+  // Check if user is contributor
+  if (project.contributors && project.contributors.includes(userId)) {
+    return 'contributor';
+  }
+  
+  return null;
+};
+
+// Helper function to check if user can add tasks
+const canUserAddTasks = (currentUser, project) => {
+  const role = getUserProjectRole(currentUser, project);
+  return role === 'admin' || role === 'manager';
+};
+
 function Project() {
   const { darkMode } = useTheme();
   const { id } = useParams();
@@ -679,21 +709,23 @@ function Project() {
                   </span>
                 </div>
               </div>
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setIsAddTaskModalOpen(true);
-                }}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                  darkMode
-                    ? "bg-blue-600 hover:bg-blue-700 text-white"
-                    : "bg-blue-500 hover:bg-blue-600 text-white"
-                } transition-colors`}
-              >
-                <Plus className="w-5 h-5" />
-                Add Task
-              </button>
+              {canUserAddTasks(currentUser, project) && (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsAddTaskModalOpen(true);
+                  }}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+                    darkMode
+                      ? "bg-blue-600 hover:bg-blue-700 text-white"
+                      : "bg-blue-500 hover:bg-blue-600 text-white"
+                  } transition-colors`}
+                >
+                  <Plus className="w-5 h-5" />
+                  Add Task
+                </button>
+              )}
             </div>
 
             {/* Search Bar */}

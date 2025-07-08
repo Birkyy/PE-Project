@@ -64,6 +64,36 @@ const isTaskOverdue = (task) => {
   return new Date(task.deadline) < new Date();
 };
 
+// Helper function to determine user's role in the project
+const getUserProjectRole = (currentUser, project) => {
+  if (!currentUser || !project) return null;
+  
+  const userId = currentUser?.userId || currentUser?.id || currentUser?.UserId;
+  
+  // Check if user is admin
+  if (currentUser?.role?.toLowerCase() === 'admin') {
+    return 'admin';
+  }
+  
+  // Check if user is project manager
+  if (project.projectManagerInCharge === userId) {
+    return 'manager';
+  }
+  
+  // Check if user is contributor
+  if (project.contributors && project.contributors.includes(userId)) {
+    return 'contributor';
+  }
+  
+  return null;
+};
+
+// Helper function to check if user can add tasks
+const canUserAddTasks = (currentUser, project) => {
+  const role = getUserProjectRole(currentUser, project);
+  return role === 'admin' || role === 'manager';
+};
+
 const MyTask = () => {
   const { projectName } = useParams();
   const { darkMode } = useTheme();
@@ -933,17 +963,19 @@ const MyTask = () => {
                 </div>
 
                 {/* Add Task Button */}
-                <button
-                  onClick={() => setIsAddModalOpen(true)}
-                  className={`ml-4 px-4 py-2 rounded-lg flex items-center ${
-                    darkMode
-                      ? "bg-blue-600 hover:bg-blue-700 text-white"
-                      : "bg-blue-500 hover:bg-blue-600 text-white"
-                  }`}
-                >
-                  <Plus className="w-5 h-5 mr-2" />
-                  Add Task
-                </button>
+                {canUserAddTasks(currentUser, currentProject) && (
+                  <button
+                    onClick={() => setIsAddModalOpen(true)}
+                    className={`ml-4 px-4 py-2 rounded-lg flex items-center ${
+                      darkMode
+                        ? "bg-blue-600 hover:bg-blue-700 text-white"
+                        : "bg-blue-500 hover:bg-blue-600 text-white"
+                    }`}
+                  >
+                    <Plus className="w-5 h-5 mr-2" />
+                    Add Task
+                  </button>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

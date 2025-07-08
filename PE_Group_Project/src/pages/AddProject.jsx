@@ -46,6 +46,27 @@ const AddProject = () => {
   const [allUsers, setAllUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(true);
   const [usersError, setUsersError] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // Load current user data and check permissions
+  useEffect(() => {
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      setCurrentUser(user);
+      
+      // Check if user is admin, if not redirect to projects page
+      if (user?.role?.toLowerCase() !== 'admin') {
+        alert("Access denied. Only administrators can create projects.");
+        navigate("/my-projects");
+        return;
+      }
+    } else {
+      // No user found, redirect to login
+      navigate("/login");
+      return;
+    }
+  }, [navigate]);
 
   // Filter users based on search term (empty array for now)
   const filteredUsers = [];

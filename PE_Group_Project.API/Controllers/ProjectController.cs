@@ -35,24 +35,25 @@ namespace PE_Group_Project.API.Controllers
                     return BadRequest("User not found.");
                 }
 
-                // If user is Admin, show all projects
+                // If user is Admin, show all non-archived projects
                 if (user.Role?.Equals("Admin", StringComparison.OrdinalIgnoreCase) == true)
                 {
-                    projects = _context.Projects.ToList();
+                    projects = _context.Projects.Where(p => !p.IsArchived).ToList();
                 }
                 else
                 {
-                    // For non-Admin users, only show projects they're involved in
+                    // For non-Admin users, only show non-archived projects they're involved in
                     projects = _context
                         .UserProjects.Where(up => up.UserId == userId.Value)
                         .Select(up => up.Project)
+                        .Where(p => !p.IsArchived)
                         .ToList();
                 }
             }
             else
             {
-                // If no userId provided, return all projects (maintain backward compatibility)
-                projects = _context.Projects.ToList();
+                // If no userId provided, return all non-archived projects (maintain backward compatibility)
+                projects = _context.Projects.Where(p => !p.IsArchived).ToList();
             }
 
             var projectsDTO = new List<ProjectDTO>();
@@ -75,6 +76,8 @@ namespace PE_Group_Project.API.Controllers
                             .Select(up => up.UserId)
                             .ToList(),
                         Description = project.Description,
+                        IsArchived = project.IsArchived,
+                        ArchivedDate = project.ArchivedDate,
                         Attachments = new List<ProjectAttachmentDTO>(), // Add if needed
                     }
                 );
@@ -132,6 +135,8 @@ namespace PE_Group_Project.API.Controllers
                     .Select(up => up.UserId)
                     .ToList(),
                 Description = project.Description,
+                IsArchived = project.IsArchived,
+                ArchivedDate = project.ArchivedDate,
                 Attachments = new List<ProjectAttachmentDTO>(), // Add if needed
             };
 
@@ -145,6 +150,7 @@ namespace PE_Group_Project.API.Controllers
             var userProjects = _context
                 .UserProjects.Where(up => up.UserId == id)
                 .Select(up => up.Project)
+                .Where(p => !p.IsArchived)
                 .ToList();
 
             var projectDTOs = userProjects
@@ -163,6 +169,8 @@ namespace PE_Group_Project.API.Controllers
                         .Select(up => up.UserId)
                         .ToList(),
                     Description = project.Description,
+                    IsArchived = project.IsArchived,
+                    ArchivedDate = project.ArchivedDate,
                     Attachments = new List<ProjectAttachmentDTO>(), // Add if needed
                 })
                 .ToList();
@@ -464,6 +472,177 @@ namespace PE_Group_Project.API.Controllers
             _context.Projects.Remove(project);
             _context.SaveChanges();
             return NoContent();
+        }
+
+        [HttpGet]
+        [Route("archived")]
+        public IActionResult GetArchivedProjects([FromQuery] Guid? userId = null)
+        {
+            List<Project> archivedProjects;
+
+            if (userId.HasValue)
+            {
+                // Get user to check their role
+                var user = _context.Users.FirstOrDefault(u => u.UserId == userId.Value);
+                if (user == null)
+                {
+                    return BadRequest("User not found.");
+                }
+
+                // If user is Admin, show all archived projects
+                if (user.Role?.Equals("Admin", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    archivedProjects = _context.Projects.Where(p => p.IsArchived).ToList();
+                }
+                else
+                {
+                    // For non-Admin users, only show archived projects they're involved in
+                    archivedProjects = _context
+                        .UserProjects.Where(up => up.UserId == userId.Value)
+                        .Select(up => up.Project)
+                        .Where(p => p.IsArchived)
+                        .ToList();
+                }
+            }
+            else
+            {
+                // If no userId provided, return all archived projects
+                archivedProjects = _context.Projects.Where(p => p.IsArchived).ToList();
+            }
+
+            var projectsDTO = archivedProjects.Select(project => new ProjectDTO
+            {
+                ProjectId = project.ProjectId,
+                ProjectName = project.ProjectName,
+                Date = project.Date,
+                Status = project.Status,
+                PriorityLevel = project.PriorityLevel,
+                ProjectManagerInCharge = project.ProjectManagerInCharge,
+                Contributors = _context
+                    .UserProjects.Where(up =>
+                        up.ProjectId == project.ProjectId && up.ProjectRole == "Contributor"
+                    )
+                    .Select(up => up.UserId)
+                    .ToList(),
+                Description = project.Description,
+                IsArchived = project.IsArchived,
+                ArchivedDate = project.ArchivedDate,
+                Attachments = new List<ProjectAttachmentDTO>(), // Add if needed
+            }).ToList();
+
+            return Ok(projectsDTO);
+        }
+
+        [HttpPut]
+        [Route("{id:guid}/archive")]
+        public IActionResult ArchiveProject([FromRoute] Guid id, [FromQuery] Guid? userId = null)
+        {
+            var project = _context.Projects.FirstOrDefault(p => p.ProjectId == id);
+
+            if (project == null)
+            {
+                return NotFound();
+            }
+
+            // If userId is provided, check access permissions
+            if (userId.HasValue)
+            {
+                var user = _context.Users.FirstOrDefault(u => u.UserId == userId.Value);
+                if (user == null)
+                {
+                    return BadRequest("User not found.");
+                }
+
+                // Check if user is Admin or Project Manager
+                if (user.Role?.Equals("Admin", StringComparison.OrdinalIgnoreCase) != true)
+                {
+                    var userProject = _context.UserProjects.FirstOrDefault(up =>
+                        up.UserId == userId.Value
+                        && up.ProjectId == id
+                        && up.ProjectRole == "Manager"
+                    );
+
+                    if (userProject == null)
+                    {
+                        return Forbid("Only Admin users or Project Managers can archive projects.");
+                    }
+                }
+            }
+
+            if (project.IsArchived)
+            {
+                return BadRequest("Project is already archived.");
+            }
+
+            project.IsArchived = true;
+            project.ArchivedDate = DateTime.UtcNow;
+
+            try
+            {
+                _context.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error archiving project: {ex.Message}");
+            }
+
+            return Ok(new { message = "Project archived successfully", archivedDate = project.ArchivedDate });
+        }
+
+        [HttpPut]
+        [Route("{id:guid}/restore")]
+        public IActionResult RestoreProject([FromRoute] Guid id, [FromQuery] Guid? userId = null)
+        {
+            var project = _context.Projects.FirstOrDefault(p => p.ProjectId == id);
+
+            if (project == null)
+            {
+                return NotFound();
+            }
+
+            // If userId is provided, check access permissions
+            if (userId.HasValue)
+            {
+                var user = _context.Users.FirstOrDefault(u => u.UserId == userId.Value);
+                if (user == null)
+                {
+                    return BadRequest("User not found.");
+                }
+
+                // Check if user is Admin or Project Manager
+                if (user.Role?.Equals("Admin", StringComparison.OrdinalIgnoreCase) != true)
+                {
+                    var userProject = _context.UserProjects.FirstOrDefault(up =>
+                        up.UserId == userId.Value
+                        && up.ProjectId == id
+                        && up.ProjectRole == "Manager"
+                    );
+
+                    if (userProject == null)
+                    {
+                        return Forbid("Only Admin users or Project Managers can restore projects.");
+                    }
+                }
+            }
+
+            if (!project.IsArchived)
+            {
+                return BadRequest("Project is not archived.");
+            }
+
+            project.IsArchived = false;
+            project.ArchivedDate = null;
+
+            try
+            {
+                _context.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error restoring project: {ex.Message}");
+            }
+
+            return Ok(new { message = "Project restored successfully" });
         }
     }
 }

@@ -9,6 +9,8 @@ namespace PE_Group_Project.API.Models.Domain
         public required string PriorityLevel { get; set; }
         public required Guid ProjectManagerInCharge { get; set; }
         public required string Description { get; set; }
+        public bool IsArchived { get; set; } = false;
+        public DateTime? ArchivedDate { get; set; }
         public ICollection<ProjectAttachment> Attachments { get; set; } = new List<ProjectAttachment>();
         public ICollection<UserProject> Contributors { get; set; } = new List<UserProject>();
     }

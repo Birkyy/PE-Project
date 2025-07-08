@@ -26,12 +26,28 @@ const Header = ({ onToggleSidebar, darkMode }) => {
     return location.pathname === path;
   };
 
-  const navItems = [
-    { path: "/home", label: "Dashboard" },
-    { path: "/my-projects", label: "My Projects" },
-    { path: "/users-management", label: "Users Management" },
-    { path: "/profile", label: "Profile" },
-  ];
+  // Helper function to check if user is admin
+  const isUserAdmin = () => {
+    return currentUser?.role?.toLowerCase() === 'admin';
+  };
+
+  // Define navigation items based on user role
+  const getNavItems = () => {
+    const baseItems = [
+      { path: "/home", label: "Dashboard" },
+      { path: "/my-projects", label: "My Projects" },
+      { path: "/profile", label: "Profile" },
+    ];
+
+    // Add Users Management only for admin users
+    if (isUserAdmin()) {
+      baseItems.splice(2, 0, { path: "/users-management", label: "Users Management" });
+    }
+
+    return baseItems;
+  };
+
+  const navItems = getNavItems();
 
   return (
     <nav
