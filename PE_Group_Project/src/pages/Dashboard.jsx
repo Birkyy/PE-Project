@@ -26,6 +26,8 @@ import {
   Line,
   Area,
   AreaChart,
+  BarChart,
+  Bar,
 } from "recharts";
 import { projectAPI, taskAPI } from "../API/apiService";
 
@@ -50,6 +52,8 @@ const Dashboard = () => {
   const [overdueTasks, setOverdueTasks] = useState([]);
   const [projectDistribution, setProjectDistribution] = useState([]);
   const [weeklyProgress, setWeeklyProgress] = useState([]);
+  // Add state for overall project progress
+  const [overallProjectProgress, setOverallProjectProgress] = useState({ completed: 0, incomplete: 0, percent: 0 });
 
   useEffect(() => {
     // Load user data
@@ -97,16 +101,27 @@ const Dashboard = () => {
       calculateTaskLists(userTasks);
 
       // Calculate project distribution for user's projects and tasks
-      calculateProjectDistribution(projectsData || [], userTasks);
+      calculateProjectDistribution(projectsData || [], tasksData || []);
 
       // Calculate weekly progress for user's tasks only
       calculateWeeklyProgress(userTasks);
+      // Calculate overall project progress (all projects, all tasks)
+      calculateOverallProjectProgress(tasksData || []);
     } catch (err) {
       console.error("Error fetching dashboard data:", err);
       setError("Failed to load dashboard data. Please try again.");
     } finally {
       setLoading(false);
     }
+  };
+
+  // Add this function to calculate overall project progress
+  const calculateOverallProjectProgress = (allTasks) => {
+    const total = allTasks.length;
+    const completed = allTasks.filter((task) => task.status === "Completed").length;
+    const incomplete = total - completed;
+    const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+    setOverallProjectProgress({ completed, incomplete, percent });
   };
 
   const calculateTaskStats = (allTasks) => {
@@ -157,27 +172,27 @@ const Dashboard = () => {
     setOverdueTasks(overdue);
   };
 
-  const calculateProjectDistribution = (allProjects, userTasks) => {
+  const calculateProjectDistribution = (allProjects, allTasks) => {
     const projectStats = allProjects.map((project) => {
-      // Only count tasks assigned to the current user in this project
-      const userProjectTasks = userTasks.filter(
+      // Get all tasks for this project (not just user's tasks)
+      const projectTasks = (allTasks || []).filter(
         (task) => task.projectId === project.projectId
       );
-      const completedUserTasks = userProjectTasks.filter(
+      const completedTasks = projectTasks.filter(
         (task) => task.status === "Completed"
       ).length;
-      const totalUserTasks = userProjectTasks.length;
+      const totalTasks = projectTasks.length;
       const progress =
-        totalUserTasks > 0
-          ? Math.round((completedUserTasks / totalUserTasks) * 100)
+        totalTasks > 0
+          ? Math.round((completedTasks / totalTasks) * 100)
           : 0;
 
       return {
         name: project.projectName,
         value: progress,
         color: getProjectColor(project.projectId),
-        totalTasks: totalUserTasks,
-        completedTasks: completedUserTasks,
+        totalTasks: totalTasks,
+        completedTasks: completedTasks,
       };
     });
 
@@ -673,7 +688,7 @@ const Dashboard = () => {
 
             {/* Visual Analytics */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Weekly Progress Chart */}
+              {/* Task Progress Pie Chart (now on the left) */}
               <div
                 className={`${
                   darkMode
@@ -686,62 +701,81 @@ const Dashboard = () => {
                     darkMode ? "text-white" : "text-gray-900"
                   }`}
                 >
-                  <BarChart3 className="w-5 h-5 mr-2 text-purple-400" />
-                  Weekly Task Progress
+                  <PieChart className="w-5 h-5 mr-2 text-purple-400" />
+                  Task Progress
                 </h3>
                 <ResponsiveContainer width="100%" height={350}>
-                  <AreaChart data={weeklyProgress}>
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      stroke={darkMode ? "#374151" : "#E5E7EB"}
-                    />
-                    <XAxis
-                      dataKey="day"
-                      stroke={darkMode ? "#9CA3AF" : "#6B7280"}
-                    />
-                    <YAxis stroke={darkMode ? "#9CA3AF" : "#6B7280"} />
+                  <RechartsPieChart>
+                    <Pie
+                      data={[
+                        { name: "ToDo", value: taskStats.todo, color: "#6366F1" },
+                        { name: "In Progress", value: taskStats.inProgress, color: "#F59E42" },
+                        { name: "Completed", value: taskStats.completed, color: "#10B981" },
+                        { name: "Overdue", value: taskStats.overdue, color: "#EF4444" },
+                      ]}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {[
+                        "#6366F1",
+                        "#F59E42",
+                        "#10B981",
+                        "#EF4444",
+                      ].map((color, index) => (
+                        <Cell key={`cell-taskpie-${index}`} fill={color} />
+                      ))}
+                    </Pie>
                     <Tooltip
                       contentStyle={{
                         backgroundColor: darkMode ? "#1F2937" : "#FFFFFF",
-                        border: darkMode
-                          ? "1px solid #6B7280"
-                          : "1px solid #D1D5DB",
+                        border: darkMode ? "1px solid #6B7280" : "1px solid #D1D5DB",
                         borderRadius: "8px",
                         color: darkMode ? "#F3F4F6" : "#111827",
                       }}
                     />
-                    <Area
-                      type="monotone"
-                      dataKey="tasks"
-                      stroke="#8B5CF6"
-                      fill="url(#colorGradient)"
-                      strokeWidth={2}
-                    />
-                    <defs>
-                      <linearGradient
-                        id="colorGradient"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <stop
-                          offset="5%"
-                          stopColor="#8B5CF6"
-                          stopOpacity={0.3}
-                        />
-                        <stop
-                          offset="95%"
-                          stopColor="#8B5CF6"
-                          stopOpacity={0}
-                        />
-                      </linearGradient>
-                    </defs>
-                  </AreaChart>
+                  </RechartsPieChart>
                 </ResponsiveContainer>
+                <div className="mt-4 space-y-2">
+                  {[
+                    { name: "ToDo", color: "#6366F1", value: taskStats.todo },
+                    { name: "In Progress", color: "#F59E42", value: taskStats.inProgress },
+                    { name: "Completed", color: "#10B981", value: taskStats.completed },
+                    { name: "Overdue", color: "#EF4444", value: taskStats.overdue },
+                  ].map((item, index) => (
+                    <div
+                      key={item.name}
+                      className="flex items-center justify-between text-sm"
+                    >
+                      <div className="flex items-center">
+                        <div
+                          className="w-3 h-3 rounded-full mr-2"
+                          style={{ backgroundColor: item.color }}
+                        ></div>
+                        <span
+                          className={`${
+                            darkMode ? "text-gray-300" : "text-gray-700"
+                          }`}
+                        >
+                          {item.name}
+                        </span>
+                      </div>
+                      <span
+                        className={`${
+                          darkMode ? "text-gray-400" : "text-gray-600"}
+                        }`}
+                      >
+                        {item.value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              {/* Project Distribution */}
+              {/* Project Progress Bar Chart (now on the right) */}
               <div
                 className={`${
                   darkMode
@@ -754,35 +788,30 @@ const Dashboard = () => {
                     darkMode ? "text-white" : "text-gray-900"
                   }`}
                 >
-                  <PieChart className="w-5 h-5 mr-2 text-cyan-400" />
+                  <BarChart3 className="w-5 h-5 mr-2 text-cyan-400" />
                   Project Progress
                 </h3>
                 <ResponsiveContainer width="100%" height={350}>
-                  <RechartsPieChart>
-                    <Pie
-                      data={projectDistribution}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={100}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {projectDistribution.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
+                  <BarChart
+                    data={projectDistribution}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#374151" : "#E5E7EB"} />
+                    <XAxis dataKey="name" stroke={darkMode ? "#9CA3AF" : "#6B7280"} />
+                    <YAxis stroke={darkMode ? "#9CA3AF" : "#6B7280"} allowDecimals={false} domain={[0, 100]} />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: darkMode ? "#1F2937" : "#FFFFFF",
-                        border: darkMode
-                          ? "1px solid #6B7280"
-                          : "1px solid #D1D5DB",
+                        border: darkMode ? "1px solid #6B7280" : "1px solid #D1D5DB",
                         borderRadius: "8px",
                         color: darkMode ? "#F3F4F6" : "#111827",
                       }}
                     />
-                  </RechartsPieChart>
+                    <Bar dataKey="value">
+                      {projectDistribution.map((entry, index) => (
+                        <Cell key={`cell-bar-${index}`} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
                 </ResponsiveContainer>
                 <div className="mt-4 space-y-2">
                   {projectDistribution.map((item, index) => (
@@ -805,7 +834,7 @@ const Dashboard = () => {
                       </div>
                       <span
                         className={`${
-                          darkMode ? "text-gray-400" : "text-gray-600"
+                          darkMode ? "text-gray-400" : "text-gray-600"}
                         }`}
                       >
                         {item.value}%
