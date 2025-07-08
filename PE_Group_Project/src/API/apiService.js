@@ -607,4 +607,8 @@ export const fileAPI = {
   },
 };
 
+export const deleteUser = async (userId) => {
+  return api.delete(`/User/${userId}`);
+};
+
 export default api; 
