@@ -161,16 +161,18 @@ const MyProjects = () => {
   const handleDelete = async (projectId) => {
     if (!window.confirm('Are you sure you want to delete this project?')) return;
     try {
+      // Delete all tasks for this project first
+      const tasks = await taskAPI.getTasksByProjectId(projectId);
+      await Promise.all(tasks.map(task => taskAPI.deleteTask(task.projectTaskId)));
       // Delete the project using API
       await projectAPI.deleteProject(projectId);
-      
       // Remove from local state
       setProjects((prev) => prev.filter((p) => p.projectId !== projectId));
       setFilteredProjects((prev) => prev.filter((p) => p.projectId !== projectId));
-      console.log('Project deleted:', projectId);
+      console.log('Project and all its tasks deleted:', projectId);
     } catch (err) {
-      console.error('Error deleting project:', err);
-      alert('Failed to delete project. Please try again.');
+      console.error('Error deleting project and its tasks:', err);
+      alert('Failed to delete project and its tasks. Please try again.');
     }
   };
 
