@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\user\\Documents\\GitHub\\PE-Project\\PE_Group_project.API\\PE_Group_Project.API.csproj": {}
+    "C:\\Users\\laose\\Desktop\\Y3S3\\Programming Elective (II)\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj": {}
   },
   "projects": {
-    "C:\\Users\\user\\Documents\\GitHub\\PE-Project\\PE_Group_project.API\\PE_Group_Project.API.csproj": {
+    "C:\\Users\\laose\\Desktop\\Y3S3\\Programming Elective (II)\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\user\\Documents\\GitHub\\PE-Project\\PE_Group_project.API\\PE_Group_Project.API.csproj",
+        "projectUniqueName": "C:\\Users\\laose\\Desktop\\Y3S3\\Programming Elective (II)\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj",
         "projectName": "PE_Group_Project.API",
-        "projectPath": "C:\\Users\\user\\Documents\\GitHub\\PE-Project\\PE_Group_project.API\\PE_Group_Project.API.csproj",
-        "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\user\\Documents\\GitHub\\PE-Project\\PE_Group_project.API\\obj\\",
+        "projectPath": "C:\\Users\\laose\\Desktop\\Y3S3\\Programming Elective (II)\\PE-Project\\PE_Group_Project.API\\PE_Group_Project.API.csproj",
+        "packagesPath": "C:\\Users\\laose\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\laose\\Desktop\\Y3S3\\Programming Elective (II)\\PE-Project\\PE_Group_Project.API\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\laose\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net9.0"
@@ -84,7 +84,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.202/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
