@@ -1,0 +1,1 @@
+An enterprise-grade task tracking and management platform designed to streamline team workflows. This system features a decoupled architecture with a high-performance .NET Core Web API serving a modern React frontend.
